@@ -158,7 +158,7 @@ export const SPJUploadModal = ({ onSuccess, onCancel }: SPJUploadModalProps) => 
         </label>
         
         {!file ? (
-          <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center hover:bg-slate-50 hover:border-slate-300 transition-colors cursor-pointer relative">
+          <div className="border-2 border-dashed border-slate-200 rounded-none p-8 flex flex-col items-center justify-center hover:bg-slate-50 hover:border-slate-300 transition-colors cursor-pointer relative">
             <input
               type="file"
               onChange={handleFileChange}
@@ -171,9 +171,9 @@ export const SPJUploadModal = ({ onSuccess, onCancel }: SPJUploadModalProps) => 
             </p>
           </div>
         ) : (
-          <div className="p-4 border border-slate-200 rounded-xl bg-slate-50 flex items-center justify-between">
+          <div className="p-4 border border-slate-200 rounded-none bg-slate-50 flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
+              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-none">
                 {selectedFileType === 'pdf' ? <FileText size={20} /> : <Image size={20} />}
               </div>
               <div className="min-w-0">
@@ -186,7 +186,7 @@ export const SPJUploadModal = ({ onSuccess, onCancel }: SPJUploadModalProps) => 
             <button
               type="button"
               onClick={() => { setFile(null); setPreview(null); }}
-              className="p-1 bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-100 transition-colors"
+              className="p-1 bg-rose-50 text-rose-500 rounded-none hover:bg-rose-100 transition-colors cursor-pointer"
             >
               <X size={16} />
             </button>
@@ -194,7 +194,7 @@ export const SPJUploadModal = ({ onSuccess, onCancel }: SPJUploadModalProps) => 
         )}
 
         {preview && (
-          <div className="mt-3 relative rounded-xl overflow-hidden border border-slate-200 h-40 bg-slate-100">
+          <div className="mt-3 relative rounded-none overflow-hidden border border-slate-200 h-40 bg-slate-100">
             <img src={preview} alt="Preview" className="w-full h-full object-contain" />
           </div>
         )}
@@ -203,13 +203,13 @@ export const SPJUploadModal = ({ onSuccess, onCancel }: SPJUploadModalProps) => 
       </div>
 
       <div className="pt-4 flex gap-3 border-t border-slate-100">
-        <Button type="button" variant="outline" onClick={onCancel} className="flex-1 py-3">
+        <Button type="button" variant="outline" onClick={onCancel} className="flex-1 py-3 rounded-none">
           Batal
         </Button>
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 py-3 font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 flex justify-center items-center gap-2"
+          className="flex-1 py-3 font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-none flex justify-center items-center gap-2 rounded-none"
         >
           {isSubmitting ? 'Mengunggah...' : <><CheckCircle2 size={18} /> Simpan & Upload</>}
         </Button>

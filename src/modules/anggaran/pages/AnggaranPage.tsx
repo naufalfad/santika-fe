@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Target, ShieldAlert, Plus, Calculator } from 'lucide-react';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
+import { Modal } from '../../../shared/components/ui/Modal';
 import { MOCK_ANGGARAN, MOCK_DANA_KHUSUS } from '../../../shared/mock/anggaranData';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
@@ -9,38 +10,65 @@ import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
 /**
  * Clean & Typesafe Anggaran and Dana Khusus dashboard page.
  * Implements high contrast typography and flat visual hierarchy.
+ * Fully interactive with simulated form submissions and sharp-edge visual styling.
  */
 const AnggaranPage = () => {
-    // Memoize static lists and computational aggregates for rendering safety
+    const [anggaranList, setAnggaranList] = useState(MOCK_ANGGARAN);
+    const [danaKhususList] = useState(MOCK_DANA_KHUSUS);
+    const [isAddAnggaranOpen, setIsAddAnggaranOpen] = useState(false);
+
+    // Memoize lists and computational aggregates for rendering safety
     const processedDanaKhusus = useMemo(() => {
-        return MOCK_DANA_KHUSUS.map((dana) => {
+        return danaKhususList.map((dana) => {
             const progressKoleksi = dana.target > 0 ? (dana.terkumpul / dana.target) * 100 : 0;
             return {
                 ...dana,
                 progressKoleksi,
             };
         });
-    }, []);
+    }, [danaKhususList]);
 
     const processedAnggaran = useMemo(() => {
-        return MOCK_ANGGARAN.map((item) => {
+        return anggaranList.map((item) => {
             const percentUsed = item.plafon > 0 ? (item.terpakai / item.plafon) * 100 : 0;
             return {
                 ...item,
                 percentUsed,
             };
         });
-    }, []);
+    }, [anggaranList]);
+
+    const handleAddAnggaranSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        const namaPos = formData.get('namaPos') as string;
+        const plafon = Number(formData.get('plafon'));
+        const kategori = formData.get('kategori') as 'Operasional' | 'Liturgi' | 'Pastoral' | 'Lainnya';
+
+        if (!namaPos || !plafon || !kategori) return;
+
+        const newPos = {
+            id: `A24-${String(anggaranList.length + 1).padStart(2, '0')}`,
+            namaPos,
+            plafon,
+            terpakai: 0,
+            sisa: plafon,
+            kategori,
+        };
+
+        setAnggaranList([newPos, ...anggaranList]);
+        setIsAddAnggaranOpen(false);
+    };
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
+        <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
             {/* Header section */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Anggaran & Dana Khusus</h2>
                     <p className="text-sm text-gray-500">Monitoring realisasi rencana anggaran tahunan paroki.</p>
                 </div>
-                <Button className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 shadow-sm">
+                <Button onClick={() => setIsAddAnggaranOpen(true)} className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 shadow-none rounded-none">
                     <Plus size={16} /> Buat Pos Anggaran
                 </Button>
             </div>
@@ -52,10 +80,10 @@ const AnggaranPage = () => {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {processedDanaKhusus.map((dana) => (
-                        <Card key={dana.id} className="p-4 border-slate-200 shadow-sm flex flex-col justify-between">
+                        <Card key={dana.id} className="p-4 border-slate-200 shadow-none rounded-none flex flex-col justify-between">
                             <div className="flex justify-between items-start mb-3">
                                 <h4 className="font-bold text-slate-800 text-sm tracking-tight">{dana.namaDana}</h4>
-                                <span className="text-[9px] font-black bg-blue-50 text-blue-600 border border-blue-100/50 px-2 py-0.5 rounded uppercase">
+                                <span className="text-[9px] font-black bg-blue-50 text-blue-600 border border-blue-100/50 px-2 py-0.5 rounded-none uppercase">
                                     {dana.status}
                                 </span>
                             </div>
@@ -66,9 +94,9 @@ const AnggaranPage = () => {
                                         <span>Koleksi Dana</span>
                                         <span>{Math.round(dana.progressKoleksi)}%</span>
                                     </div>
-                                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                    <div className="w-full bg-slate-100 h-1.5 rounded-none overflow-hidden">
                                         <div
-                                            className="bg-blue-600 h-full rounded-full transition-all duration-500"
+                                            className="bg-blue-600 h-full rounded-none transition-all duration-500"
                                             style={{ width: `${Math.min(dana.progressKoleksi, 100)}%` }}
                                         ></div>
                                     </div>
@@ -110,7 +138,7 @@ const AnggaranPage = () => {
                         renderDesktopRow={(item) => (
                             <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                                 <td className="px-5 py-2.5 border-r border-slate-100">
-                                    <span className="text-[9px] font-black px-2 py-0.5 bg-slate-100 text-slate-600 rounded uppercase border border-slate-200/55 tracking-tight">
+                                    <span className="text-[9px] font-black px-2 py-0.5 bg-slate-100 text-slate-600 rounded-none uppercase border border-slate-200/55 tracking-tight">
                                         {item.kategori}
                                     </span>
                                 </td>
@@ -119,9 +147,9 @@ const AnggaranPage = () => {
                                 <td className="px-5 py-2.5 text-xs text-right font-black text-rose-600 border-r border-slate-100">{formatIDR(item.terpakai)}</td>
                                 <td className="px-5 py-2.5 border-r border-slate-100">
                                     <div className="flex items-center gap-2 justify-center">
-                                        <div className="flex-1 bg-slate-100 h-1.5 rounded-full w-24 overflow-hidden">
+                                        <div className="flex-1 bg-slate-100 h-1.5 rounded-none w-24 overflow-hidden">
                                             <div
-                                                className={`h-full rounded-full ${item.percentUsed > 80 ? 'bg-rose-500' : 'bg-emerald-500'}`}
+                                                className={`h-full rounded-none ${item.percentUsed > 80 ? 'bg-rose-500' : 'bg-emerald-500'}`}
                                                 style={{ width: `${item.percentUsed}%` }}
                                             ></div>
                                         </div>
@@ -134,15 +162,15 @@ const AnggaranPage = () => {
                         renderMobileCard={(item) => (
                             <div className="flex flex-col gap-2.5">
                                 <div className="flex justify-between items-center">
-                                    <span className="text-[9px] font-black px-2 py-0.5 bg-slate-100 text-slate-600 rounded uppercase border border-slate-200/55 tracking-tight">
+                                    <span className="text-[9px] font-black px-2 py-0.5 bg-slate-100 text-slate-600 rounded-none uppercase border border-slate-200/55 tracking-tight">
                                         {item.kategori}
                                     </span>
                                     <span className="text-[10px] font-bold text-slate-500">{Math.round(item.percentUsed)}% Terpakai</span>
                                 </div>
                                 <div className="text-xs font-bold text-slate-800">{item.namaPos}</div>
-                                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                <div className="w-full bg-slate-100 h-1.5 rounded-none overflow-hidden">
                                     <div
-                                        className={`h-full rounded-full ${item.percentUsed > 80 ? 'bg-rose-500' : 'bg-emerald-500'}`}
+                                        className={`h-full rounded-none ${item.percentUsed > 80 ? 'bg-rose-500' : 'bg-emerald-500'}`}
                                         style={{ width: `${item.percentUsed}%` }}
                                     ></div>
                                 </div>
@@ -164,7 +192,7 @@ const AnggaranPage = () => {
                         )}
                     />
 
-                    <div className="p-3.5 bg-amber-50/60 border border-amber-200/50 rounded-xl flex items-center gap-2.5 text-amber-900 shadow-sm">
+                    <div className="p-3.5 bg-amber-50/60 border border-amber-200/50 rounded-none flex items-center gap-2.5 text-amber-900 shadow-none">
                         <ShieldAlert size={16} className="text-amber-700 shrink-0" />
                         <p className="text-[11px] font-semibold leading-normal">
                             Sistem akan memberikan peringatan otomatis jika pengajuan dana melebihi sisa anggaran di setiap Pos.
@@ -172,6 +200,59 @@ const AnggaranPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Modal Form Pos Anggaran Baru */}
+            <Modal
+                isOpen={isAddAnggaranOpen}
+                onClose={() => setIsAddAnggaranOpen(false)}
+                title="Buat Pos Anggaran Baru"
+            >
+                <form onSubmit={handleAddAnggaranSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-[11px] font-black text-slate-500 uppercase mb-1">NAMA POS ANGGARAN</label>
+                        <input
+                            type="text"
+                            name="namaPos"
+                            required
+                            placeholder="Contoh: Operasional Rumah Tangga Pastor"
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500"
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-[11px] font-black text-slate-500 uppercase mb-1">PLAFON (IDR)</label>
+                            <input
+                                type="number"
+                                name="plafon"
+                                required
+                                placeholder="0"
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-black text-slate-500 uppercase mb-1">KATEGORI</label>
+                            <select
+                                name="kategori"
+                                required
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 cursor-pointer"
+                            >
+                                <option value="Operasional">Operasional</option>
+                                <option value="Liturgi">Liturgi</option>
+                                <option value="Pastoral">Pastoral</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                        <Button type="button" variant="outline" size="sm" onClick={() => setIsAddAnggaranOpen(false)} className="rounded-none">
+                            Batal
+                        </Button>
+                        <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-none shadow-none text-xs py-2 px-4">
+                            Simpan Pos Anggaran
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 };

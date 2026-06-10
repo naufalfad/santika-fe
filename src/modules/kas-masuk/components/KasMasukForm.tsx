@@ -33,7 +33,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                     <input
                         type="date"
                         {...register('tanggal')}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-none text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                     />
                     {errors.tanggal && <p className="text-[10px] text-rose-500 font-bold">{errors.tanggal.message}</p>}
                 </div>
@@ -45,7 +45,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                     </label>
                     <select
                         {...register('kategori')}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-none text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none"
                     >
                         <option value="">Pilih Kategori</option>
                         <option value="Kolekte">Kolekte</option>
@@ -67,7 +67,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                     type="text"
                     placeholder="Misal: Kolekte Misa Minggu Pagi"
                     {...register('sumber')}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-none text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                 />
                 {errors.sumber && <p className="text-[10px] text-rose-500 font-bold">{errors.sumber.message}</p>}
             </div>
@@ -83,7 +83,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                         type="number"
                         placeholder="0"
                         {...register('jumlah', { valueAsNumber: true })}
-                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-lg font-black text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-none text-lg font-black text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                     />
                 </div>
                 {errors.jumlah && <p className="text-[10px] text-rose-500 font-bold">{errors.jumlah.message}</p>}
@@ -95,14 +95,14 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                     type="button"
                     variant="outline"
                     onClick={onCancel}
-                    className="flex-1 py-3 rounded-xl font-bold text-slate-500"
+                    className="flex-1 py-3 rounded-none font-bold text-slate-500"
                 >
                     Batal
                 </Button>
                 <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-100 flex justify-center items-center gap-2"
+                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-none font-bold shadow-none flex justify-center items-center gap-2"
                 >
                     {isSubmitting ? 'Menyimpan...' : <><CheckCircle2 size={18} /> Simpan Data</>}
                 </Button>

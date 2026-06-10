@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Wallet, Gift, Users, Briefcase, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useApprovalStore } from '../../../app/store/useApprovalStore';
 import { cn } from '../../../shared/utils/cn';
 import { formatIDR } from '../../../shared/utils/formatter';
@@ -7,9 +8,11 @@ import { formatIDR } from '../../../shared/utils/formatter';
 /**
  * Unified and seamless list for pending expense approvals.
  * Standardized spacing without bulky bounding boxes.
+ * Sharp-corner styling and dynamic navigation to approvals.
  */
 export const PendingApprovals = () => {
     const approvalRequests = useApprovalStore((state) => state.approvalRequests);
+    const navigate = useNavigate();
 
     // Memoize computation to extract only pending approvals
     const pendingRequests = useMemo(() => {
@@ -38,7 +41,7 @@ export const PendingApprovals = () => {
                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">
                     Menunggu Persetujuan
                 </h3>
-                <span className="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 text-[9px] font-black rounded-full">
+                <span className="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 text-[9px] font-black rounded-none">
                     {pendingRequests.length} Antrean
                 </span>
             </div>
@@ -48,8 +51,9 @@ export const PendingApprovals = () => {
                     <div
                         key={req.id}
                         className="flex items-center gap-3 py-2.5 transition-colors group cursor-pointer hover:bg-slate-50/40"
+                        onClick={() => navigate('/approval')}
                     >
-                        <div className={cn("p-1.5 rounded-lg shrink-0", getColorClass(req.komisi))}>
+                        <div className={cn("p-1.5 rounded-none shrink-0", getColorClass(req.komisi))}>
                             {getIcon(req.komisi)}
                         </div>
 
@@ -75,7 +79,10 @@ export const PendingApprovals = () => {
                 )}
             </div>
 
-            <button className="w-full pt-3.5 pb-1 text-[10px] font-black text-blue-600 flex items-center justify-between border-t border-slate-100 hover:text-blue-700 transition-colors">
+            <button 
+                onClick={() => navigate('/approval')}
+                className="w-full pt-3.5 pb-1 text-[10px] font-black text-blue-600 flex items-center justify-between border-t border-slate-100 hover:text-blue-700 transition-colors cursor-pointer rounded-none"
+            >
                 LIHAT SEMUA PENGAJUAN <ChevronRight size={12} />
             </button>
         </div>

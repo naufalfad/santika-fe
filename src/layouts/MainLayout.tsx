@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { cn } from '../shared/utils/cn';
@@ -50,6 +50,9 @@ import { cn } from '../shared/utils/cn';
  * z-50 → Sidebar drawer mobile (di atas segalanya)
  */
 const MainLayout = () => {
+  // Application Router State untuk trigger page-transitions
+  const location = useLocation();
+
   // MainLayout sebagai single source of truth untuk state layout
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
 
@@ -62,7 +65,8 @@ const MainLayout = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    // bg-transparent di sini krusial: Membiarkan pola radial-dot CSS di body tembus ke permukaan!
+    <div className="min-h-screen bg-transparent text-slate-900">
 
       {/* ── SIDEBAR ──
           Menerima isOpen + onClose sebagai props.
@@ -94,7 +98,12 @@ const MainLayout = () => {
           isSidebarOpen ? 'md:pl-64' : 'md:pl-0',
         )}
       >
-        <div className="p-4 md:p-6 lg:p-8">
+        {/* 
+          KEY INJECTION: React akan membuang div lama dan memasang div baru 
+          (remount) setiap kali location.pathname berubah. Hal ini akan memicu ulang 
+          animasi `animate-fade-slide` secara sempurna tanpa bentrok.
+        */}
+        <div key={location.pathname} className="p-4 md:p-6 lg:p-8 animate-fade-slide">
           <Outlet />
         </div>
       </main>

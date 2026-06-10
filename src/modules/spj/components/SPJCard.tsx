@@ -22,7 +22,7 @@ export const SPJCard: React.FC<SPJCardProps> = ({ doc, onPreview }) => {
   };
 
   return (
-    <Card className="group hover:shadow-md hover:border-slate-300 transition-all duration-300 border-slate-200 overflow-hidden bg-white flex flex-col justify-between">
+    <Card className="group hover:shadow-none hover:border-slate-300 hover:bg-slate-50/40 transition-colors duration-200 border-slate-200 overflow-hidden bg-white flex flex-col justify-between">
       {/* Thumbnail/Icon Area - Flat Separator */}
       <div className="relative h-28 bg-slate-50 flex items-center justify-center border-b border-slate-100 overflow-hidden">
         {doc.thumbnail ? (
@@ -41,7 +41,7 @@ export const SPJCard: React.FC<SPJCardProps> = ({ doc, onPreview }) => {
         <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
           <button
             onClick={() => onPreview(doc)}
-            className="bg-white text-slate-900 p-2 rounded-full shadow-md transform translate-y-1 group-hover:translate-y-0 transition-transform duration-300"
+            className="bg-white text-slate-900 p-2 rounded-none shadow-none transform translate-y-1 group-hover:translate-y-0 transition-transform duration-300 cursor-pointer"
           >
             <Eye size={16} />
           </button>

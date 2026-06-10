@@ -18,35 +18,35 @@ export const LaporanRealisasi: React.FC<LaporanRealisasiProps> = ({ realisations
     const totalPersen = totalAnggaran > 0 ? (totalRealisasi / totalAnggaran) * 100 : 0;
 
     return (
-        <div className="overflow-x-auto shadow-sm rounded-xl border border-gray-200">
+        <div className="overflow-x-auto border border-slate-200 rounded-none shadow-none">
             <table className="w-full text-left border-collapse">
                 <thead>
-                    <tr className="bg-slate-100 text-slate-800 text-[11px] font-black uppercase border-b border-gray-200">
-                        <th className="p-3 border-r border-gray-200">Pos Anggaran</th>
-                        <th className="p-3 text-right border-r border-gray-200 w-48">Plafon Anggaran</th>
-                        <th className="p-3 text-right border-r border-gray-200 w-48">Realisasi Pengeluaran</th>
-                        <th className="p-3 text-center border-r border-gray-200 w-32">Serapan (%)</th>
+                    <tr className="bg-slate-100 text-slate-800 text-[11px] font-black uppercase border-b border-slate-200">
+                        <th className="p-3 border-r border-slate-200">Pos Anggaran</th>
+                        <th className="p-3 text-right border-r border-slate-200 w-48">Plafon Anggaran</th>
+                        <th className="p-3 text-right border-r border-slate-200 w-48">Realisasi Pengeluaran</th>
+                        <th className="p-3 text-center border-r border-slate-200 w-32">Serapan (%)</th>
                         <th className="p-3 text-right w-48">Sisa Pagu</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
+                <tbody className="divide-y divide-slate-100 bg-white">
                     {realisations.length > 0 ? (
                         realisations.map((item) => (
                             <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="p-3 font-semibold text-slate-700 border-r border-gray-200">
+                                <td className="p-3 font-semibold text-slate-700 border-r border-slate-100">
                                     {item.nama}
                                 </td>
-                                <td className="p-3 text-right text-slate-600 font-medium border-r border-gray-200">
+                                <td className="p-3 text-right text-slate-600 font-medium border-r border-slate-100">
                                     {formatIDR(item.anggaran)}
                                 </td>
-                                <td className="p-3 text-right text-rose-600 font-black border-r border-gray-200">
+                                <td className="p-3 text-right text-rose-600 font-black border-r border-slate-100">
                                     {formatIDR(item.realisasi)}
                                 </td>
-                                <td className="p-3 border-r border-gray-200 text-center">
+                                <td className="p-3 border-r border-slate-100 text-center">
                                     <span
-                                        className={`inline-block px-2.5 py-1 rounded text-xs font-black tracking-tight ${item.persen > 80
-                                            ? 'bg-rose-50 text-rose-700 border border-rose-100'
-                                            : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                        className={`inline-block px-2.5 py-1 rounded-none text-xs font-black tracking-tight ${item.persen > 80
+                                            ? 'bg-rose-50/50 text-rose-700 border border-rose-100'
+                                            : 'bg-emerald-50/50 text-emerald-700 border border-emerald-100'
                                             }`}
                                     >
                                         {Math.round(item.persen)}%
@@ -66,20 +66,20 @@ export const LaporanRealisasi: React.FC<LaporanRealisasiProps> = ({ realisations
                     )}
                 </tbody>
                 <tfoot>
-                    <tr className="bg-slate-900 text-white font-bold text-sm">
-                        <td className="p-4 uppercase border-r border-slate-700 text-xs tracking-wider">
+                    <tr className="bg-slate-50 text-slate-800 font-bold text-sm border-t border-slate-200">
+                        <td className="p-4 uppercase border-r border-slate-200 text-xs tracking-wider">
                             Total Pagu Anggaran Paroki
                         </td>
-                        <td className="p-4 text-right border-r border-slate-700 font-black">
+                        <td className="p-4 text-right border-r border-slate-200 text-slate-800 font-black">
                             {formatIDR(totalAnggaran)}
                         </td>
-                        <td className="p-4 text-right border-r border-slate-700 text-rose-300 font-black">
+                        <td className="p-4 text-right border-r border-slate-200 text-rose-600 font-black">
                             {formatIDR(totalRealisasi)}
                         </td>
-                        <td className="p-4 text-center border-r border-slate-700 font-black text-amber-400 text-xs">
+                        <td className="p-4 text-center border-r border-slate-200 font-black text-slate-800 text-xs">
                             {Math.round(totalPersen)}%
                         </td>
-                        <td className="p-4 text-right bg-slate-800 text-emerald-400 font-black underline decoration-double underline-offset-4">
+                        <td className="p-4 text-right bg-slate-100/80 text-emerald-600 font-black underline decoration-double underline-offset-4">
                             {formatIDR(totalSisa)}
                         </td>
                     </tr>

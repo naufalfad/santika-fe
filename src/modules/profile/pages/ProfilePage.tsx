@@ -3,17 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  Camera,
-  KeyRound,
-  User,
-  Mail,
-  Shield,
-  Building2,
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-  Eye,
-  EyeOff,
+  Camera, KeyRound, User, Mail, Shield, Building2,
+  CheckCircle, AlertCircle, Loader2, Eye, EyeOff,
 } from 'lucide-react';
 import { useProfileQuery, useUpdateAvatarMutation, useUpdatePasswordMutation } from '../hooks/useProfileQuery';
 import { useAuthStore } from '../../../app/store/useAuthStore';
@@ -23,11 +14,6 @@ import { Badge } from '../../../shared/components/ui/Badge';
 import { cn } from '../../../shared/utils/cn';
 import { getAvatarUrl } from '../../../shared/utils/formatter';
 
-// ──────────────────────────────────────────────────────────────────────────────
-// ZOD SCHEMA — Validasi form ubah kata sandi (frontend layer)
-// Validasi ini melengkapi validasi backend, fokus pada UX real-time.
-// confirmNewPassword adalah field UI-only yang tidak dikirim ke backend.
-// ──────────────────────────────────────────────────────────────────────────────
 const changePasswordSchema = z
   .object({
     oldPassword: z.string().min(6, 'Kata sandi lama minimal 6 karakter'),
@@ -45,55 +31,30 @@ const changePasswordSchema = z
 
 type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
 
-// ──────────────────────────────────────────────────────────────────────────────
-// HELPER — Format label Role untuk tampilan UI
-// ──────────────────────────────────────────────────────────────────────────────
-const formatRole = (role: string): string =>
-  role.replace(/_/g, ' ');
+const formatRole = (role: string): string => role.replace(/_/g, ' ');
 
-// ──────────────────────────────────────────────────────────────────────────────
-// HELPER — Tentukan variant Badge berdasarkan role
-// ──────────────────────────────────────────────────────────────────────────────
 const getRoleBadgeVariant = (role: string): 'default' | 'success' | 'warning' | 'info' | 'danger' | 'neutral' => {
   switch (role) {
-    case 'SUPER_ADMIN':   return 'danger';
-    case 'PASTOR':        return 'info';
-    case 'BENDAHARA':     return 'success';
-    case 'DEWAN_KEUANGAN':return 'warning';
-    default:              return 'neutral';
+    case 'SUPER_ADMIN': return 'danger';
+    case 'PASTOR': return 'info';
+    case 'BENDAHARA': return 'success';
+    case 'DEWAN_KEUANGAN': return 'warning';
+    default: return 'neutral';
   }
 };
 
 /**
  * ProfilePage — Halaman Pengaturan Profil Mandiri.
  *
- * GRASP: Controller (UI)
- * ProfilePage mengorkestrasikan:
- * 1. Query data profil real dari server via useProfileQuery.
- * 2. State lokal untuk preview avatar sebelum upload.
- * 3. Mutation upload avatar via useUpdateAvatarMutation.
- * 4. Form ubah kata sandi via react-hook-form + Zod.
- * 5. Mutation update password via useUpdatePasswordMutation.
- *
- * KEBIJAKAN DATA INTEGRITY (READ-ONLY ENFORCEMENT DI UI):
- * Field yang TIDAK memiliki input form: Nama, Email, Role, Paroki.
- * Ditampilkan sebagai teks statis yang menyatu seamlessly dengan layout.
- *
- * DESIGN SYSTEM GUARD (MUTLAK):
- * - rounded-none: SEMUA elemen UI tanpa pengecualian.
- * - NO BOX INSIDE A BOX: Tidak ada card bertumpuk di dalam card.
- *   Pemisah seksi menggunakan border-b border-slate-100 (satu sisi saja).
- * - TYPOGRAPHY: Roboto, hierarki Apple-style, proporsional.
- * - LIGHTWEIGHT: Zero glassmorphism, zero shadow berwarna.
+ * Implements strict data read-only enforcement for audit trail protection.
+ * Visualized with high-density, sharp-cornered seamless boundaries.
  */
 const ProfilePage = () => {
-  // ── Server State ──
   const { data: profile, isLoading: isProfileLoading } = useProfileQuery();
   const updateAvatarMutation = useUpdateAvatarMutation();
   const updatePasswordMutation = useUpdatePasswordMutation();
 
-  // ── Local State ──
-  const { user: mockUser } = useAuthStore(); // Fallback untuk mock mode
+  const { user: mockUser } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [showOldPassword, setShowOldPassword] = useState(false);
@@ -101,7 +62,6 @@ const ProfilePage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordSuccessMsg, setPasswordSuccessMsg] = useState<string | null>(null);
 
-  // ── Form State ──
   const {
     register,
     handleSubmit,
@@ -109,32 +69,21 @@ const ProfilePage = () => {
     formState: { errors, isSubmitting },
   } = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
-    defaultValues: {
-      oldPassword: '',
-      newPassword: '',
-      confirmNewPassword: '',
-    },
+    defaultValues: { oldPassword: '', newPassword: '', confirmNewPassword: '' },
   });
 
-  // ── Computed: gunakan data profil real jika ada, fallback ke mock store ──
-  const displayName    = profile?.name    ?? mockUser?.name    ?? 'Pengguna';
-  const displayEmail   = profile?.email   ?? mockUser?.email   ?? '-';
-  const displayRole    = profile?.role    ?? mockUser?.role    ?? '-';
-  const displayParoki  = profile?.paroki?.nama ?? 'Paroki St. Stefanus – Sempan';
-  const displayAvatar  = avatarPreview ?? profile?.avatarUrl ?? null;
+  const displayName = profile?.name ?? mockUser?.name ?? 'Pengguna';
+  const displayEmail = profile?.email ?? mockUser?.email ?? '-';
+  const displayRole = profile?.role ?? mockUser?.role ?? '-';
+  const displayParoki = profile?.paroki?.nama ?? 'Paroki St. Stefanus – Sempan';
+  const displayAvatar = avatarPreview ?? profile?.avatarUrl ?? null;
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Handler: Pilih file avatar
-  // ──────────────────────────────────────────────────────────────────────────
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
+  const handleAvatarClick = () => fileInputRef.current?.click();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validasi client-side: hanya gambar, maksimal 5MB
     if (!file.type.startsWith('image/')) {
       alert('Hanya file gambar (JPG, PNG) yang diizinkan');
       return;
@@ -144,25 +93,14 @@ const ProfilePage = () => {
       return;
     }
 
-    // Preview lokal sebelum upload ke server
     const objectUrl = URL.createObjectURL(file);
     setAvatarPreview(objectUrl);
-
-    // Upload ke server
     await updateAvatarMutation.mutateAsync(file);
-
-    // Bersihkan object URL untuk mencegah memory leak
     URL.revokeObjectURL(objectUrl);
 
-    // Reset file input agar file yang sama bisa dipilih ulang
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Handler: Submit form ubah kata sandi
-  // ──────────────────────────────────────────────────────────────────────────
   const onPasswordSubmit = async (values: ChangePasswordFormValues) => {
     setPasswordSuccessMsg(null);
     try {
@@ -172,31 +110,29 @@ const ProfilePage = () => {
       });
       reset();
       setPasswordSuccessMsg('Kata sandi berhasil diperbarui.');
-      // Auto-clear success message setelah 5 detik
       setTimeout(() => setPasswordSuccessMsg(null), 5000);
     } catch (err: any) {
-      // Error dari backend akan ditampilkan via mutation.error di bawah
+      // Backend error is handled by mutation state
     }
   };
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Loading skeleton saat data profil sedang di-fetch
-  // ──────────────────────────────────────────────────────────────────────────
   if (isProfileLoading) {
     return (
-      <div className="max-w-4xl mx-auto pb-10 animate-pulse">
-        <div className="h-8 bg-slate-100 w-64 mb-2" />
-        <div className="h-4 bg-slate-100 w-48 mb-8" />
+      <div className="max-w-4xl mx-auto pb-10 animate-fade-slide">
+        <div className="animate-pulse">
+          <div className="h-8 bg-slate-200/60 w-64 mb-2 rounded-none" />
+          <div className="h-4 bg-slate-200/60 w-48 mb-8 rounded-none" />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-slate-200 bg-white">
-          <div className="p-8 border-b md:border-b-0 md:border-r border-slate-100">
-            <div className="w-32 h-32 bg-slate-100 mx-auto mb-4" />
-            <div className="h-4 bg-slate-100 w-3/4 mx-auto mb-2" />
-            <div className="h-3 bg-slate-100 w-1/2 mx-auto" />
+          <div className="p-8 border-b md:border-b-0 md:border-r border-slate-100 animate-pulse">
+            <div className="w-32 h-32 bg-slate-200/60 mx-auto mb-4 rounded-none" />
+            <div className="h-4 bg-slate-200/60 w-3/4 mx-auto mb-2 rounded-none" />
+            <div className="h-3 bg-slate-200/60 w-1/2 mx-auto rounded-none" />
           </div>
-          <div className="md:col-span-2 p-8">
+          <div className="md:col-span-2 p-8 animate-pulse">
             <div className="space-y-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-10 bg-slate-100" />
+                <div key={i} className="h-10 bg-slate-200/60 rounded-none" />
               ))}
             </div>
           </div>
@@ -205,41 +141,28 @@ const ProfilePage = () => {
     );
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // RENDER UTAMA
-  // ──────────────────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-4xl mx-auto pb-10 space-y-0">
-
+    <div className="max-w-4xl mx-auto pb-10 space-y-0 animate-fade-slide">
       {/* ── PAGE HEADER ── */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
           Pengaturan Profil
         </h2>
-        <p className="text-sm text-slate-400 font-medium mt-1">
+        <p className="text-sm text-slate-500 font-medium mt-0.5">
           Kelola informasi akun dan kata sandi Anda.
         </p>
       </div>
 
-      {/* ── PANEL UTAMA: Dua kolom (Avatar | Info) ──────────────────────────
-          DESIGN SYSTEM GUARD:
-          - rounded-none: container panel
-          - NO BOX INSIDE A BOX: border-r satu sisi sebagai pemisah kolom,
-            bukan dua card terpisah yang berdiri sendiri.
-      ─────────────────────────────────────────────────────────────────────── */}
-      <div className="border border-slate-200 bg-white rounded-none overflow-hidden">
+      <div className="border border-slate-200 bg-white rounded-none shadow-sm overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-3">
 
           {/* ── KOLOM KIRI: Avatar + Identitas Read-Only ── */}
           <div className="p-6 md:p-8 flex flex-col items-center border-b md:border-b-0 md:border-r border-slate-100">
-
-            {/* AVATAR CONTAINER
-                DESIGN SYSTEM GUARD: rounded-none — kotak tegas, bukan bulat */}
             <div className="relative group mb-5">
               <div
                 className={cn(
-                  'w-32 h-32 bg-slate-100 overflow-hidden rounded-none',
-                  'border-2 border-slate-200',
+                  'w-32 h-32 bg-slate-50 overflow-hidden rounded-none',
+                  'border border-slate-200 shadow-sm',
                   'flex items-center justify-center',
                 )}
               >
@@ -250,14 +173,12 @@ const ProfilePage = () => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  // Placeholder inisial nama jika belum ada avatar
                   <span className="text-4xl font-black text-slate-400 select-none">
                     {displayName.charAt(0).toUpperCase()}
                   </span>
                 )}
               </div>
 
-              {/* Overlay kamera saat hover — micro-interaction */}
               <button
                 onClick={handleAvatarClick}
                 disabled={updateAvatarMutation.isPending}
@@ -283,7 +204,6 @@ const ProfilePage = () => {
               </button>
             </div>
 
-            {/* Input file tersembunyi — dipicu via ref */}
             <input
               ref={fileInputRef}
               type="file"
@@ -293,37 +213,28 @@ const ProfilePage = () => {
               aria-label="Upload foto profil"
             />
 
-            {/* Tombol upload — alternatif jika overlay kurang jelas di mobile */}
             <Button
-              variant="secondary"
+              variant="outline"
               size="sm"
               onClick={handleAvatarClick}
               isLoading={updateAvatarMutation.isPending}
               leftIcon={<Camera size={12} />}
-              className="mb-5 w-full"
+              className="mb-5 w-full rounded-none"
             >
-              Unggah Foto
+              Unggah Foto Baru
             </Button>
 
-            {/* Error upload avatar */}
             {updateAvatarMutation.isError && (
-              <div className="flex items-center gap-1.5 mb-4 w-full">
+              <div className="flex items-center gap-1.5 mb-4 w-full bg-rose-50 p-2 border border-rose-100 rounded-none">
                 <AlertCircle size={12} className="text-rose-500 shrink-0" />
-                <p className="text-[10px] text-rose-500 font-medium">
+                <p className="text-[9px] text-rose-600 font-bold uppercase tracking-wider leading-tight">
                   {(updateAvatarMutation.error as any)?.response?.data?.message
-                    ?? 'Gagal mengunggah foto. Coba lagi.'}
+                    ?? 'Gagal mengunggah foto.'}
                 </p>
               </div>
             )}
 
-            {/* ── INFORMASI IDENTITAS: READ-ONLY ──
-                DESIGN SYSTEM GUARD:
-                - NO BOX INSIDE A BOX: tidak ada card di dalam kolom ini.
-                - border-b satu sisi untuk pemisah item.
-                - Data ditampilkan sebagai teks statis yang menyatu dengan layout. */}
             <div className="w-full space-y-0 border-t border-slate-100 pt-5">
-
-              {/* Nama */}
               <div className="py-3 border-b border-slate-100">
                 <div className="flex items-center gap-2 mb-1">
                   <User size={11} className="text-slate-400" />
@@ -331,12 +242,11 @@ const ProfilePage = () => {
                     Nama Lengkap
                   </span>
                 </div>
-                <p className="text-sm font-semibold text-slate-800 pl-[19px]">
+                <p className="text-xs font-bold text-slate-800 pl-[19px] tracking-tight">
                   {displayName}
                 </p>
               </div>
 
-              {/* Email */}
               <div className="py-3 border-b border-slate-100">
                 <div className="flex items-center gap-2 mb-1">
                   <Mail size={11} className="text-slate-400" />
@@ -344,27 +254,25 @@ const ProfilePage = () => {
                     Surat Elektronik
                   </span>
                 </div>
-                <p className="text-sm font-medium text-slate-600 pl-[19px] break-all">
+                <p className="text-xs font-semibold text-slate-600 pl-[19px] break-all">
                   {displayEmail}
                 </p>
               </div>
 
-              {/* Role dengan Badge */}
               <div className="py-3 border-b border-slate-100">
                 <div className="flex items-center gap-2 mb-2">
                   <Shield size={11} className="text-slate-400" />
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                    Peran
+                    Peran Otorisasi
                   </span>
                 </div>
                 <div className="pl-[19px]">
-                  <Badge variant={getRoleBadgeVariant(displayRole)}>
+                  <Badge variant={getRoleBadgeVariant(displayRole)} className="rounded-none">
                     {formatRole(displayRole)}
                   </Badge>
                 </div>
               </div>
 
-              {/* Paroki */}
               <div className="py-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Building2 size={11} className="text-slate-400" />
@@ -372,24 +280,21 @@ const ProfilePage = () => {
                     Paroki
                   </span>
                 </div>
-                <p className="text-sm font-medium text-slate-600 pl-[19px]">
+                <p className="text-xs font-semibold text-slate-600 pl-[19px]">
                   {displayParoki}
                 </p>
               </div>
             </div>
 
-            {/* Catatan kebijakan read-only */}
-            <p className="text-[9px] text-slate-300 text-center leading-relaxed mt-4 italic">
-              Nama, email, peran, dan paroki adalah data identitas sistem yang tidak dapat diubah secara mandiri.
+            <p className="text-[9px] text-slate-400 text-center leading-relaxed mt-4 font-medium border border-slate-100 bg-slate-50 p-2 rounded-none">
+              Data identitas sistem di atas terkunci secara permanen dan tidak dapat diubah secara mandiri untuk menjaga integritas Audit Trail paroki.
             </p>
           </div>
 
           {/* ── KOLOM KANAN: Form Ubah Kata Sandi ── */}
-          <div className="md:col-span-2 p-6 md:p-8">
-
-            {/* Section header */}
+          <div className="md:col-span-2 p-6 md:p-8 bg-white">
             <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-slate-100">
-              <div className="w-7 h-7 bg-slate-800 flex items-center justify-center rounded-none">
+              <div className="w-7 h-7 bg-slate-800 flex items-center justify-center rounded-none shadow-sm">
                 <KeyRound size={14} className="text-white" />
               </div>
               <div>
@@ -402,14 +307,11 @@ const ProfilePage = () => {
               </div>
             </div>
 
-            {/* ── FORM UBAH KATA SANDI ── */}
             <form
               onSubmit={handleSubmit(onPasswordSubmit)}
               noValidate
               className="space-y-4"
             >
-
-              {/* Field: Kata Sandi Lama */}
               <Input
                 id="oldPassword"
                 label="Kata Sandi Lama"
@@ -417,13 +319,13 @@ const ProfilePage = () => {
                 placeholder="Masukkan kata sandi saat ini"
                 error={errors.oldPassword?.message}
                 required
+                className="rounded-none bg-slate-50 border-slate-200 focus:border-slate-800"
                 rightElement={
                   <button
                     type="button"
                     onClick={() => setShowOldPassword((p) => !p)}
-                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                    className="text-slate-400 hover:text-slate-800 transition-colors bg-white p-1"
                     tabIndex={-1}
-                    aria-label={showOldPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
                   >
                     {showOldPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
@@ -431,10 +333,8 @@ const ProfilePage = () => {
                 {...register('oldPassword')}
               />
 
-              {/* Separator visual */}
               <div className="border-t border-slate-100 my-2" />
 
-              {/* Field: Kata Sandi Baru */}
               <Input
                 id="newPassword"
                 label="Kata Sandi Baru"
@@ -442,13 +342,13 @@ const ProfilePage = () => {
                 placeholder="Minimal 6 karakter"
                 error={errors.newPassword?.message}
                 required
+                className="rounded-none bg-slate-50 border-slate-200 focus:border-slate-800"
                 rightElement={
                   <button
                     type="button"
                     onClick={() => setShowNewPassword((p) => !p)}
-                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                    className="text-slate-400 hover:text-slate-800 transition-colors bg-white p-1"
                     tabIndex={-1}
-                    aria-label={showNewPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
                   >
                     {showNewPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
@@ -456,7 +356,6 @@ const ProfilePage = () => {
                 {...register('newPassword')}
               />
 
-              {/* Field: Konfirmasi Kata Sandi Baru */}
               <Input
                 id="confirmNewPassword"
                 label="Konfirmasi Kata Sandi Baru"
@@ -464,13 +363,13 @@ const ProfilePage = () => {
                 placeholder="Ulangi kata sandi baru"
                 error={errors.confirmNewPassword?.message}
                 required
+                className="rounded-none bg-slate-50 border-slate-200 focus:border-slate-800"
                 rightElement={
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword((p) => !p)}
-                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                    className="text-slate-400 hover:text-slate-800 transition-colors bg-white p-1"
                     tabIndex={-1}
-                    aria-label={showConfirmPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
                   >
                     {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
@@ -478,28 +377,25 @@ const ProfilePage = () => {
                 {...register('confirmNewPassword')}
               />
 
-              {/* Pesan sukses ubah kata sandi */}
               {passwordSuccessMsg && (
-                <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-2.5 rounded-none">
+                <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-4 py-3 rounded-none">
                   <CheckCircle size={14} className="text-emerald-600 shrink-0" />
-                  <p className="text-xs font-medium text-emerald-700">
+                  <p className="text-xs font-bold text-emerald-700 tracking-tight">
                     {passwordSuccessMsg}
                   </p>
                 </div>
               )}
 
-              {/* Pesan error dari server */}
               {updatePasswordMutation.isError && (
-                <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 px-3 py-2.5 rounded-none">
+                <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 px-4 py-3 rounded-none">
                   <AlertCircle size={14} className="text-rose-600 shrink-0" />
-                  <p className="text-xs font-medium text-rose-700">
+                  <p className="text-xs font-bold text-rose-700 tracking-tight">
                     {(updatePasswordMutation.error as any)?.response?.data?.message
                       ?? 'Gagal memperbarui kata sandi. Periksa kata sandi lama Anda.'}
                   </p>
                 </div>
               )}
 
-              {/* Tombol Simpan */}
               <div className="pt-2">
                 <Button
                   type="submit"
@@ -507,36 +403,29 @@ const ProfilePage = () => {
                   size="md"
                   isLoading={isSubmitting || updatePasswordMutation.isPending}
                   leftIcon={<KeyRound size={14} />}
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto rounded-none shadow-none bg-blue-600 hover:bg-blue-700"
                 >
                   Perbarui Kata Sandi
                 </Button>
               </div>
             </form>
 
-            {/* ── INFORMASI KEBIJAKAN KEAMANAN ──
-                Penjelasan singkat tentang kebijakan keamanan sandi.
-                DESIGN SYSTEM GUARD: border-t satu sisi — no box-inside-box. */}
-            <div className="mt-8 pt-6 border-t border-slate-100">
+            <div className="mt-8 pt-5 border-t border-slate-100">
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">
-                Kebijakan Keamanan Sandi
+                Kebijakan Keamanan
               </p>
-              <ul className="space-y-1 text-[10px] text-slate-400 font-medium">
-                <li className="flex items-start gap-1.5">
+              <ul className="space-y-1.5 text-[10px] text-slate-500 font-medium">
+                <li className="flex items-start gap-2">
                   <span className="text-slate-300 mt-0.5">—</span>
                   Kata sandi minimal 6 karakter.
                 </li>
-                <li className="flex items-start gap-1.5">
+                <li className="flex items-start gap-2">
                   <span className="text-slate-300 mt-0.5">—</span>
-                  Kata sandi lama harus benar sebelum dapat diganti.
+                  Kata sandi lama harus divalidasi sebelum diganti.
                 </li>
-                <li className="flex items-start gap-1.5">
+                <li className="flex items-start gap-2">
                   <span className="text-slate-300 mt-0.5">—</span>
-                  Kata sandi baru tidak boleh sama dengan kata sandi lama.
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <span className="text-slate-300 mt-0.5">—</span>
-                  Setiap perubahan kata sandi dicatat dalam Audit Trail sistem.
+                  Perubahan kata sandi akan direkam secara otomatis dalam Audit Trail sistem.
                 </li>
               </ul>
             </div>

@@ -139,33 +139,32 @@ export default axiosInstance;
 
 
 --- FILE: src\app\providers\QueryProvider.tsx ---
-import React, { useState } from 'react';
+import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Global singleton queryClient agar bisa diakses di luar React Context (seperti di Zustand store)
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000,
+    },
+  },
+});
 
 interface QueryProviderProps {
   children: React.ReactNode;
 }
 
 export const QueryProvider = ({ children }: QueryProviderProps) => {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            refetchOnWindowFocus: false,
-            retry: 1,
-            staleTime: 5 * 60 * 1000,
-          },
-        },
-      })
-  );
-
   return (
     <QueryClientProvider client={queryClient}>
       {children}
     </QueryClientProvider>
   );
 };
+
 
 
 --- FILE: src\app\router\index.tsx ---
@@ -418,6 +417,7 @@ export const useApprovalStore = create<ApprovalState>((set) => ({
 import { create } from 'zustand';
 import type { User, UserRole } from '../../shared/types/auth';
 import axiosInstance from '../api/axios.config';
+import { queryClient } from '../providers/QueryProvider';
 
 interface AuthState {
   user: User | null;
@@ -450,6 +450,7 @@ const getFallbackUser = (role: UserRole): User => {
     name: names[role] || 'Pengguna',
     role,
     email: roleEmailMap[role] || 'user@santika.org',
+    avatarUrl: null,
   };
 };
 
@@ -490,8 +491,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           name: user.name,
           role: user.role as UserRole,
           email: user.email,
+          avatarUrl: user.avatarUrl,
         },
       });
+
+      // Clear query cache instan agar cache user lama terhapus bersih dan dipaksa refetch
+      queryClient.clear();
     } catch (error) {
       console.warn('Backend sync failed (offline or database not seeded). Using frontend fallback.', error);
     }
@@ -501,6 +506,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 // Auto-run sinkronisasi awal saat file ini di-load (agar session awal valid)
 const initialRole = useAuthStore.getState().user?.role || 'BENDAHARA';
 useAuthStore.getState().syncBackend(initialRole).catch(() => {});
+
 
 
 --- FILE: src\app\store\useKasStore.ts ---
@@ -601,8 +607,26 @@ export const useSPJStore = create<SPJState>((set) => ({
 
 @layer base {
   body {
-    @apply bg-gray-50 text-slate-900 antialiased;
+    @apply text-slate-900 antialiased;
+    background-color: #f8fafc;
+    background-image: radial-gradient(#e2e8f0 1.2px, transparent 1.2px);
+    background-size: 20px 20px;
   }
+}
+
+@keyframes santika-fade-slide {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-slide {
+  animation: santika-fade-slide 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Custom Scrollbar Utility */
@@ -637,6 +661,7 @@ import { Bell, Menu, Search, User } from 'lucide-react';
 import { useAuthStore } from '../app/store/useAuthStore';
 import { cn } from '../shared/utils/cn';
 import type { UserRole } from '../shared/types/auth';
+import { getAvatarUrl } from '../shared/utils/formatter';
 
 /**
  * Header Props Contract.
@@ -818,7 +843,15 @@ export const Header = ({ isOpen, onToggle }: HeaderProps) => {
             aria-label={`Profil pengguna: ${user?.name ?? 'Pengguna'}`}
             title={user?.name ?? 'Pengguna'}
           >
-            <User size={15} />
+            {user?.avatarUrl ? (
+              <img
+                src={getAvatarUrl(user.avatarUrl) || undefined}
+                alt={`Avatar ${user.name}`}
+                className="w-full h-full object-cover rounded-none"
+              />
+            ) : (
+              <User size={15} />
+            )}
           </button>
         </div>
       </div>
@@ -1168,10 +1201,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 )
 
 --- FILE: src\modules\anggaran\pages\AnggaranPage.tsx ---
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Target, ShieldAlert, Plus, Calculator } from 'lucide-react';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
+import { Modal } from '../../../shared/components/ui/Modal';
 import { MOCK_ANGGARAN, MOCK_DANA_KHUSUS } from '../../../shared/mock/anggaranData';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
@@ -1179,38 +1213,65 @@ import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
 /**
  * Clean & Typesafe Anggaran and Dana Khusus dashboard page.
  * Implements high contrast typography and flat visual hierarchy.
+ * Fully interactive with simulated form submissions and sharp-edge visual styling.
  */
 const AnggaranPage = () => {
-    // Memoize static lists and computational aggregates for rendering safety
+    const [anggaranList, setAnggaranList] = useState(MOCK_ANGGARAN);
+    const [danaKhususList] = useState(MOCK_DANA_KHUSUS);
+    const [isAddAnggaranOpen, setIsAddAnggaranOpen] = useState(false);
+
+    // Memoize lists and computational aggregates for rendering safety
     const processedDanaKhusus = useMemo(() => {
-        return MOCK_DANA_KHUSUS.map((dana) => {
+        return danaKhususList.map((dana) => {
             const progressKoleksi = dana.target > 0 ? (dana.terkumpul / dana.target) * 100 : 0;
             return {
                 ...dana,
                 progressKoleksi,
             };
         });
-    }, []);
+    }, [danaKhususList]);
 
     const processedAnggaran = useMemo(() => {
-        return MOCK_ANGGARAN.map((item) => {
+        return anggaranList.map((item) => {
             const percentUsed = item.plafon > 0 ? (item.terpakai / item.plafon) * 100 : 0;
             return {
                 ...item,
                 percentUsed,
             };
         });
-    }, []);
+    }, [anggaranList]);
+
+    const handleAddAnggaranSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        const namaPos = formData.get('namaPos') as string;
+        const plafon = Number(formData.get('plafon'));
+        const kategori = formData.get('kategori') as 'Operasional' | 'Liturgi' | 'Pastoral' | 'Lainnya';
+
+        if (!namaPos || !plafon || !kategori) return;
+
+        const newPos = {
+            id: `A24-${String(anggaranList.length + 1).padStart(2, '0')}`,
+            namaPos,
+            plafon,
+            terpakai: 0,
+            sisa: plafon,
+            kategori,
+        };
+
+        setAnggaranList([newPos, ...anggaranList]);
+        setIsAddAnggaranOpen(false);
+    };
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
+        <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
             {/* Header section */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Anggaran & Dana Khusus</h2>
                     <p className="text-sm text-gray-500">Monitoring realisasi rencana anggaran tahunan paroki.</p>
                 </div>
-                <Button className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 shadow-sm">
+                <Button onClick={() => setIsAddAnggaranOpen(true)} className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 shadow-none rounded-none">
                     <Plus size={16} /> Buat Pos Anggaran
                 </Button>
             </div>
@@ -1222,10 +1283,10 @@ const AnggaranPage = () => {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {processedDanaKhusus.map((dana) => (
-                        <Card key={dana.id} className="p-4 border-slate-200 shadow-sm flex flex-col justify-between">
+                        <Card key={dana.id} className="p-4 border-slate-200 shadow-none rounded-none flex flex-col justify-between">
                             <div className="flex justify-between items-start mb-3">
                                 <h4 className="font-bold text-slate-800 text-sm tracking-tight">{dana.namaDana}</h4>
-                                <span className="text-[9px] font-black bg-blue-50 text-blue-600 border border-blue-100/50 px-2 py-0.5 rounded uppercase">
+                                <span className="text-[9px] font-black bg-blue-50 text-blue-600 border border-blue-100/50 px-2 py-0.5 rounded-none uppercase">
                                     {dana.status}
                                 </span>
                             </div>
@@ -1236,9 +1297,9 @@ const AnggaranPage = () => {
                                         <span>Koleksi Dana</span>
                                         <span>{Math.round(dana.progressKoleksi)}%</span>
                                     </div>
-                                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                    <div className="w-full bg-slate-100 h-1.5 rounded-none overflow-hidden">
                                         <div
-                                            className="bg-blue-600 h-full rounded-full transition-all duration-500"
+                                            className="bg-blue-600 h-full rounded-none transition-all duration-500"
                                             style={{ width: `${Math.min(dana.progressKoleksi, 100)}%` }}
                                         ></div>
                                     </div>
@@ -1280,7 +1341,7 @@ const AnggaranPage = () => {
                         renderDesktopRow={(item) => (
                             <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                                 <td className="px-5 py-2.5 border-r border-slate-100">
-                                    <span className="text-[9px] font-black px-2 py-0.5 bg-slate-100 text-slate-600 rounded uppercase border border-slate-200/55 tracking-tight">
+                                    <span className="text-[9px] font-black px-2 py-0.5 bg-slate-100 text-slate-600 rounded-none uppercase border border-slate-200/55 tracking-tight">
                                         {item.kategori}
                                     </span>
                                 </td>
@@ -1289,9 +1350,9 @@ const AnggaranPage = () => {
                                 <td className="px-5 py-2.5 text-xs text-right font-black text-rose-600 border-r border-slate-100">{formatIDR(item.terpakai)}</td>
                                 <td className="px-5 py-2.5 border-r border-slate-100">
                                     <div className="flex items-center gap-2 justify-center">
-                                        <div className="flex-1 bg-slate-100 h-1.5 rounded-full w-24 overflow-hidden">
+                                        <div className="flex-1 bg-slate-100 h-1.5 rounded-none w-24 overflow-hidden">
                                             <div
-                                                className={`h-full rounded-full ${item.percentUsed > 80 ? 'bg-rose-500' : 'bg-emerald-500'}`}
+                                                className={`h-full rounded-none ${item.percentUsed > 80 ? 'bg-rose-500' : 'bg-emerald-500'}`}
                                                 style={{ width: `${item.percentUsed}%` }}
                                             ></div>
                                         </div>
@@ -1304,15 +1365,15 @@ const AnggaranPage = () => {
                         renderMobileCard={(item) => (
                             <div className="flex flex-col gap-2.5">
                                 <div className="flex justify-between items-center">
-                                    <span className="text-[9px] font-black px-2 py-0.5 bg-slate-100 text-slate-600 rounded uppercase border border-slate-200/55 tracking-tight">
+                                    <span className="text-[9px] font-black px-2 py-0.5 bg-slate-100 text-slate-600 rounded-none uppercase border border-slate-200/55 tracking-tight">
                                         {item.kategori}
                                     </span>
                                     <span className="text-[10px] font-bold text-slate-500">{Math.round(item.percentUsed)}% Terpakai</span>
                                 </div>
                                 <div className="text-xs font-bold text-slate-800">{item.namaPos}</div>
-                                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                <div className="w-full bg-slate-100 h-1.5 rounded-none overflow-hidden">
                                     <div
-                                        className={`h-full rounded-full ${item.percentUsed > 80 ? 'bg-rose-500' : 'bg-emerald-500'}`}
+                                        className={`h-full rounded-none ${item.percentUsed > 80 ? 'bg-rose-500' : 'bg-emerald-500'}`}
                                         style={{ width: `${item.percentUsed}%` }}
                                     ></div>
                                 </div>
@@ -1334,7 +1395,7 @@ const AnggaranPage = () => {
                         )}
                     />
 
-                    <div className="p-3.5 bg-amber-50/60 border border-amber-200/50 rounded-xl flex items-center gap-2.5 text-amber-900 shadow-sm">
+                    <div className="p-3.5 bg-amber-50/60 border border-amber-200/50 rounded-none flex items-center gap-2.5 text-amber-900 shadow-none">
                         <ShieldAlert size={16} className="text-amber-700 shrink-0" />
                         <p className="text-[11px] font-semibold leading-normal">
                             Sistem akan memberikan peringatan otomatis jika pengajuan dana melebihi sisa anggaran di setiap Pos.
@@ -1342,6 +1403,59 @@ const AnggaranPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Modal Form Pos Anggaran Baru */}
+            <Modal
+                isOpen={isAddAnggaranOpen}
+                onClose={() => setIsAddAnggaranOpen(false)}
+                title="Buat Pos Anggaran Baru"
+            >
+                <form onSubmit={handleAddAnggaranSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-[11px] font-black text-slate-500 uppercase mb-1">NAMA POS ANGGARAN</label>
+                        <input
+                            type="text"
+                            name="namaPos"
+                            required
+                            placeholder="Contoh: Operasional Rumah Tangga Pastor"
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500"
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-[11px] font-black text-slate-500 uppercase mb-1">PLAFON (IDR)</label>
+                            <input
+                                type="number"
+                                name="plafon"
+                                required
+                                placeholder="0"
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-black text-slate-500 uppercase mb-1">KATEGORI</label>
+                            <select
+                                name="kategori"
+                                required
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 cursor-pointer"
+                            >
+                                <option value="Operasional">Operasional</option>
+                                <option value="Liturgi">Liturgi</option>
+                                <option value="Pastoral">Pastoral</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                        <Button type="button" variant="outline" size="sm" onClick={() => setIsAddAnggaranOpen(false)} className="rounded-none">
+                            Batal
+                        </Button>
+                        <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-none shadow-none text-xs py-2 px-4">
+                            Simpan Pos Anggaran
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 };
@@ -1479,7 +1593,7 @@ const ApprovalPage = () => {
     };
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-4 md:space-y-6">
+        <div className="max-w-[1600px] mx-auto space-y-4 md:space-y-6 animate-fade-slide">
 
             {/* HEADER SECTION - Responsive Stack */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -1488,13 +1602,13 @@ const ApprovalPage = () => {
                     <p className="text-xs md:text-sm text-gray-500">Paroki St. Stefanus - Sempan</p>
                 </div>
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                    <div className="flex-1 sm:flex-none flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm">
+                    <div className="flex-1 sm:flex-none flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-none text-xs font-semibold shadow-none">
                         <Filter size={14} className="text-slate-400" />
                         <select className="outline-none bg-transparent w-full">
                             <option>Semua Komisi</option>
                         </select>
                     </div>
-                    <div className="flex-1 sm:flex-none flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm">
+                    <div className="flex-1 sm:flex-none flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-none text-xs font-semibold shadow-none">
                         <Clock size={14} className="text-slate-400" />
                         <span>Mei 2025</span>
                     </div>
@@ -1503,23 +1617,23 @@ const ApprovalPage = () => {
 
             {/* TAB NAVIGATION - Scrollable on Mobile */}
             <div className="flex gap-6 border-b border-slate-200 overflow-x-auto no-scrollbar pb-1 text-xs md:text-sm font-bold text-gray-400">
-                <button className="pb-3 border-b-2 border-blue-600 text-blue-600 whitespace-nowrap">
-                    Menunggu <span className="ml-1 px-2 py-0.5 bg-blue-50 rounded-full text-[10px]">
+                <button className="pb-3 border-b-2 border-slate-800 text-slate-800 whitespace-nowrap">
+                    Menunggu <span className="ml-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-none text-[10px]">
                         {approvalRequests.filter((r) => r.status === 'Menunggu').length}
                     </span>
                 </button>
                 <button className="pb-3 hover:text-slate-600 whitespace-nowrap">
-                    Disetujui <span className="ml-1 px-2 py-0.5 bg-slate-50 rounded-full text-[10px]">
+                    Disetujui <span className="ml-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-none text-[10px]">
                         {approvalRequests.filter((r) => r.status === 'Disetujui').length}
                     </span>
                 </button>
                 <button className="pb-3 hover:text-slate-600 whitespace-nowrap">
-                    Ditolak <span className="ml-1 px-2 py-0.5 bg-slate-50 rounded-full text-[10px]">
+                    Ditolak <span className="ml-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-none text-[10px]">
                         {approvalRequests.filter((r) => r.status === 'Ditolak').length}
                     </span>
                 </button>
                 <button className="pb-3 hover:text-slate-600 whitespace-nowrap">
-                    Revisi <span className="ml-1 px-2 py-0.5 bg-slate-50 rounded-full text-[10px]">
+                    Revisi <span className="ml-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-none text-[10px]">
                         {approvalRequests.filter((r) => r.status === 'Revisi').length}
                     </span>
                 </button>
@@ -1542,10 +1656,10 @@ const ApprovalPage = () => {
                             <Card
                                 key={item.id}
                                 className={cn(
-                                    "p-4 cursor-pointer transition-all duration-200 border-l-4",
+                                    "p-4 cursor-pointer transition-all duration-200 border-l-4 rounded-none shadow-none",
                                     selected.id === item.id
-                                        ? "border-l-blue-600 bg-blue-50/20 shadow-md ring-1 ring-blue-100"
-                                        : "border-l-transparent hover:bg-white hover:shadow-sm"
+                                        ? "border-l-slate-800 bg-slate-100/60 ring-0"
+                                        : "border-l-transparent hover:bg-slate-50"
                                 )}
                                 onClick={() => {
                                     setSelectedId(item.id);
@@ -1553,7 +1667,7 @@ const ApprovalPage = () => {
                                 }}
                             >
                                 <div className="flex gap-4">
-                                    <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl h-fit border border-indigo-100">
+                                    <div className="p-2.5 bg-slate-100 text-slate-600 rounded-none h-fit border border-slate-200">
                                         <Gift size={20} />
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -1594,27 +1708,27 @@ const ApprovalPage = () => {
                     </button>
 
                     {selected ? (
-                        <Card className="overflow-hidden border-slate-200 shadow-xl shadow-slate-200/50">
+                        <Card className="overflow-hidden border-slate-200 shadow-none rounded-none">
                             <div className="p-4 md:p-8">
                                 <div className="flex flex-col md:flex-row justify-between items-start gap-6 border-b border-slate-100 pb-8">
                                     <div className="flex gap-4 md:gap-6">
-                                        <div className="hidden md:block p-5 bg-purple-50 text-purple-600 rounded-2xl border border-purple-100 shadow-sm h-fit">
+                                        <div className="hidden md:block p-5 bg-slate-100 text-slate-600 rounded-none border border-slate-200 shadow-none h-fit">
                                             <Gift size={36} />
                                         </div>
                                         <div className="space-y-2">
                                             <div className="flex items-center gap-2">
-                                                <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded uppercase">{selected.komisi}</span>
+                                                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-none uppercase">{selected.komisi}</span>
                                                 <span className="text-[10px] text-slate-400 font-mono tracking-tighter">{selected.id}</span>
                                             </div>
                                             <h3 className="text-xl md:text-2xl font-black text-slate-800 leading-tight">{selected.judul}</h3>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 pt-2 text-[12px]">
                                                 <div className="flex items-center gap-2 text-slate-600">
-                                                    <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center"><Users size={12} /></div>
+                                                    <div className="w-6 h-6 rounded-none bg-slate-100 flex items-center justify-center"><Users size={12} /></div>
                                                     <span className="font-semibold">{selected.pemohon}</span>
                                                     <span className="text-slate-400 text-[10px] uppercase">({selected.jabatanPemohon})</span>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-slate-600">
-                                                    <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center"><Clock size={12} /></div>
+                                                    <div className="w-6 h-6 rounded-none bg-slate-100 flex items-center justify-center"><Clock size={12} /></div>
                                                     <span className="font-semibold">{selected.tanggal} • {selected.waktu}</span>
                                                 </div>
                                             </div>
@@ -1622,9 +1736,9 @@ const ApprovalPage = () => {
                                     </div>
 
                                     <div className="w-full md:w-auto">
-                                        <div className="bg-slate-50 border border-slate-100 p-5 rounded-2xl text-center md:text-right">
+                                        <div className="bg-slate-50 border border-slate-200 p-5 rounded-none text-center md:text-right">
                                             <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Nominal Pengajuan</p>
-                                            <p className="text-2xl font-black text-blue-700 leading-none">{formatIDR(selected.nominal)}</p>
+                                            <p className="text-2xl font-black text-slate-800 leading-none">{formatIDR(selected.nominal)}</p>
                                             <div className="flex items-center justify-center md:justify-end gap-1 mt-3 text-slate-400">
                                                 <FileText size={12} />
                                                 <span className="text-[10px] font-bold">{selected.dokumen.length} Lampiran Dokumen</span>
@@ -1636,29 +1750,14 @@ const ApprovalPage = () => {
                                 {/* Budget Stats - Memoized Visual Outputs */}
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 my-8">
                                     {[
-                                        { label: 'Anggaran Program', val: selected.anggaranProgram, icon: Wallet, color: 'blue' as const },
-                                        { label: 'Total Realisasi', val: selected.totalRealisasi, icon: BarChart3, color: 'emerald' as const },
-                                        { label: 'Sisa Anggaran', val: selected.sisaAnggaran, icon: ShieldCheck, color: 'amber' as const },
-                                        { label: 'Pengajuan Ini', val: selected.nominal, icon: Gift, color: 'purple' as const },
+                                        { label: 'Anggaran Program', val: selected.anggaranProgram, icon: Wallet },
+                                        { label: 'Total Realisasi', val: selected.totalRealisasi, icon: BarChart3 },
+                                        { label: 'Sisa Anggaran', val: selected.sisaAnggaran, icon: ShieldCheck },
+                                        { label: 'Pengajuan Ini', val: selected.nominal, icon: Gift },
                                     ].map((stat, i) => {
-                                        const bgClasses = {
-                                            blue: 'bg-blue-50/30 border-blue-100',
-                                            emerald: 'bg-emerald-50/30 border-emerald-100',
-                                            amber: 'bg-amber-50/30 border-amber-100',
-                                            purple: 'bg-purple-50/30 border-purple-100',
-                                        };
-                                        const iconBgClasses = {
-                                            blue: 'bg-blue-600',
-                                            emerald: 'bg-emerald-600',
-                                            amber: 'bg-amber-600',
-                                            purple: 'bg-purple-600',
-                                        };
                                         return (
-                                            <div key={i} className={cn(
-                                                "p-3 rounded-2xl border flex flex-col justify-between h-24",
-                                                bgClasses[stat.color]
-                                            )}>
-                                                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm", iconBgClasses[stat.color])}>
+                                            <div key={i} className="p-3 rounded-none border border-slate-200 flex flex-col justify-between h-24 bg-slate-50/80 shadow-none">
+                                                <div className="w-8 h-8 rounded-none flex items-center justify-center bg-slate-100 text-slate-600">
                                                     <stat.icon size={16} />
                                                 </div>
                                                 <div>
@@ -1679,12 +1778,12 @@ const ApprovalPage = () => {
                                         </div>
                                         <div className="space-y-2">
                                             {selected.dokumen.map((doc, i) => (
-                                                <div key={i} className="flex justify-between items-center p-3 border border-slate-100 rounded-xl bg-white group hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer">
+                                                <div key={i} className="flex justify-between items-center p-3 border border-slate-200 rounded-none bg-white group hover:border-slate-400 transition-all cursor-pointer">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="p-1.5 bg-slate-50 text-slate-400 rounded group-hover:text-blue-500 transition-colors"><FileText size={14} /></div>
+                                                        <div className="p-1.5 bg-slate-100 text-slate-500 rounded-none group-hover:text-slate-800 transition-colors"><FileText size={14} /></div>
                                                         <span className="text-[11px] font-bold text-slate-600 truncate max-w-[120px] md:max-w-[180px]">{doc.nama}</span>
                                                     </div>
-                                                    <Download size={14} className="text-slate-300 hover:text-blue-600" />
+                                                    <Download size={14} className="text-slate-300 hover:text-slate-800" />
                                                 </div>
                                             ))}
                                         </div>
@@ -1700,8 +1799,8 @@ const ApprovalPage = () => {
                                             {selected.alur.map((a, i) => (
                                                 <div key={i} className="relative">
                                                     <div className={cn(
-                                                        "absolute -left-[22px] top-1 w-3 h-3 rounded-full border-2 border-white shadow-sm",
-                                                        a.status === 'done' ? "bg-emerald-500" : a.status === 'active' ? "bg-blue-600 ring-4 ring-blue-50" : "bg-slate-200"
+                                                        "absolute -left-[22px] top-1 w-3 h-3 rounded-none border-2 border-white shadow-none",
+                                                        a.status === 'done' ? "bg-emerald-600" : a.status === 'active' ? "bg-slate-800 ring-4 ring-slate-100" : "bg-slate-300"
                                                     )}></div>
                                                     <div className="flex justify-between gap-4">
                                                         <div className="min-w-0">
@@ -1722,20 +1821,20 @@ const ApprovalPage = () => {
                                         <Button
                                             onClick={() => handleActionClick('reject')}
                                             variant="outline"
-                                            className="flex-1 border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl py-6 font-bold flex justify-center items-center gap-2"
+                                            className="flex-1 border-rose-600 text-rose-600 hover:bg-rose-50 rounded-none py-6 font-bold flex justify-center items-center gap-2 active:scale-95 transition-transform"
                                         >
                                             <XCircle size={20} /> Tolak
                                         </Button>
                                         <Button
                                             onClick={() => handleActionClick('revise')}
                                             variant="outline"
-                                            className="flex-1 border-amber-200 text-amber-600 hover:bg-amber-50 rounded-xl py-6 font-bold flex justify-center items-center gap-2"
+                                            className="flex-1 border-slate-400 text-slate-600 hover:bg-slate-50 rounded-none py-6 font-bold flex justify-center items-center gap-2 active:scale-95 transition-transform"
                                         >
                                             <FileText size={20} /> Revisi
                                         </Button>
                                         <Button
                                             onClick={() => handleActionClick('approve')}
-                                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200 rounded-xl py-6 font-bold flex justify-center items-center gap-2 transition-all active:scale-95"
+                                            className="flex-1 bg-slate-800 hover:bg-slate-900 text-white rounded-none py-6 font-bold flex justify-center items-center gap-2 shadow-none active:scale-95 transition-transform"
                                         >
                                             <CheckCircle2 size={20} /> Setujui
                                         </Button>
@@ -1834,7 +1933,7 @@ const AuditTrailPage = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -1947,10 +2046,11 @@ const AuditTrailPage = () => {
 export default AuditTrailPage;
 
 --- FILE: src\modules\dana-khusus\pages\DanaKhususPage.tsx ---
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Wallet, Users, ArrowUpRight, History, Plus } from 'lucide-react';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
+import { Modal } from '../../../shared/components/ui/Modal';
 import { MOCK_DANA_KHUSUS } from '../../../shared/mock/anggaranData';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
@@ -1974,30 +2074,83 @@ const MOCK_HISTORY = [
     }
 ];
 
+// Mock donors by program id
+const MOCK_DONORS_BY_PROGRAM: Record<string, { nama: string; jumlah: number; tanggal: string }[]> = {
+    'DK-01': [
+        { nama: 'Keluarga Bpk. Santoso', jumlah: 500000000, tanggal: '10 Mar 2024' },
+        { nama: 'Ibu Maria Lucia', jumlah: 300000000, tanggal: '15 Mar 2024' },
+        { nama: 'Kolekte Pembangunan', jumlah: 400000000, tanggal: '20 Mar 2024' }
+    ],
+    'DK-02': [
+        { nama: 'Hamba Allah', jumlah: 12500000, tanggal: '12 Mar 2024' },
+        { nama: 'Bapak FX. Bambang', jumlah: 20000000, tanggal: '14 Mar 2024' },
+        { nama: 'Donasi OMK Wilayah 2', jumlah: 20000000, tanggal: '18 Mar 2024' }
+    ],
+    'DK-03': [
+        { nama: 'Keluarga Bpk. Andi', jumlah: 35000000, tanggal: '05 Mar 2024' },
+        { nama: 'Ibu Susanti Semarang', jumlah: 30000000, tanggal: '08 Mar 2024' },
+        { nama: 'Dewan Paroki', jumlah: 20000000, tanggal: '15 Mar 2024' }
+    ]
+};
+
 /**
  * Typesafe Dana Khusus page showing dedicated donation programs.
  * Formatted with tight density spacing and standard flat borders.
+ * Fully interactive with simulated form submissions, sharp-edge styling, and donor details modal.
  */
 const DanaKhususPage = () => {
+    const [programs, setPrograms] = useState(MOCK_DANA_KHUSUS);
+    const [isAddProgramOpen, setIsAddProgramOpen] = useState(false);
+    const [selectedProgram, setSelectedProgram] = useState<typeof MOCK_DANA_KHUSUS[0] | null>(null);
+
     const processedPrograms = useMemo(() => {
-        return MOCK_DANA_KHUSUS.map((dana) => {
+        return programs.map((dana) => {
             const collectionPercent = dana.target > 0 ? (dana.terkumpul / dana.target) * 100 : 0;
             return {
                 ...dana,
                 collectionPercent,
             };
         });
-    }, []);
+    }, [programs]);
+
+    const handleAddProgramSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        const namaDana = formData.get('namaDana') as string;
+        const target = Number(formData.get('target'));
+
+        if (!namaDana || !target) return;
+
+        const newProgram = {
+            id: `DK-${String(programs.length + 1).padStart(2, '0')}`,
+            namaDana,
+            target,
+            terkumpul: 0,
+            terpakai: 0,
+            status: 'Aktif' as const,
+            color: 'blue',
+        };
+
+        setPrograms([newProgram, ...programs]);
+        setIsAddProgramOpen(false);
+    };
+
+    const activeDonors = useMemo(() => {
+        if (!selectedProgram) return [];
+        return MOCK_DONORS_BY_PROGRAM[selectedProgram.id] || [
+            { nama: 'Donatur Awal', jumlah: selectedProgram.terkumpul, tanggal: '01 Mar 2024' }
+        ];
+    }, [selectedProgram]);
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
+        <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
             {/* Header section */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Dana Khusus</h2>
                     <p className="text-sm text-gray-500">Pengelolaan dana terikat dan donasi pembangunan.</p>
                 </div>
-                <Button className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 shadow-sm">
+                <Button onClick={() => setIsAddProgramOpen(true)} className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 shadow-none rounded-none">
                     <Plus size={16} /> Buka Program Dana Baru
                 </Button>
             </div>
@@ -2005,14 +2158,14 @@ const DanaKhususPage = () => {
             {/* Program cards - Seamless flat surfaces */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {processedPrograms.map((dana) => (
-                    <Card key={dana.id} className="flex flex-col h-full border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <Card key={dana.id} className="flex flex-col h-full border-slate-200 shadow-none rounded-none hover:border-slate-300 transition-colors">
                         <div className="p-4 flex-1">
                             <div className="flex justify-between items-start mb-3">
-                                <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg border border-blue-100/50">
+                                <div className="p-1.5 bg-blue-50 text-blue-600 rounded-none border border-blue-100/50">
                                     <Wallet size={16} />
                                 </div>
-                                <span className="text-[9px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100/50 px-2 py-0.5 rounded">
-                                    AKTIF
+                                <span className="text-[9px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100/50 px-2 py-0.5 rounded-none uppercase">
+                                    {dana.status}
                                 </span>
                             </div>
 
@@ -2025,9 +2178,9 @@ const DanaKhususPage = () => {
                                         <span>Progress Pengumpulan</span>
                                         <span className="text-blue-600">{Math.round(dana.collectionPercent)}%</span>
                                     </div>
-                                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div className="w-full bg-slate-100 h-2 rounded-none overflow-hidden">
                                         <div
-                                            className="bg-blue-600 h-full rounded-full"
+                                            className="bg-blue-600 h-full rounded-none"
                                             style={{ width: `${Math.min(dana.collectionPercent, 100)}%` }}
                                         ></div>
                                     </div>
@@ -2049,9 +2202,12 @@ const DanaKhususPage = () => {
                         <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center text-[11px]">
                             <div className="flex items-center gap-1.5 font-bold text-slate-400">
                                 <Users size={12} />
-                                <span>124 Donatur</span>
+                                <span>{activeDonors.length} Donatur</span>
                             </div>
-                            <button className="font-black text-blue-600 flex items-center gap-0.5 hover:text-blue-700 transition-colors uppercase tracking-tight text-[10px]">
+                            <button 
+                                onClick={() => setSelectedProgram(dana)}
+                                className="font-black text-blue-600 flex items-center gap-0.5 hover:text-blue-700 transition-colors uppercase tracking-tight text-[10px] cursor-pointer"
+                            >
                                 Lihat Detail <ArrowUpRight size={12} />
                             </button>
                         </div>
@@ -2061,7 +2217,7 @@ const DanaKhususPage = () => {
 
             {/* Aktivitas Dana Khusus - Responsive Table using AdaptiveList */}
             <div className="space-y-4">
-                <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-sm flex items-center justify-between">
+                <div className="p-4 bg-white border border-slate-200 rounded-none shadow-none flex items-center justify-between">
                     <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                         <History size={14} /> Riwayat Donasi Terakhir
                     </h3>
@@ -2083,7 +2239,7 @@ const DanaKhususPage = () => {
                             <td className="px-5 py-2.5 text-xs font-semibold text-slate-600 border-r border-slate-100">{item.program}</td>
                             <td className="px-5 py-2.5 text-xs font-black text-right text-emerald-600 border-r border-slate-100">{formatIDR(item.jumlah)}</td>
                             <td className="px-5 py-2.5 text-center">
-                                <span className="px-2 py-0.5 bg-slate-100 rounded text-[9px] font-black uppercase text-slate-500 border border-slate-200/50">
+                                <span className="px-2 py-0.5 bg-slate-100 rounded-none text-[9px] font-black uppercase text-slate-500 border border-slate-200/50">
                                     {item.metode}
                                 </span>
                             </td>
@@ -2093,7 +2249,7 @@ const DanaKhususPage = () => {
                         <div className="flex flex-col gap-2.5">
                             <div className="flex justify-between items-center">
                                 <span className="text-xs font-bold text-slate-700">{item.donatur}</span>
-                                <span className="px-2 py-0.5 bg-slate-100 rounded text-[9px] font-black uppercase text-slate-500 border border-slate-200/50">
+                                <span className="px-2 py-0.5 bg-slate-100 rounded-none text-[9px] font-black uppercase text-slate-500 border border-slate-200/50">
                                     {item.metode}
                                 </span>
                             </div>
@@ -2106,6 +2262,97 @@ const DanaKhususPage = () => {
                     )}
                 />
             </div>
+
+            {/* Modal Program Dana Baru */}
+            <Modal
+                isOpen={isAddProgramOpen}
+                onClose={() => setIsAddProgramOpen(false)}
+                title="Buka Program Dana Baru"
+            >
+                <form onSubmit={handleAddProgramSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-[11px] font-black text-slate-500 uppercase mb-1">NAMA PROGRAM DANA</label>
+                        <input
+                            type="text"
+                            name="namaDana"
+                            required
+                            placeholder="Contoh: Dana Kemanusiaan Bencana Banjir"
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-[11px] font-black text-slate-500 uppercase mb-1">TARGET DANA (IDR)</label>
+                        <input
+                            type="number"
+                            name="target"
+                            required
+                            placeholder="0"
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500"
+                        />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                        <Button type="button" variant="outline" size="sm" onClick={() => setIsAddProgramOpen(false)} className="rounded-none">
+                            Batal
+                        </Button>
+                        <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-none shadow-none text-xs py-2 px-4">
+                            Buat Program Dana
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Modal Detail Program Dana & Donatur */}
+            <Modal
+                isOpen={!!selectedProgram}
+                onClose={() => setSelectedProgram(null)}
+                title={selectedProgram ? `Rincian: ${selectedProgram.namaDana}` : 'Detail Dana Khusus'}
+            >
+                {selectedProgram && (
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4 border-b border-slate-100 pb-3">
+                            <div>
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">ID PROGRAM</span>
+                                <span className="text-xs font-black text-blue-600">{selectedProgram.id}</span>
+                            </div>
+                            <div>
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">STATUS</span>
+                                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 border border-emerald-100 rounded-none uppercase">{selectedProgram.status}</span>
+                            </div>
+                        </div>
+
+                        <div className="border-b border-slate-100 pb-3">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TARGET PENGUMPULAN</span>
+                            <span className="text-sm font-black text-slate-800">{formatIDR(selectedProgram.target)}</span>
+                        </div>
+
+                        <div className="border-b border-slate-100 pb-3">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">DANA TERKUMPUL</span>
+                            <span className="text-sm font-black text-emerald-600">{formatIDR(selectedProgram.terkumpul)}</span>
+                        </div>
+
+                        <div>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-2">DAFTAR DONATUR TERBARU</span>
+                            <div className="divide-y divide-slate-100 border border-slate-200 bg-slate-50 max-h-48 overflow-y-auto">
+                                {activeDonors.map((donor, idx) => (
+                                    <div key={idx} className="p-2.5 flex justify-between items-center text-xs font-semibold">
+                                        <div>
+                                            <p className="text-slate-800">{donor.nama}</p>
+                                            <p className="text-[10px] text-slate-400 font-medium mt-0.5">{donor.tanggal}</p>
+                                        </div>
+                                        <span className="font-black text-emerald-600">{formatIDR(donor.jumlah)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end pt-4 border-t border-slate-100">
+                            <Button onClick={() => setSelectedProgram(null)} variant="outline" size="sm" className="rounded-none">
+                                Tutup
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 };
@@ -2167,6 +2414,7 @@ import { formatIDR } from '../../../shared/utils/formatter';
 /**
  * High-density tabular summary showing dynamic budget realizations.
  * Computes complex metrics via useMemo for optimal client performance.
+ * Sharp-corner styling.
  */
 export const BudgetSummary = () => {
     const kasKeluar = useKasStore((state) => state.kasKeluar);
@@ -2237,8 +2485,8 @@ export const BudgetSummary = () => {
                             <td className="py-2.5 text-right font-bold text-slate-700">{formatIDR(item.sisa)}</td>
                             <td className="py-2.5 px-3">
                                 <div className="flex items-center gap-1.5">
-                                    <div className="flex-1 bg-slate-100 h-1 rounded-full overflow-hidden">
-                                        <div className="bg-emerald-500 h-full" style={{ width: `${Math.min(item.persen, 100)}%` }}></div>
+                                    <div className="flex-1 bg-slate-100 h-1 rounded-none overflow-hidden">
+                                        <div className="bg-emerald-500 h-full rounded-none" style={{ width: `${Math.min(item.persen, 100)}%` }}></div>
                                     </div>
                                     <span className="font-bold text-slate-500 w-5 text-right text-[10px]">{item.persen}%</span>
                                 </div>
@@ -2254,8 +2502,8 @@ export const BudgetSummary = () => {
                         <td className="py-2.5 text-right font-black">{formatIDR(totalSisa)}</td>
                         <td className="py-2.5 px-3">
                             <div className="flex items-center gap-1.5">
-                                <div className="flex-1 bg-blue-100 h-1 rounded-full overflow-hidden">
-                                    <div className="bg-blue-600 h-full" style={{ width: `${Math.min(totalPersen, 100)}%` }}></div>
+                                <div className="flex-1 bg-blue-100 h-1 rounded-none overflow-hidden">
+                                    <div className="bg-blue-600 h-full rounded-none" style={{ width: `${Math.min(totalPersen, 100)}%` }}></div>
                                 </div>
                                 <span className="text-blue-600 font-black w-5 text-right text-[10px]">{totalPersen}%</span>
                             </div>
@@ -2345,6 +2593,7 @@ export const FinancialChart = () => {
 --- FILE: src\modules\dashboard\components\PendingApprovals.tsx ---
 import { useMemo } from 'react';
 import { Wallet, Gift, Users, Briefcase, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useApprovalStore } from '../../../app/store/useApprovalStore';
 import { cn } from '../../../shared/utils/cn';
 import { formatIDR } from '../../../shared/utils/formatter';
@@ -2352,9 +2601,11 @@ import { formatIDR } from '../../../shared/utils/formatter';
 /**
  * Unified and seamless list for pending expense approvals.
  * Standardized spacing without bulky bounding boxes.
+ * Sharp-corner styling and dynamic navigation to approvals.
  */
 export const PendingApprovals = () => {
     const approvalRequests = useApprovalStore((state) => state.approvalRequests);
+    const navigate = useNavigate();
 
     // Memoize computation to extract only pending approvals
     const pendingRequests = useMemo(() => {
@@ -2383,7 +2634,7 @@ export const PendingApprovals = () => {
                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">
                     Menunggu Persetujuan
                 </h3>
-                <span className="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 text-[9px] font-black rounded-full">
+                <span className="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 text-[9px] font-black rounded-none">
                     {pendingRequests.length} Antrean
                 </span>
             </div>
@@ -2393,8 +2644,9 @@ export const PendingApprovals = () => {
                     <div
                         key={req.id}
                         className="flex items-center gap-3 py-2.5 transition-colors group cursor-pointer hover:bg-slate-50/40"
+                        onClick={() => navigate('/approval')}
                     >
-                        <div className={cn("p-1.5 rounded-lg shrink-0", getColorClass(req.komisi))}>
+                        <div className={cn("p-1.5 rounded-none shrink-0", getColorClass(req.komisi))}>
                             {getIcon(req.komisi)}
                         </div>
 
@@ -2420,7 +2672,10 @@ export const PendingApprovals = () => {
                 )}
             </div>
 
-            <button className="w-full pt-3.5 pb-1 text-[10px] font-black text-blue-600 flex items-center justify-between border-t border-slate-100 hover:text-blue-700 transition-colors">
+            <button 
+                onClick={() => navigate('/approval')}
+                className="w-full pt-3.5 pb-1 text-[10px] font-black text-blue-600 flex items-center justify-between border-t border-slate-100 hover:text-blue-700 transition-colors cursor-pointer rounded-none"
+            >
                 LIHAT SEMUA PENGAJUAN <ChevronRight size={12} />
             </button>
         </div>
@@ -2486,6 +2741,7 @@ import {
   Wallet, Building2, Heart, TrendingUp, TrendingDown,
   Calendar, ChevronRight
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../app/store/useAuthStore';
 import { useKasStore } from '../../../app/store/useKasStore';
 import { Card } from '../../../shared/components/ui/Card';
@@ -2502,6 +2758,7 @@ const DashboardPage = () => {
   const { user } = useAuthStore();
   const kasMasuk = useKasStore((state) => state.kasMasuk);
   const kasKeluar = useKasStore((state) => state.kasKeluar);
+  const navigate = useNavigate();
 
   // Memoized aggregation to prevent unnecessary computational renders
   const totalIn = useMemo(() => {
@@ -2540,9 +2797,9 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="space-y-6 pb-10 max-w-[1600px] mx-auto">
+    <div className="space-y-6 pb-10 max-w-[1600px] mx-auto animate-fade-slide">
       {/* 1. HERO SECTION - High Contrast & High Density */}
-      <div className="relative overflow-hidden bg-white p-5 rounded-xl border border-slate-200">
+      <div className="relative overflow-hidden bg-white p-5 rounded-none border border-slate-200">
         <div className="absolute right-0 top-0 h-full w-[28%] hidden lg:block">
           <img
             src="src/assets/church-bg.png"
@@ -2570,8 +2827,8 @@ const DashboardPage = () => {
           </div>
 
           <div className="flex justify-center lg:justify-center">
-            <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-xl">
-              <div className="p-2 bg-white text-blue-600 rounded-lg shadow-sm border border-slate-100">
+            <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-none">
+              <div className="p-2 bg-white text-blue-600 rounded-none shadow-none border border-slate-100">
                 <Calendar size={18} />
               </div>
               <div>
@@ -2588,7 +2845,7 @@ const DashboardPage = () => {
       {/* 2. STAT CARDS SECTION - Standardized Spacing & Hover States */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {stats.map((item, idx) => (
-          <Card key={idx} className="p-0 border-slate-200 hover:shadow-md hover:border-slate-300 transition-all duration-300 flex flex-col">
+          <Card key={idx} className="p-0 border-slate-200 hover:shadow-none hover:border-slate-300 transition-all duration-300 flex flex-col rounded-none">
             <div className={cn("h-1",
               item.color === 'blue' ? 'bg-blue-600' :
                 item.color === 'emerald' ? 'bg-emerald-600' :
@@ -2598,7 +2855,7 @@ const DashboardPage = () => {
 
             <div className="p-4 flex-1 flex flex-col justify-between">
               <div className="flex items-center gap-2 mb-3">
-                <div className={cn("p-1.5 rounded-lg",
+                <div className={cn("p-1.5 rounded-none",
                   item.color === 'blue' ? 'bg-blue-50 text-blue-600' :
                     item.color === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
                       item.color === 'purple' ? 'bg-purple-50 text-purple-600' :
@@ -2617,7 +2874,16 @@ const DashboardPage = () => {
               </div>
             </div>
 
-            <button className="px-4 py-2 text-[10px] font-bold text-blue-600 border-t border-slate-100 flex items-center justify-between hover:bg-slate-50 transition-colors">
+            <button 
+              onClick={() => {
+                if (item.label === 'SALDO OPERASIONAL') navigate('/kas-keluar');
+                else if (item.label === 'PENDAPATAN BULAN INI') navigate('/kas-masuk');
+                else if (item.label === 'PENGELUARAN BULAN INI') navigate('/kas-keluar');
+                else if (item.label === 'DANA PEMBANGUNAN') navigate('/dana-khusus');
+                else if (item.label === 'DANA SOSIAL (PSE)') navigate('/dana-khusus');
+              }}
+              className="px-4 py-2 text-[10px] font-bold text-blue-600 border-t border-slate-100 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer rounded-none text-left"
+            >
               Lihat Detail <ChevronRight size={10} />
             </button>
           </Card>
@@ -2626,11 +2892,11 @@ const DashboardPage = () => {
 
       {/* 3. MIDDLE SECTION: Charts & Pending Requests */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <Card className="lg:col-span-8 p-5 border-slate-200">
+        <Card className="lg:col-span-8 p-5 border-slate-200 rounded-none">
           <FinancialChart />
         </Card>
 
-        <Card className="lg:col-span-4 p-5 border-slate-200">
+        <Card className="lg:col-span-4 p-5 border-slate-200 rounded-none">
           <PendingApprovals />
         </Card>
       </div>
@@ -2638,17 +2904,17 @@ const DashboardPage = () => {
       {/* 4. BOTTOM SECTION: Budget, Balances, & Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Budget Summary (Left wide) */}
-        <Card className="lg:col-span-6 p-5 border-slate-200">
+        <Card className="lg:col-span-6 p-5 border-slate-200 rounded-none">
           <BudgetSummary />
         </Card>
 
         {/* Balance Position (Middle) */}
-        <Card className="lg:col-span-3 p-5 border-slate-200">
+        <Card className="lg:col-span-3 p-5 border-slate-200 rounded-none">
           <BalancePosition />
         </Card>
 
         {/* Recent Activity (Right) */}
-        <Card className="lg:col-span-3 p-5 border-slate-200">
+        <Card className="lg:col-span-3 p-5 border-slate-200 rounded-none">
           <RecentActivity />
         </Card>
       </div>
@@ -2722,12 +2988,12 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-bold text-gray-700 mb-1">TANGGAL</label>
-          <input type="date" {...register('tanggal')} className="w-full p-2 border rounded-lg text-sm outline-blue-500" />
+          <input type="date" {...register('tanggal')} className="w-full p-2 border rounded-none text-sm outline-blue-500 bg-slate-50 border-slate-200" />
           {errors.tanggal && <p className="text-red-500 text-[10px] mt-1">{errors.tanggal.message}</p>}
         </div>
         <div>
           <label className="block text-xs font-bold text-gray-700 mb-1">KATEGORI</label>
-          <select {...register('kategori')} className="w-full p-2 border rounded-lg text-sm outline-blue-500">
+          <select {...register('kategori')} className="w-full p-2 border rounded-none text-sm outline-blue-500 bg-slate-50 border-slate-200">
             <option value="">Pilih Kategori</option>
             <option value="Operasional">Operasional</option>
             <option value="Liturgi">Liturgi</option>
@@ -2739,13 +3005,13 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
 
       <div>
         <label className="block text-xs font-bold text-gray-700 mb-1">PENERIMA / TOKO</label>
-        <input type="text" {...register('penerima')} placeholder="Contoh: Toko Buku Beriman" className="w-full p-2 border rounded-lg text-sm outline-blue-500" />
+        <input type="text" {...register('penerima')} placeholder="Contoh: Toko Buku Beriman" className="w-full p-2 border rounded-none text-sm outline-blue-500 bg-slate-50 border-slate-200" />
         {errors.penerima && <p className="text-red-500 text-[10px] mt-1">{errors.penerima.message}</p>}
       </div>
 
       <div>
         <label className="block text-xs font-bold text-gray-700 mb-1">NOMINAL (RP)</label>
-        <input type="number" {...register('jumlah', { valueAsNumber: true })} placeholder="0" className="w-full p-2 border rounded-lg text-sm outline-blue-500" />
+        <input type="number" {...register('jumlah', { valueAsNumber: true })} placeholder="0" className="w-full p-2 border rounded-none text-sm outline-blue-500 bg-slate-50 border-slate-200" />
         {errors.jumlah && <p className="text-red-500 text-[10px] mt-1">{errors.jumlah.message}</p>}
       </div>
 
@@ -2753,15 +3019,15 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
       <div>
         <label className="block text-xs font-bold text-gray-700 mb-1">UPLOAD BUKTI (NOTA/KUITANSI)</label>
         {!preview ? (
-          <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer relative">
+          <div className="border-2 border-dashed border-slate-200 rounded-none p-8 flex flex-col items-center justify-center hover:bg-slate-100 transition-colors cursor-pointer relative">
             <input type="file" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
-            <Upload className="text-gray-400 mb-2" size={32} />
-            <p className="text-xs text-gray-500">Klik atau seret file gambar ke sini</p>
+            <Upload className="text-slate-400 mb-2" size={32} />
+            <p className="text-xs text-slate-500">Klik atau seret file gambar ke sini</p>
           </div>
         ) : (
-          <div className="relative rounded-xl overflow-hidden border border-gray-200 h-32">
+          <div className="relative rounded-none overflow-hidden border border-slate-200 h-32">
             <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-            <button onClick={() => setPreview(null)} className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full">
+            <button onClick={() => setPreview(null)} className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-none cursor-pointer">
               <X size={14} />
             </button>
           </div>
@@ -2769,7 +3035,7 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
       </div>
 
       <div className="pt-4 flex gap-3">
-        <Button type="submit" disabled={isSubmitting} className="flex-1 flex justify-center items-center gap-2">
+        <Button type="submit" disabled={isSubmitting} className="flex-1 flex justify-center items-center gap-2 rounded-none">
           {isSubmitting ? 'Menyimpan...' : <><CheckCircle2 size={18} /> Simpan Transaksi</>}
         </Button>
       </div>
@@ -2792,7 +3058,7 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { KasKeluarForm } from '../components/KasKeluarForm';
-import { KAS_KELUAR_STATS, CATEGORY_KELUAR_DATA, TREND_KELUAR_DATA } from '../../../shared/mock/kasKeluarData';
+import { KAS_KELUAR_STATS } from '../../../shared/mock/kasKeluarData';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
 import { useKasKeluarQuery } from '../../kas-masuk/hooks/useKasMasukQuery';
@@ -2801,11 +3067,13 @@ import { useKasKeluarQuery } from '../../kas-masuk/hooks/useKasMasukQuery';
  * Standardized high-contrast, high-density Kas Keluar Management page.
  * Implements optimized useMemo selectors to prevent rendering lags.
  * Integrates React Query for async Server State and AdaptiveList for responsive layouts.
+ * Fully interactive with dynamic chart updates, sharp-edge visual styling, and receipt preview modal.
  */
 const KasKeluarPage = () => {
   const { data: kasKeluar = [], isLoading } = useKasKeluarQuery();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedBuktiUrl, setSelectedBuktiUrl] = useState<string | null>(null);
 
   // Memoize search query execution
   const filteredData = useMemo(() => {
@@ -2820,8 +3088,51 @@ const KasKeluarPage = () => {
     return kasKeluar.reduce((sum, item) => sum + item.jumlah, 0);
   }, [kasKeluar]);
 
+  // Dynamic Trend Area Chart Data
+  const trendData = useMemo(() => {
+    const sorted = [...kasKeluar].sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime());
+    const groups: { [date: string]: number } = {};
+    sorted.forEach(item => {
+      const dateObj = new Date(item.tanggal);
+      const dateStr = isNaN(dateObj.getTime())
+        ? item.tanggal
+        : dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+      groups[dateStr] = (groups[dateStr] || 0) + item.jumlah;
+    });
+    return Object.entries(groups).map(([date, jumlah]) => ({ date, jumlah }));
+  }, [kasKeluar]);
+
+  // Dynamic Category Pie Chart Data
+  const categoryData = useMemo(() => {
+    const totals: Record<string, number> = {
+      'Operasional': 0,
+      'Liturgi': 0,
+      'Kegiatan': 0,
+    };
+    let grandTotal = 0;
+    kasKeluar.forEach(item => {
+      const cat = item.kategori || 'Operasional';
+      totals[cat] = (totals[cat] || 0) + item.jumlah;
+      grandTotal += item.jumlah;
+    });
+
+    const colors: Record<string, string> = {
+      'Operasional': '#e11d48', // rose
+      'Liturgi': '#6366f1', // purple
+      'Kegiatan': '#f59e0b', // amber
+    };
+
+    return Object.entries(totals)
+      .filter(([_, value]) => value > 0)
+      .map(([name, value]) => ({
+        name,
+        value: grandTotal > 0 ? Math.round((value / grandTotal) * 100) : 0,
+        color: colors[name] || '#64748b',
+      }));
+  }, [kasKeluar]);
+
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -2829,10 +3140,10 @@ const KasKeluarPage = () => {
           <p className="text-sm text-gray-500">Pantau pengeluaran operasional dan kegiatan paroki.</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button variant="outline" className="flex-1 sm:flex-none flex items-center justify-center gap-2 text-xs border-slate-200">
+          <Button variant="outline" className="flex-1 sm:flex-none flex items-center justify-center gap-2 text-xs border-slate-200 rounded-none">
             <Download size={16} /> Export Laporan
           </Button>
-          <Button onClick={() => setIsModalOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 shadow-sm text-xs bg-rose-600 hover:bg-rose-700 text-white">
+          <Button onClick={() => setIsModalOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 shadow-none text-xs bg-rose-600 hover:bg-rose-700 text-white rounded-none">
             <Plus size={16} /> Catat Pengeluaran
           </Button>
         </div>
@@ -2840,24 +3151,24 @@ const KasKeluarPage = () => {
 
       {/* Quick Stats Cards - Consistent padding density & Flat layout */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200 rounded-none">
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Total Keluar (Bulan Ini)</p>
           <h4 className="text-lg font-black mt-1 text-rose-600 tracking-tight">{formatIDR(totalKeluarBulanIni)}</h4>
           <p className="text-[9px] text-emerald-600 mt-2 font-bold">↓ {KAS_KELUAR_STATS.hematDariBulanLalu}% lebih hemat</p>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200 rounded-none">
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Burn Rate Anggaran</p>
           <div className="flex items-end gap-1.5 mt-1">
             <h4 className="text-lg font-black text-slate-800 tracking-tight">{KAS_KELUAR_STATS.anggaranTerpakai}%</h4>
             <p className="text-[9px] text-slate-400 font-bold mb-0.5">terpakai</p>
           </div>
-          <div className="w-full bg-slate-100 h-1 rounded-full mt-3 overflow-hidden">
-            <div className="bg-amber-500 h-full" style={{ width: `${KAS_KELUAR_STATS.anggaranTerpakai}%` }}></div>
+          <div className="w-full bg-slate-100 h-1 rounded-none mt-3 overflow-hidden">
+            <div className="bg-amber-500 h-full rounded-none" style={{ width: `${KAS_KELUAR_STATS.anggaranTerpakai}%` }}></div>
           </div>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-blue-500 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border-l-4 border-l-blue-500 border-y-slate-200 border-r-slate-200 rounded-none">
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Menunggu Verifikasi</p>
           <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{KAS_KELUAR_STATS.pendingVerifikasi}</h4>
           <p className="text-[9px] text-slate-400 mt-2 font-bold italic flex items-center gap-1">
@@ -2865,7 +3176,7 @@ const KasKeluarPage = () => {
           </p>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-slate-800 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border-l-4 border-l-slate-800 border-y-slate-200 border-r-slate-200 rounded-none">
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Saldo Kas Saat Ini</p>
           <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(150500000)}</h4>
           <p className="text-[9px] text-blue-600 mt-2 font-bold">Cukup untuk 12 bulan kedepan</p>
@@ -2875,65 +3186,73 @@ const KasKeluarPage = () => {
       {/* Analytics & Side Info */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Trend Area Chart */}
-        <Card className="lg:col-span-8 p-5 border-slate-200">
+        <Card className="lg:col-span-8 p-5 border-slate-200 rounded-none">
           <div className="mb-4">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <ArrowUpRight size={14} className="text-rose-500" /> Fluktuasi Pengeluaran (Harian)
+              <ArrowUpRight size={14} className="text-rose-500" /> Fluktuasi Pengeluaran Kas
             </h3>
           </div>
           <div className="h-[230px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={TREND_KELUAR_DATA}>
-                <defs>
-                  <linearGradient id="colorKeluar" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#e11d48" stopOpacity={0.06} />
-                    <stop offset="95%" stopColor="#e11d48" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }} />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }}
-                  tickFormatter={(val) => formatIDR(val, { notation: 'compact' })}
-                />
-                <Tooltip contentStyle={{ border: '1px solid #f1f5f9', borderRadius: '8px', fontSize: '11px', fontWeight: 600 }} />
-                <Area type="monotone" dataKey="jumlah" stroke="#e11d48" fillOpacity={1} fill="url(#colorKeluar)" strokeWidth={2.5} />
-              </AreaChart>
-            </ResponsiveContainer>
+            {trendData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={trendData}>
+                  <defs>
+                    <linearGradient id="colorKeluar" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#e11d48" stopOpacity={0.06} />
+                      <stop offset="95%" stopColor="#e11d48" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }} />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }}
+                    tickFormatter={(val) => formatIDR(val, { notation: 'compact' })}
+                  />
+                  <Tooltip contentStyle={{ border: '1px solid #f1f5f9', borderRadius: '0px', fontSize: '11px', fontWeight: 600 }} />
+                  <Area type="monotone" dataKey="jumlah" stroke="#e11d48" fillOpacity={1} fill="url(#colorKeluar)" strokeWidth={2.5} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-xs text-slate-400 font-medium">Belum ada data trend pengeluaran</div>
+            )}
           </div>
         </Card>
 
         {/* Donut & Prosedur */}
         <div className="lg:col-span-4 space-y-6">
-          <Card className="p-5 border-slate-200">
+          <Card className="p-5 border-slate-200 rounded-none">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <PieIcon size={14} className="text-purple-500" /> Alokasi Dana
+              <PieIcon size={14} className="text-purple-500" /> Alokasi Dana (%)
             </h3>
             <div className="h-[180px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={CATEGORY_KELUAR_DATA}
-                    innerRadius={50}
-                    outerRadius={65}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {CATEGORY_KELUAR_DATA.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 700 }} />
-                </PieChart>
-              </ResponsiveContainer>
+              {categoryData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      innerRadius={50}
+                      outerRadius={65}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 700 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-xs text-slate-400 font-medium">Belum ada alokasi kategori</div>
+              )}
             </div>
           </Card>
 
           {/* Side Info Card - Flat, seamless, no glassmorphism */}
-          <Card className="p-4 bg-amber-50 border-amber-200 text-amber-950">
+          <Card className="p-4 bg-amber-50 border-amber-200 text-amber-950 rounded-none shadow-none">
             <h4 className="font-black text-amber-800 flex items-center gap-1.5 mb-1.5 text-xs uppercase tracking-wide">
               <Info size={14} /> Prosedur Pengeluaran
             </h4>
@@ -2948,8 +3267,8 @@ const KasKeluarPage = () => {
 
       {/* Main Table - Flat with zero boxed layers inside */}
       <div className="space-y-4">
-        <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col md:flex-row gap-4 justify-between">
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg w-full md:w-80">
+        <div className="p-4 bg-white border border-slate-200 rounded-none shadow-none flex flex-col md:flex-row gap-4 justify-between">
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-none w-full md:w-80">
             <Search size={16} className="text-slate-400" />
             <input
               type="text"
@@ -2959,12 +3278,12 @@ const KasKeluarPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200">Filter Kategori</Button>
+          <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200 rounded-none">Filter Kategori</Button>
         </div>
 
         {isLoading ? (
-          <div className="p-8 text-center text-slate-500 bg-white border border-slate-200 rounded-xl shadow-sm flex items-center justify-center gap-2.5 font-semibold text-xs">
-            <div className="w-4 h-4 border-2 border-rose-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="p-8 text-center text-slate-500 bg-white border border-slate-200 rounded-none shadow-none flex items-center justify-center gap-2.5 font-semibold text-xs">
+            <div className="w-4 h-4 border-2 border-rose-600 border-t-transparent rounded-none animate-spin"></div>
             Loading data transaksi kas keluar...
           </div>
         ) : (
@@ -2985,16 +3304,19 @@ const KasKeluarPage = () => {
                 <td className="px-5 py-3 text-xs text-slate-500 font-medium border-r border-slate-100">{item.tanggal}</td>
                 <td className="px-5 py-3 text-xs font-bold text-slate-700 border-r border-slate-100">{item.penerima}</td>
                 <td className="px-5 py-3 border-r border-slate-100">
-                  <span className="text-[9px] font-black px-2 py-0.5 bg-slate-100 rounded text-slate-600 border border-slate-200 uppercase tracking-tight">
+                  <span className="text-[9px] font-black px-2 py-0.5 bg-slate-100 rounded-none text-slate-600 border border-slate-200 uppercase tracking-tight">
                     {item.kategori}
                   </span>
                 </td>
                 <td className="px-5 py-3 text-xs font-black text-right text-rose-600 border-r border-slate-100">{formatIDR(item.jumlah)}</td>
                 <td className="px-5 py-3 border-r border-slate-100">
-                  <Badge variant={item.status === 'Selesai' ? 'success' : 'warning'}>{item.status}</Badge>
+                  <Badge variant={item.status === 'Selesai' ? 'success' : 'warning'} className="rounded-none">{item.status}</Badge>
                 </td>
                 <td className="px-5 py-3 text-center">
-                  <button className="p-1 hover:bg-slate-50 border border-transparent hover:border-slate-200 rounded text-gray-400 hover:text-rose-600 transition-all">
+                  <button 
+                    onClick={() => setSelectedBuktiUrl(item.buktiUrl || 'https://via.placeholder.com/600x800?text=Nota+Pembayaran+Fisik')}
+                    className="p-1 hover:bg-slate-50 border border-transparent hover:border-slate-200 rounded-none text-gray-400 hover:text-rose-600 transition-all cursor-pointer"
+                  >
                     <FileImage size={14} />
                   </button>
                 </td>
@@ -3004,7 +3326,7 @@ const KasKeluarPage = () => {
               <div className="flex flex-col gap-2.5">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-black text-rose-600">{item.id}</span>
-                  <Badge variant={item.status === 'Selesai' ? 'success' : 'warning'}>{item.status}</Badge>
+                  <Badge variant={item.status === 'Selesai' ? 'success' : 'warning'} className="rounded-none">{item.status}</Badge>
                 </div>
                 <div className="flex justify-between items-baseline">
                   <span className="text-xs font-bold text-slate-700">{item.penerima}</span>
@@ -3012,15 +3334,37 @@ const KasKeluarPage = () => {
                 </div>
                 <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium">
                   <span>{item.tanggal}</span>
-                  <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-bold uppercase tracking-tight">
+                  <span className="px-2 py-0.5 bg-slate-100 rounded-none text-slate-600 font-bold uppercase tracking-tight">
                     {item.kategori}
                   </span>
                 </div>
+                <button
+                  onClick={() => setSelectedBuktiUrl(item.buktiUrl || 'https://via.placeholder.com/600x800?text=Nota+Pembayaran+Fisik')}
+                  className="mt-2 text-[10px] text-rose-600 hover:text-rose-700 font-black text-left uppercase tracking-wider cursor-pointer"
+                >
+                  Lihat Bukti
+                </button>
               </div>
             )}
           />
         )}
       </div>
+
+      {/* Receipt Preview Modal */}
+      <Modal isOpen={!!selectedBuktiUrl} onClose={() => setSelectedBuktiUrl(null)} title="Bukti Transaksi Kas Keluar">
+        {selectedBuktiUrl && (
+          <div className="space-y-4">
+            <div className="border border-slate-200 rounded-none overflow-hidden h-96 bg-slate-50 flex items-center justify-center">
+              <img src={selectedBuktiUrl} alt="Bukti Pengeluaran" className="max-w-full max-h-full object-contain" />
+            </div>
+            <div className="flex justify-end pt-4 border-t border-slate-100">
+              <Button onClick={() => setSelectedBuktiUrl(null)} variant="outline" size="sm" className="rounded-none">
+                Tutup Preview
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Modal Form */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Input Pengeluaran Baru">
@@ -3068,7 +3412,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                     <input
                         type="date"
                         {...register('tanggal')}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-none text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                     />
                     {errors.tanggal && <p className="text-[10px] text-rose-500 font-bold">{errors.tanggal.message}</p>}
                 </div>
@@ -3080,7 +3424,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                     </label>
                     <select
                         {...register('kategori')}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-none text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none"
                     >
                         <option value="">Pilih Kategori</option>
                         <option value="Kolekte">Kolekte</option>
@@ -3102,7 +3446,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                     type="text"
                     placeholder="Misal: Kolekte Misa Minggu Pagi"
                     {...register('sumber')}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-none text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                 />
                 {errors.sumber && <p className="text-[10px] text-rose-500 font-bold">{errors.sumber.message}</p>}
             </div>
@@ -3118,7 +3462,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                         type="number"
                         placeholder="0"
                         {...register('jumlah', { valueAsNumber: true })}
-                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-lg font-black text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-none text-lg font-black text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                     />
                 </div>
                 {errors.jumlah && <p className="text-[10px] text-rose-500 font-bold">{errors.jumlah.message}</p>}
@@ -3130,14 +3474,14 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                     type="button"
                     variant="outline"
                     onClick={onCancel}
-                    className="flex-1 py-3 rounded-xl font-bold text-slate-500"
+                    className="flex-1 py-3 rounded-none font-bold text-slate-500"
                 >
                     Batal
                 </Button>
                 <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-100 flex justify-center items-center gap-2"
+                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-none font-bold shadow-none flex justify-center items-center gap-2"
                 >
                     {isSubmitting ? 'Menyimpan...' : <><CheckCircle2 size={18} /> Simpan Data</>}
                 </Button>
@@ -3232,9 +3576,9 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { KasMasukForm } from '../components/KasMasukForm';
-import type { KasMasukInput } from '../types/kas-masuk';
+import type { KasMasukInput, KasMasuk } from '../types/kas-masuk';
 import { useActivityStore } from '../../../app/store/useActivityStore';
-import { KAS_MASUK_STATS, TREND_MASUK_DATA, CATEGORY_DATA } from '../../../shared/mock/kasMasukData';
+import { KAS_MASUK_STATS } from '../../../shared/mock/kasMasukData';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
 import { useKasMasukQuery, useAddKasMasukMutation } from '../hooks/useKasMasukQuery';
@@ -3243,6 +3587,7 @@ import { useKasMasukQuery, useAddKasMasukMutation } from '../hooks/useKasMasukQu
  * Standardized high-contrast, high-density Kas Masuk Management page.
  * Implements optimized useMemo selectors to prevent rendering lags.
  * Integrates React Query for async Server State and AdaptiveList for responsive layouts.
+ * Fully interactive with dynamic chart updates and sharp-edge visual styling.
  */
 const KasMasukPage = () => {
   const { data: kasMasuk = [], isLoading } = useKasMasukQuery();
@@ -3251,6 +3596,7 @@ const KasMasukPage = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTransaction, setSelectedTransaction] = useState<KasMasuk | null>(null);
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
@@ -3287,8 +3633,55 @@ const KasMasukPage = () => {
     return kasMasuk.reduce((sum, item) => sum + item.jumlah, 0);
   }, [kasMasuk]);
 
+  // Dynamic Trend Chart Data
+  const trendData = useMemo(() => {
+    const sorted = [...kasMasuk].sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime());
+    const groups: { [date: string]: number } = {};
+    sorted.forEach(item => {
+      const dateObj = new Date(item.tanggal);
+      const dateStr = isNaN(dateObj.getTime())
+        ? item.tanggal
+        : dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+      groups[dateStr] = (groups[dateStr] || 0) + item.jumlah;
+    });
+    return Object.entries(groups).map(([date, jumlah]) => ({ date, jumlah }));
+  }, [kasMasuk]);
+
+  // Dynamic Category Pie Data
+  const categoryData = useMemo(() => {
+    const totals: Record<string, number> = {
+      'Kolekte': 0,
+      'Donasi': 0,
+      'Persembahan': 0,
+      'Pembangunan': 0,
+      'Lainnya': 0,
+    };
+    let grandTotal = 0;
+    kasMasuk.forEach(item => {
+      const cat = item.kategori || 'Lainnya';
+      totals[cat] = (totals[cat] || 0) + item.jumlah;
+      grandTotal += item.jumlah;
+    });
+
+    const colors: Record<string, string> = {
+      'Kolekte': '#0284c7', // blue
+      'Donasi': '#10b981', // emerald
+      'Pembangunan': '#f59e0b', // amber
+      'Persembahan': '#6366f1', // purple
+      'Lainnya': '#64748b', // slate
+    };
+
+    return Object.entries(totals)
+      .filter(([_, value]) => value > 0)
+      .map(([name, value]) => ({
+        name,
+        value: grandTotal > 0 ? Math.round((value / grandTotal) * 100) : 0,
+        color: colors[name] || '#64748b',
+      }));
+  }, [kasMasuk]);
+
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -3296,10 +3689,10 @@ const KasMasukPage = () => {
           <p className="text-sm text-gray-500">Pantau dan catat seluruh penerimaan paroki.</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button variant="outline" className="flex-1 sm:flex-none flex items-center justify-center gap-2 text-xs border-slate-200">
+          <Button variant="outline" className="flex-1 sm:flex-none flex items-center justify-center gap-2 text-xs border-slate-200 rounded-none">
             <Download size={16} /> Export Laporan
           </Button>
-          <Button onClick={handleOpenModal} className="flex-1 sm:flex-none flex items-center justify-center gap-2 shadow-sm text-xs bg-blue-600 hover:bg-blue-700 text-white">
+          <Button onClick={handleOpenModal} className="flex-1 sm:flex-none flex items-center justify-center gap-2 shadow-none text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-none">
             <Plus size={16} /> Transaksi Baru
           </Button>
         </div>
@@ -3307,7 +3700,7 @@ const KasMasukPage = () => {
 
       {/* Stats Cards Section - Compact Space Padding & Flat border styling */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4 border-l-4 border-l-blue-600 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border-l-4 border-l-blue-600 border-y-slate-200 border-r-slate-200 rounded-none">
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Total Bulan Ini</p>
           <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(totalBulanIni)}</h4>
           <div className="flex items-center gap-1 mt-2 text-emerald-600 font-bold text-[10px]">
@@ -3315,19 +3708,19 @@ const KasMasukPage = () => {
             <span>+{KAS_MASUK_STATS.growth}%</span>
           </div>
         </Card>
-        <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200 rounded-none">
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Target Penerimaan</p>
           <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(KAS_MASUK_STATS.targetBulan)}</h4>
-          <div className="w-full bg-slate-100 h-1 rounded-full mt-3 overflow-hidden">
-            <div className="bg-emerald-500 h-full" style={{ width: '90%' }}></div>
+          <div className="w-full bg-slate-100 h-1 rounded-none mt-3 overflow-hidden">
+            <div className="bg-emerald-500 h-full rounded-none" style={{ width: '90%' }}></div>
           </div>
         </Card>
-        <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200 rounded-none">
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Sumber Terbesar</p>
           <h4 className="text-sm font-black mt-2 text-slate-800 truncate tracking-tight">{KAS_MASUK_STATS.sumberTerbesar}</h4>
           <p className="text-[9px] text-slate-400 mt-2 font-bold italic">Kontribusi 55% dari total</p>
         </Card>
-        <Card className="p-4 border-l-4 border-l-purple-600 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border-l-4 border-l-purple-600 border-y-slate-200 border-r-slate-200 rounded-none">
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Hari Ini</p>
           <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(1250000)}</h4>
           <p className="text-[9px] text-slate-400 mt-2 font-bold italic">3 Transaksi masuk</p>
@@ -3337,66 +3730,74 @@ const KasMasukPage = () => {
       {/* Analytics Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Trend Chart - Aspect containment instead of hardcoded pixels */}
-        <Card className="lg:col-span-8 p-5 border-slate-200">
+        <Card className="lg:col-span-8 p-5 border-slate-200 rounded-none">
           <div className="mb-4">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Calendar size={14} className="text-blue-500" /> Tren Penerimaan 30 Hari Terakhir
+              <Calendar size={14} className="text-blue-500" /> Tren Penerimaan Kas
             </h3>
           </div>
           <div className="h-[230px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={TREND_MASUK_DATA}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }} />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }}
-                  tickFormatter={(val) => formatIDR(val, { notation: 'compact' })}
-                />
-                <Tooltip contentStyle={{ border: '1px solid #f1f5f9', borderRadius: '8px', fontSize: '11px', fontWeight: 600 }} />
-                <Line type="monotone" dataKey="jumlah" stroke="#0284c7" strokeWidth={2.5} dot={{ r: 3, fill: '#0284c7' }} activeDot={{ r: 5 }} />
-              </LineChart>
-            </ResponsiveContainer>
+            {trendData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trendData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }} />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }}
+                    tickFormatter={(val) => formatIDR(val, { notation: 'compact' })}
+                  />
+                  <Tooltip contentStyle={{ border: '1px solid #f1f5f9', borderRadius: '0px', fontSize: '11px', fontWeight: 600 }} />
+                  <Line type="monotone" dataKey="jumlah" stroke="#0284c7" strokeWidth={2.5} dot={{ r: 3, fill: '#0284c7' }} activeDot={{ r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-xs text-slate-400 font-medium">Belum ada data trend</div>
+            )}
           </div>
         </Card>
 
         {/* Donut Chart & Info */}
         <div className="lg:col-span-4 space-y-6">
-          <Card className="p-5 border-slate-200">
+          <Card className="p-5 border-slate-200 rounded-none">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Target size={14} className="text-emerald-500" /> Komposisi Dana
+              <Target size={14} className="text-emerald-500" /> Komposisi Dana (%)
             </h3>
             <div className="h-[180px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={CATEGORY_DATA}
-                    innerRadius={50}
-                    outerRadius={65}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {CATEGORY_DATA.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 700 }} />
-                </PieChart>
-              </ResponsiveContainer>
+              {categoryData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      innerRadius={50}
+                      outerRadius={65}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 700 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-xs text-slate-400 font-medium">Belum ada komposisi kategori</div>
+              )}
             </div>
           </Card>
 
           {/* Sidebar Info Card - Flat, seamless, without glassmorphism */}
-          <Card className="p-4 bg-blue-50 border-blue-100/60 text-blue-900">
+          <Card className="p-4 bg-blue-50 border-blue-100/60 text-blue-900 rounded-none shadow-none">
             <h4 className="font-black text-blue-800 flex items-center gap-1.5 mb-1.5 text-xs uppercase tracking-wide">
               <Info size={14} /> Informasi Kas
             </h4>
             <p className="text-[11px] text-blue-700/90 leading-relaxed font-semibold">
               Jangan lupa melakukan verifikasi fisik (hitung uang cash) sebelum menekan status "Selesai" pada input Kolekte.
             </p>
-            <button className="mt-3 text-[10px] bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-black transition-colors uppercase tracking-wide">
+            <button className="mt-3 text-[10px] bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-none font-black transition-colors uppercase tracking-wide cursor-pointer">
               Baca Panduan Input
             </button>
           </Card>
@@ -3405,8 +3806,8 @@ const KasMasukPage = () => {
 
       {/* Main Table Section - Flat & Seamless border structures */}
       <div className="space-y-4">
-        <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col md:flex-row gap-4 justify-between">
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg w-full md:w-80">
+        <div className="p-4 bg-white border border-slate-200 rounded-none shadow-none flex flex-col md:flex-row gap-4 justify-between">
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-none w-full md:w-80">
             <Search size={16} className="text-slate-400" />
             <input
               type="text"
@@ -3416,14 +3817,14 @@ const KasMasukPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200">
+          <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200 rounded-none">
             <Filter size={14} /> Filter Lanjutan
           </Button>
         </div>
 
         {isLoading ? (
-          <div className="p-8 text-center text-slate-500 bg-white border border-slate-200 rounded-xl shadow-sm flex items-center justify-center gap-2.5 font-semibold text-xs">
-            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="p-8 text-center text-slate-500 bg-white border border-slate-200 rounded-none shadow-none flex items-center justify-center gap-2.5 font-semibold text-xs">
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-none animate-spin"></div>
             Loading data transaksi kas masuk...
           </div>
         ) : (
@@ -3443,19 +3844,22 @@ const KasMasukPage = () => {
                 <td className="px-5 py-3 text-xs font-black text-blue-600 border-r border-slate-100">{item.id}</td>
                 <td className="px-5 py-3 text-xs text-slate-500 font-medium border-r border-slate-100">{item.tanggal}</td>
                 <td className="px-5 py-3 border-r border-slate-100">
-                  <span className="text-[9px] font-black px-2 py-0.5 bg-slate-100 rounded text-slate-600 border border-slate-200 uppercase tracking-tight">
+                  <span className="text-[9px] font-black px-2 py-0.5 bg-slate-100 rounded-none text-slate-600 border border-slate-200 uppercase tracking-tight">
                     {item.kategori}
                   </span>
                 </td>
                 <td className="px-5 py-3 text-xs font-bold text-slate-700 border-r border-slate-100">{item.sumber}</td>
                 <td className="px-5 py-3 text-xs font-black text-right text-emerald-600 border-r border-slate-100">{formatIDR(item.jumlah)}</td>
                 <td className="px-5 py-3 border-r border-slate-100">
-                  <Badge variant={item.status === 'Selesai' ? 'success' : 'warning'}>
+                  <Badge variant={item.status === 'Selesai' ? 'success' : 'warning'} className="rounded-none">
                     {item.status}
                   </Badge>
                 </td>
                 <td className="px-5 py-3 text-center">
-                  <button className="p-1 hover:bg-slate-50 border border-transparent hover:border-slate-200 rounded shadow-sm text-gray-400 hover:text-blue-600 transition-all">
+                  <button 
+                    onClick={() => setSelectedTransaction(item)}
+                    className="p-1 hover:bg-slate-50 border border-transparent hover:border-slate-200 rounded-none text-gray-400 hover:text-blue-600 transition-all cursor-pointer"
+                  >
                     <MoreVertical size={14} />
                   </button>
                 </td>
@@ -3465,7 +3869,7 @@ const KasMasukPage = () => {
               <div className="flex flex-col gap-2.5">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-black text-blue-600">{item.id}</span>
-                  <Badge variant={item.status === 'Selesai' ? 'success' : 'warning'}>
+                  <Badge variant={item.status === 'Selesai' ? 'success' : 'warning'} className="rounded-none">
                     {item.status}
                   </Badge>
                 </div>
@@ -3475,15 +3879,76 @@ const KasMasukPage = () => {
                 </div>
                 <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium">
                   <span>{item.tanggal}</span>
-                  <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-bold uppercase tracking-tight">
+                  <span className="px-2 py-0.5 bg-slate-100 rounded-none text-slate-600 font-bold uppercase tracking-tight">
                     {item.kategori}
                   </span>
                 </div>
+                <button
+                  onClick={() => setSelectedTransaction(item)}
+                  className="mt-2 text-[10px] text-blue-600 hover:text-blue-700 font-black text-left uppercase tracking-wider cursor-pointer"
+                >
+                  Detail Transaksi
+                </button>
               </div>
             )}
           />
         )}
       </div>
+
+      {/* Detail Modal */}
+      <Modal
+        isOpen={!!selectedTransaction}
+        onClose={() => setSelectedTransaction(null)}
+        title="Detail Transaksi Kas Masuk"
+      >
+        {selectedTransaction && (
+          <div className="space-y-4">
+            <div className="border-b border-slate-100 pb-3">
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">ID Transaksi</span>
+              <p className="text-sm font-bold text-blue-600">{selectedTransaction.id}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4 border-b border-slate-100 pb-3">
+              <div>
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Tanggal</span>
+                <p className="text-xs font-bold text-slate-700">{selectedTransaction.tanggal}</p>
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Kategori</span>
+                <div>
+                  <span className="text-[9px] font-black px-2 py-0.5 bg-slate-100 rounded-none text-slate-600 border border-slate-200 uppercase tracking-tight">
+                    {selectedTransaction.kategori}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="border-b border-slate-100 pb-3">
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Keterangan Sumber</span>
+              <p className="text-xs font-bold text-slate-700">{selectedTransaction.sumber}</p>
+            </div>
+            <div className="border-b border-slate-100 pb-3">
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Jumlah</span>
+              <p className="text-sm font-black text-emerald-600">{formatIDR(selectedTransaction.jumlah)}</p>
+            </div>
+            <div className="border-b border-slate-100 pb-3">
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Keterangan Tambahan</span>
+              <p className="text-xs font-medium text-slate-600">{selectedTransaction.keterangan || '-'}</p>
+            </div>
+            <div className="pb-2">
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Status</span>
+              <div className="mt-1">
+                <Badge variant={selectedTransaction.status === 'Selesai' ? 'success' : 'warning'} className="rounded-none">
+                  {selectedTransaction.status}
+                </Badge>
+              </div>
+            </div>
+            <div className="flex justify-end pt-4 border-t border-slate-100">
+              <Button onClick={() => setSelectedTransaction(null)} variant="outline" size="sm" className="rounded-none">
+                Tutup
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Modal Form */}
       <Modal
@@ -3491,8 +3956,8 @@ const KasMasukPage = () => {
         onClose={handleCloseModal}
         title="Input Penerimaan Kas Baru"
       >
-        <div className="mb-4 p-4 bg-blue-50 rounded-xl flex gap-3 items-center">
-          <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100">
+        <div className="mb-4 p-4 bg-blue-50 rounded-none flex gap-3 items-center">
+          <div className="p-2 bg-white rounded-none text-blue-600 shadow-none border border-slate-100">
             <Info size={16} />
           </div>
           <p className="text-[11px] text-blue-700 leading-normal font-semibold">
@@ -3536,24 +4001,24 @@ interface LaporanArusKasProps {
  */
 export const LaporanArusKas: React.FC<LaporanArusKasProps> = ({ summary }) => {
     return (
-        <div className="overflow-x-auto shadow-sm rounded-xl border border-gray-200">
+        <div className="overflow-x-auto border border-slate-200 rounded-none shadow-none">
             <table className="w-full text-left border-collapse">
                 <thead>
-                    <tr className="bg-slate-100 text-slate-800 text-[12px] font-black uppercase border-b border-gray-200">
-                        <th className="p-4 border-r border-gray-200">Aktivitas Arus Kas</th>
+                    <tr className="bg-slate-100 text-slate-800 text-[12px] font-black uppercase border-b border-slate-200">
+                        <th className="p-4 border-r border-slate-200">Aktivitas Arus Kas</th>
                         <th className="p-4 text-right w-64">Jumlah (IDR)</th>
                     </tr>
                 </thead>
-                <tbody className="text-sm bg-white divide-y divide-gray-200">
+                <tbody className="text-sm bg-white divide-y divide-slate-100">
                     {/* ARUS KAS MASUK */}
                     <tr className="bg-slate-50/50 font-black text-slate-800">
-                        <td className="p-3 pl-4 border-r border-gray-200 uppercase tracking-wider text-[11px] text-slate-500">
+                        <td className="p-3 pl-4 border-r border-slate-100 uppercase tracking-wider text-[11px] text-slate-500">
                             Arus Kas Masuk (Penerimaan)
                         </td>
                         <td className="p-3"></td>
                     </tr>
                     <tr className="hover:bg-slate-50/30 transition-colors">
-                        <td className="p-3 pl-8 text-slate-600 font-semibold border-r border-gray-200">
+                        <td className="p-3 pl-8 text-slate-600 font-semibold border-r border-slate-100">
                             Penerimaan Kolekte
                         </td>
                         <td className="p-3 text-right text-emerald-600 font-black">
@@ -3561,7 +4026,7 @@ export const LaporanArusKas: React.FC<LaporanArusKasProps> = ({ summary }) => {
                         </td>
                     </tr>
                     <tr className="hover:bg-slate-50/30 transition-colors">
-                        <td className="p-3 pl-8 text-slate-600 font-semibold border-r border-gray-200">
+                        <td className="p-3 pl-8 text-slate-600 font-semibold border-r border-slate-100">
                             Penerimaan Donasi / Aksi Sosial
                         </td>
                         <td className="p-3 text-right text-emerald-600 font-black">
@@ -3569,7 +4034,7 @@ export const LaporanArusKas: React.FC<LaporanArusKasProps> = ({ summary }) => {
                         </td>
                     </tr>
                     <tr className="hover:bg-slate-50/30 transition-colors">
-                        <td className="p-3 pl-8 text-slate-600 font-semibold border-r border-gray-200">
+                        <td className="p-3 pl-8 text-slate-600 font-semibold border-r border-slate-100">
                             Dana Pembangunan Altar / Gedung
                         </td>
                         <td className="p-3 text-right text-emerald-600 font-black">
@@ -3577,15 +4042,15 @@ export const LaporanArusKas: React.FC<LaporanArusKasProps> = ({ summary }) => {
                         </td>
                     </tr>
                     <tr className="hover:bg-slate-50/30 transition-colors">
-                        <td className="p-3 pl-8 text-slate-600 font-semibold border-r border-gray-200">
+                        <td className="p-3 pl-8 text-slate-600 font-semibold border-r border-slate-100">
                             Persembahan & Pendapatan Lain-lain
                         </td>
                         <td className="p-3 text-right text-emerald-600 font-black">
                             {formatIDR(summary.inboundLainnya)}
                         </td>
                     </tr>
-                    <tr className="bg-emerald-50/40 text-emerald-800 font-bold border-b-2">
-                        <td className="p-3 pl-6 border-r border-gray-200 uppercase text-[11px] tracking-wider">
+                    <tr className="bg-slate-50 text-emerald-600 font-bold border-b border-slate-100">
+                        <td className="p-3 pl-6 border-r border-slate-100 uppercase text-[11px] tracking-wider">
                             Total Penerimaan Kas
                         </td>
                         <td className="p-3 text-right font-black">
@@ -3595,13 +4060,13 @@ export const LaporanArusKas: React.FC<LaporanArusKasProps> = ({ summary }) => {
 
                     {/* ARUS KAS KELUAR */}
                     <tr className="bg-slate-50/50 font-black text-slate-800">
-                        <td className="p-3 pl-4 border-r border-gray-200 uppercase tracking-wider text-[11px] text-slate-500">
+                        <td className="p-3 pl-4 border-r border-slate-100 uppercase tracking-wider text-[11px] text-slate-500">
                             Arus Kas Keluar (Pengeluaran)
                         </td>
                         <td className="p-3"></td>
                     </tr>
                     <tr className="hover:bg-slate-50/30 transition-colors">
-                        <td className="p-3 pl-8 text-slate-600 font-semibold border-r border-gray-200">
+                        <td className="p-3 pl-8 text-slate-600 font-semibold border-r border-slate-100">
                             Pengeluaran Administrasi & Operasional Kantor
                         </td>
                         <td className="p-3 text-right text-rose-600 font-black">
@@ -3609,7 +4074,7 @@ export const LaporanArusKas: React.FC<LaporanArusKasProps> = ({ summary }) => {
                         </td>
                     </tr>
                     <tr className="hover:bg-slate-50/30 transition-colors">
-                        <td className="p-3 pl-8 text-slate-600 font-semibold border-r border-gray-200">
+                        <td className="p-3 pl-8 text-slate-600 font-semibold border-r border-slate-100">
                             Pengeluaran Liturgi & Perayaan Hari Raya
                         </td>
                         <td className="p-3 text-right text-rose-600 font-black">
@@ -3617,15 +4082,15 @@ export const LaporanArusKas: React.FC<LaporanArusKasProps> = ({ summary }) => {
                         </td>
                     </tr>
                     <tr className="hover:bg-slate-50/30 transition-colors">
-                        <td className="p-3 pl-8 text-slate-600 font-semibold border-r border-gray-200">
+                        <td className="p-3 pl-8 text-slate-600 font-semibold border-r border-slate-100">
                             Belanja Kegiatan Komisi & Pembinaan Iman
                         </td>
                         <td className="p-3 text-right text-rose-600 font-black">
                             {formatIDR(summary.outboundKegiatan)}
                         </td>
                     </tr>
-                    <tr className="bg-rose-50/40 text-rose-800 font-bold">
-                        <td className="p-3 pl-6 border-r border-gray-200 uppercase text-[11px] tracking-wider">
+                    <tr className="bg-slate-50 text-rose-600 font-bold border-b border-slate-100">
+                        <td className="p-3 pl-6 border-r border-slate-100 uppercase text-[11px] tracking-wider">
                             Total Pengeluaran Kas
                         </td>
                         <td className="p-3 text-right font-black">
@@ -3634,11 +4099,11 @@ export const LaporanArusKas: React.FC<LaporanArusKasProps> = ({ summary }) => {
                     </tr>
                 </tbody>
                 <tfoot>
-                    <tr className="bg-slate-900 text-white font-bold text-base">
-                        <td className="p-4 pl-4 uppercase border-r border-slate-700 tracking-wider text-xs">
+                    <tr className="bg-slate-50 text-slate-800 font-bold text-base border-t border-slate-200">
+                        <td className="p-4 pl-4 uppercase border-r border-slate-200 tracking-wider text-xs">
                             Kenaikan / (Penurunan) Bersih Kas
                         </td>
-                        <td className="p-4 text-right font-black text-amber-400 underline decoration-double underline-offset-4">
+                        <td className="p-4 text-right font-black bg-slate-100/80 text-slate-900 underline decoration-double underline-offset-4">
                             {formatIDR(summary.kenaikanBersihKas)}
                         </td>
                     </tr>
@@ -3671,39 +4136,39 @@ export const LaporanBKU: React.FC<LaporanBKUProps> = ({
     endingSaldo,
 }) => {
     return (
-        <div className="overflow-x-auto shadow-sm rounded-xl border border-gray-200">
+        <div className="overflow-x-auto border border-slate-200 rounded-none shadow-none">
             <table className="w-full text-left border-collapse">
                 <thead>
-                    <tr className="bg-slate-100 text-slate-800 text-[11px] font-black uppercase border-b border-gray-200">
-                        <th className="p-3 text-center w-12 border-r border-gray-200">No</th>
-                        <th className="p-3 w-32 border-r border-gray-200">Tanggal</th>
-                        <th className="p-3 border-r border-gray-200">Keterangan</th>
-                        <th className="p-3 text-center w-28 border-r border-gray-200">Ref</th>
-                        <th className="p-3 text-right w-40 border-r border-gray-200">Masuk (Dr)</th>
-                        <th className="p-3 text-right w-40 border-r border-gray-200">Keluar (Cr)</th>
+                    <tr className="bg-slate-100 text-slate-800 text-[11px] font-black uppercase border-b border-slate-200">
+                        <th className="p-3 text-center w-12 border-r border-slate-200">No</th>
+                        <th className="p-3 w-32 border-r border-slate-200">Tanggal</th>
+                        <th className="p-3 border-r border-slate-200">Keterangan</th>
+                        <th className="p-3 text-center w-28 border-r border-slate-200">Ref</th>
+                        <th className="p-3 text-right w-40 border-r border-slate-200">Masuk (Dr)</th>
+                        <th className="p-3 text-right w-40 border-r border-slate-200">Keluar (Cr)</th>
                         <th className="p-3 text-right bg-slate-200/80 w-44">Saldo</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
+                <tbody className="divide-y divide-slate-100 bg-white">
                     {records.length > 0 ? (
                         records.map((item, idx) => (
                             <tr key={item.id} className="text-sm hover:bg-slate-50/50 transition-colors">
-                                <td className="p-3 text-center text-gray-500 font-medium border-r border-gray-200">
+                                <td className="p-3 text-center text-gray-500 font-medium border-r border-slate-100">
                                     {idx + 1}
                                 </td>
-                                <td className="p-3 text-slate-600 font-medium whitespace-nowrap border-r border-gray-200">
+                                <td className="p-3 text-slate-600 font-medium whitespace-nowrap border-r border-slate-100">
                                     {formatDate(item.tanggal)}
                                 </td>
-                                <td className="p-3 font-semibold text-slate-700 leading-relaxed border-r border-gray-200">
+                                <td className="p-3 font-semibold text-slate-700 leading-relaxed border-r border-slate-100">
                                     {item.keterangan}
                                 </td>
-                                <td className="p-3 text-center font-mono text-xs text-blue-600 font-semibold border-r border-gray-200">
+                                <td className="p-3 text-center font-mono text-xs text-slate-800 font-semibold border-r border-slate-100">
                                     {item.ref}
                                 </td>
-                                <td className="p-3 text-right text-emerald-600 font-black border-r border-gray-200">
+                                <td className="p-3 text-right text-emerald-600 font-black border-r border-slate-100">
                                     {item.masuk > 0 ? formatIDR(item.masuk) : '-'}
                                 </td>
-                                <td className="p-3 text-right text-rose-600 font-black border-r border-gray-200">
+                                <td className="p-3 text-right text-rose-600 font-black border-r border-slate-100">
                                     {item.keluar > 0 ? formatIDR(item.keluar) : '-'}
                                 </td>
                                 <td className="p-3 text-right font-black bg-slate-50/30 text-slate-800">
@@ -3720,17 +4185,17 @@ export const LaporanBKU: React.FC<LaporanBKUProps> = ({
                     )}
                 </tbody>
                 <tfoot>
-                    <tr className="bg-slate-900 text-white font-bold text-sm">
-                        <td colSpan={4} className="p-4 text-right uppercase tracking-wider text-xs border-r border-slate-700">
+                    <tr className="bg-slate-50 text-slate-800 font-bold text-sm border-t border-slate-200">
+                        <td colSpan={4} className="p-4 text-right uppercase tracking-wider text-xs border-r border-slate-200">
                             Total Mutasi Periode Ini
                         </td>
-                        <td className="p-4 text-right text-emerald-400 font-black border-r border-slate-700">
+                        <td className="p-4 text-right text-emerald-600 font-black border-r border-slate-200">
                             {formatIDR(totalMasuk)}
                         </td>
-                        <td className="p-4 text-right text-rose-400 font-black border-r border-slate-700">
+                        <td className="p-4 text-right text-rose-600 font-black border-r border-slate-200">
                             {formatIDR(totalKeluar)}
                         </td>
-                        <td className="p-4 text-right bg-slate-800 text-amber-400 font-black underline decoration-double underline-offset-4">
+                        <td className="p-4 text-right bg-slate-100/80 text-slate-900 font-black underline decoration-double underline-offset-4">
                             {formatIDR(endingSaldo)}
                         </td>
                     </tr>
@@ -3761,35 +4226,35 @@ export const LaporanRealisasi: React.FC<LaporanRealisasiProps> = ({ realisations
     const totalPersen = totalAnggaran > 0 ? (totalRealisasi / totalAnggaran) * 100 : 0;
 
     return (
-        <div className="overflow-x-auto shadow-sm rounded-xl border border-gray-200">
+        <div className="overflow-x-auto border border-slate-200 rounded-none shadow-none">
             <table className="w-full text-left border-collapse">
                 <thead>
-                    <tr className="bg-slate-100 text-slate-800 text-[11px] font-black uppercase border-b border-gray-200">
-                        <th className="p-3 border-r border-gray-200">Pos Anggaran</th>
-                        <th className="p-3 text-right border-r border-gray-200 w-48">Plafon Anggaran</th>
-                        <th className="p-3 text-right border-r border-gray-200 w-48">Realisasi Pengeluaran</th>
-                        <th className="p-3 text-center border-r border-gray-200 w-32">Serapan (%)</th>
+                    <tr className="bg-slate-100 text-slate-800 text-[11px] font-black uppercase border-b border-slate-200">
+                        <th className="p-3 border-r border-slate-200">Pos Anggaran</th>
+                        <th className="p-3 text-right border-r border-slate-200 w-48">Plafon Anggaran</th>
+                        <th className="p-3 text-right border-r border-slate-200 w-48">Realisasi Pengeluaran</th>
+                        <th className="p-3 text-center border-r border-slate-200 w-32">Serapan (%)</th>
                         <th className="p-3 text-right w-48">Sisa Pagu</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
+                <tbody className="divide-y divide-slate-100 bg-white">
                     {realisations.length > 0 ? (
                         realisations.map((item) => (
                             <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="p-3 font-semibold text-slate-700 border-r border-gray-200">
+                                <td className="p-3 font-semibold text-slate-700 border-r border-slate-100">
                                     {item.nama}
                                 </td>
-                                <td className="p-3 text-right text-slate-600 font-medium border-r border-gray-200">
+                                <td className="p-3 text-right text-slate-600 font-medium border-r border-slate-100">
                                     {formatIDR(item.anggaran)}
                                 </td>
-                                <td className="p-3 text-right text-rose-600 font-black border-r border-gray-200">
+                                <td className="p-3 text-right text-rose-600 font-black border-r border-slate-100">
                                     {formatIDR(item.realisasi)}
                                 </td>
-                                <td className="p-3 border-r border-gray-200 text-center">
+                                <td className="p-3 border-r border-slate-100 text-center">
                                     <span
-                                        className={`inline-block px-2.5 py-1 rounded text-xs font-black tracking-tight ${item.persen > 80
-                                            ? 'bg-rose-50 text-rose-700 border border-rose-100'
-                                            : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                        className={`inline-block px-2.5 py-1 rounded-none text-xs font-black tracking-tight ${item.persen > 80
+                                            ? 'bg-rose-50/50 text-rose-700 border border-rose-100'
+                                            : 'bg-emerald-50/50 text-emerald-700 border border-emerald-100'
                                             }`}
                                     >
                                         {Math.round(item.persen)}%
@@ -3809,20 +4274,20 @@ export const LaporanRealisasi: React.FC<LaporanRealisasiProps> = ({ realisations
                     )}
                 </tbody>
                 <tfoot>
-                    <tr className="bg-slate-900 text-white font-bold text-sm">
-                        <td className="p-4 uppercase border-r border-slate-700 text-xs tracking-wider">
+                    <tr className="bg-slate-50 text-slate-800 font-bold text-sm border-t border-slate-200">
+                        <td className="p-4 uppercase border-r border-slate-200 text-xs tracking-wider">
                             Total Pagu Anggaran Paroki
                         </td>
-                        <td className="p-4 text-right border-r border-slate-700 font-black">
+                        <td className="p-4 text-right border-r border-slate-200 text-slate-800 font-black">
                             {formatIDR(totalAnggaran)}
                         </td>
-                        <td className="p-4 text-right border-r border-slate-700 text-rose-300 font-black">
+                        <td className="p-4 text-right border-r border-slate-200 text-rose-600 font-black">
                             {formatIDR(totalRealisasi)}
                         </td>
-                        <td className="p-4 text-center border-r border-slate-700 font-black text-amber-400 text-xs">
+                        <td className="p-4 text-center border-r border-slate-200 font-black text-slate-800 text-xs">
                             {Math.round(totalPersen)}%
                         </td>
-                        <td className="p-4 text-right bg-slate-800 text-emerald-400 font-black underline decoration-double underline-offset-4">
+                        <td className="p-4 text-right bg-slate-100/80 text-emerald-600 font-black underline decoration-double underline-offset-4">
                             {formatIDR(totalSisa)}
                         </td>
                     </tr>
@@ -4053,7 +4518,7 @@ const LaporanPage = () => {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-fade-slide">
             {/* Header & Export Actions */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
@@ -4086,13 +4551,13 @@ const LaporanPage = () => {
             </div>
 
             {/* Report Type Selector */}
-            <div className="flex bg-white p-1 rounded-xl border border-gray-200 shadow-sm w-fit">
+            <div className="flex gap-6 border-b border-slate-200 overflow-x-auto no-scrollbar pb-1 text-xs md:text-sm font-bold text-gray-400">
                 <button
                     onClick={() => {
                         setActiveTab('BKU');
                         setSearch('');
                     }}
-                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'BKU' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                    className={`pb-3 whitespace-nowrap transition-all rounded-none ${activeTab === 'BKU' ? 'border-b-2 border-slate-800 text-slate-800' : 'hover:text-slate-600'}`}
                 >
                     Buku Kas Umum
                 </button>
@@ -4101,7 +4566,7 @@ const LaporanPage = () => {
                         setActiveTab('ARUS_KAS');
                         setSearch('');
                     }}
-                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'ARUS_KAS' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                    className={`pb-3 whitespace-nowrap transition-all rounded-none ${activeTab === 'ARUS_KAS' ? 'border-b-2 border-slate-800 text-slate-800' : 'hover:text-slate-600'}`}
                 >
                     Arus Kas
                 </button>
@@ -4110,22 +4575,22 @@ const LaporanPage = () => {
                         setActiveTab('REALISASI');
                         setSearch('');
                     }}
-                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'REALISASI' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                    className={`pb-3 whitespace-nowrap transition-all rounded-none ${activeTab === 'REALISASI' ? 'border-b-2 border-slate-800 text-slate-800' : 'hover:text-slate-600'}`}
                 >
                     Realisasi Anggaran
                 </button>
             </div>
 
             {/* Filter Toolbar */}
-            <Card className="p-4 bg-slate-50 border-none flex flex-col md:flex-row gap-4 items-center">
-                <div className="flex items-center gap-2 bg-white px-3 py-2 border rounded-lg w-full md:w-auto">
+            <Card className="p-4 bg-transparent border-none shadow-none flex flex-col md:flex-row gap-4 items-center rounded-none">
+                <div className="flex items-center gap-2 bg-white px-3 py-2 border border-slate-200 rounded-none w-full md:w-auto">
                     <Calendar size={18} className="text-gray-400" />
                     <select className="bg-transparent text-sm font-medium outline-none">
                         <option>Mei 2025</option>
                     </select>
                 </div>
                 {activeTab === 'BKU' && (
-                    <div className="flex items-center gap-2 bg-white px-3 py-2 border rounded-lg w-full md:w-auto">
+                    <div className="flex items-center gap-2 bg-white px-3 py-2 border border-slate-200 rounded-none w-full md:w-auto">
                         <Search size={18} className="text-gray-400" />
                         <input
                             type="text"
@@ -4142,14 +4607,14 @@ const LaporanPage = () => {
             </Card>
 
             {/* Report Table Area */}
-            <Card className="p-0 overflow-hidden shadow-xl border-gray-200">
+            <Card className="p-0 overflow-hidden shadow-none border border-slate-200 rounded-none">
                 <div className="p-8 bg-white print:p-0">
                     {/* Header Laporan */}
                     <div className="text-center mb-8 border-b-2 border-slate-900 pb-6">
                         <h1 className="text-2xl font-black uppercase tracking-wide">KEUSKUPAN AGUNG MERAUKE</h1>
                         <h2 className="text-xl font-bold uppercase text-slate-800">Paroki St. Stefanus - Sempan</h2>
                         <p className="text-sm text-gray-600">Tahun Anggaran: 2025</p>
-                        <div className="mt-4 inline-block bg-slate-900 text-white px-4 py-1.5 text-xs font-bold rounded">
+                        <div className="mt-4 inline-block bg-slate-900 text-white px-4 py-1.5 text-xs font-bold rounded-none">
                             {activeTab === 'BKU' ? 'LAPORAN BUKU KAS UMUM' : activeTab === 'ARUS_KAS' ? 'LAPORAN ARUS KAS' : 'LAPORAN REALISASI ANGGARAN'}
                         </div>
                     </div>
@@ -4197,6 +4662,7 @@ export default LaporanPage;
 --- FILE: src\modules\profile\hooks\useProfileQuery.ts ---
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '../../../app/api/axios.config';
+import { useAuthStore } from '../../../app/store/useAuthStore';
 
 /**
  * Type definisi untuk data profil yang dikembalikan oleh endpoint GET /api/v1/auth/me.
@@ -4292,9 +4758,14 @@ export const useUpdateAvatarMutation = () => {
 
       return response.data.data.user as UserProfile;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       // Invalidate cache profil agar data fresh diambil ulang dari server
       queryClient.invalidateQueries({ queryKey: profileQueryKeys.me });
+
+      // Sinkronkan ke Zustand store agar perubahan langsung terlihat di seluruh aplikasi (seperti Header)
+      useAuthStore.setState((state) => ({
+        user: state.user ? { ...state.user, avatarUrl: data.avatarUrl } : null,
+      }));
     },
   });
 };
@@ -4342,6 +4813,7 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { cn } from '../../../shared/utils/cn';
+import { getAvatarUrl } from '../../../shared/utils/formatter';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // ZOD SCHEMA — Validasi form ubah kata sandi (frontend layer)
@@ -4504,7 +4976,7 @@ const ProfilePage = () => {
   // ──────────────────────────────────────────────────────────────────────────
   if (isProfileLoading) {
     return (
-      <div className="max-w-4xl mx-auto pb-10 animate-pulse">
+      <div className="max-w-4xl mx-auto pb-10 animate-pulse animate-fade-slide">
         <div className="h-8 bg-slate-100 w-64 mb-2" />
         <div className="h-4 bg-slate-100 w-48 mb-8" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-slate-200 bg-white">
@@ -4529,7 +5001,7 @@ const ProfilePage = () => {
   // RENDER UTAMA
   // ──────────────────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-4xl mx-auto pb-10 space-y-0">
+    <div className="max-w-4xl mx-auto pb-10 space-y-0 animate-fade-slide">
 
       {/* ── PAGE HEADER ── */}
       <div className="mb-8">
@@ -4565,7 +5037,7 @@ const ProfilePage = () => {
               >
                 {displayAvatar ? (
                   <img
-                    src={displayAvatar}
+                    src={getAvatarUrl(displayAvatar) || undefined}
                     alt={`Avatar ${displayName}`}
                     className="w-full h-full object-cover"
                   />
@@ -4940,7 +5412,7 @@ export const SPJCard: React.FC<SPJCardProps> = ({ doc, onPreview }) => {
   };
 
   return (
-    <Card className="group hover:shadow-md hover:border-slate-300 transition-all duration-300 border-slate-200 overflow-hidden bg-white flex flex-col justify-between">
+    <Card className="group hover:shadow-none hover:border-slate-300 hover:bg-slate-50/40 transition-colors duration-200 border-slate-200 overflow-hidden bg-white flex flex-col justify-between">
       {/* Thumbnail/Icon Area - Flat Separator */}
       <div className="relative h-28 bg-slate-50 flex items-center justify-center border-b border-slate-100 overflow-hidden">
         {doc.thumbnail ? (
@@ -4959,7 +5431,7 @@ export const SPJCard: React.FC<SPJCardProps> = ({ doc, onPreview }) => {
         <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
           <button
             onClick={() => onPreview(doc)}
-            className="bg-white text-slate-900 p-2 rounded-full shadow-md transform translate-y-1 group-hover:translate-y-0 transition-transform duration-300"
+            className="bg-white text-slate-900 p-2 rounded-none shadow-none transform translate-y-1 group-hover:translate-y-0 transition-transform duration-300 cursor-pointer"
           >
             <Eye size={16} />
           </button>
@@ -5162,7 +5634,7 @@ export const SPJUploadModal = ({ onSuccess, onCancel }: SPJUploadModalProps) => 
         </label>
         
         {!file ? (
-          <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center hover:bg-slate-50 hover:border-slate-300 transition-colors cursor-pointer relative">
+          <div className="border-2 border-dashed border-slate-200 rounded-none p-8 flex flex-col items-center justify-center hover:bg-slate-50 hover:border-slate-300 transition-colors cursor-pointer relative">
             <input
               type="file"
               onChange={handleFileChange}
@@ -5175,9 +5647,9 @@ export const SPJUploadModal = ({ onSuccess, onCancel }: SPJUploadModalProps) => 
             </p>
           </div>
         ) : (
-          <div className="p-4 border border-slate-200 rounded-xl bg-slate-50 flex items-center justify-between">
+          <div className="p-4 border border-slate-200 rounded-none bg-slate-50 flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
+              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-none">
                 {selectedFileType === 'pdf' ? <FileText size={20} /> : <Image size={20} />}
               </div>
               <div className="min-w-0">
@@ -5190,7 +5662,7 @@ export const SPJUploadModal = ({ onSuccess, onCancel }: SPJUploadModalProps) => 
             <button
               type="button"
               onClick={() => { setFile(null); setPreview(null); }}
-              className="p-1 bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-100 transition-colors"
+              className="p-1 bg-rose-50 text-rose-500 rounded-none hover:bg-rose-100 transition-colors cursor-pointer"
             >
               <X size={16} />
             </button>
@@ -5198,7 +5670,7 @@ export const SPJUploadModal = ({ onSuccess, onCancel }: SPJUploadModalProps) => 
         )}
 
         {preview && (
-          <div className="mt-3 relative rounded-xl overflow-hidden border border-slate-200 h-40 bg-slate-100">
+          <div className="mt-3 relative rounded-none overflow-hidden border border-slate-200 h-40 bg-slate-100">
             <img src={preview} alt="Preview" className="w-full h-full object-contain" />
           </div>
         )}
@@ -5207,13 +5679,13 @@ export const SPJUploadModal = ({ onSuccess, onCancel }: SPJUploadModalProps) => 
       </div>
 
       <div className="pt-4 flex gap-3 border-t border-slate-100">
-        <Button type="button" variant="outline" onClick={onCancel} className="flex-1 py-3">
+        <Button type="button" variant="outline" onClick={onCancel} className="flex-1 py-3 rounded-none">
           Batal
         </Button>
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 py-3 font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 flex justify-center items-center gap-2"
+          className="flex-1 py-3 font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-none flex justify-center items-center gap-2 rounded-none"
         >
           {isSubmitting ? 'Mengunggah...' : <><CheckCircle2 size={18} /> Simpan & Upload</>}
         </Button>
@@ -5241,6 +5713,7 @@ import { formatIDR } from '../../../shared/utils/formatter';
 /**
  * Optimised SPJ Document management page.
  * Implements clean layouts, zero box-in-a-box frames, and memoized metrics.
+ * 100% interactive, sharp-edge styling.
  */
 const SPJPage = () => {
   const spjDocuments = useSPJStore((state) => state.spjDocuments);
@@ -5251,6 +5724,7 @@ const SPJPage = () => {
   const [selectedDoc, setSelectedDoc] = useState<SPJDocument | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('Semua Kategori');
 
   // Memoize static metrics calculations from SPJ store state
   const { totalArsip, totalVerified, totalPending } = useMemo(() => {
@@ -5263,43 +5737,45 @@ const SPJPage = () => {
 
   // Memoize search query sorting
   const filteredDocs = useMemo(() => {
-    return spjDocuments.filter(doc =>
-      doc.title.toLowerCase().includes(search.toLowerCase()) ||
-      doc.category.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [spjDocuments, search]);
+    return spjDocuments.filter(doc => {
+      const matchSearch = doc.title.toLowerCase().includes(search.toLowerCase()) ||
+                          doc.category.toLowerCase().includes(search.toLowerCase());
+      const matchCategory = categoryFilter === 'Semua Kategori' || doc.category === categoryFilter;
+      return matchSearch && matchCategory;
+    });
+  }, [spjDocuments, search, categoryFilter]);
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
       {/* Header section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight">SPJ Digital</h2>
           <p className="text-sm text-gray-500">Arsip surat pertanggungjawaban dan bukti transaksi.</p>
         </div>
-        <Button onClick={() => setIsUploadOpen(true)} className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 shadow-sm">
+        <Button onClick={() => setIsUploadOpen(true)} className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 shadow-none rounded-none">
           <UploadCloud size={16} /> Upload Dokumen
         </Button>
       </div>
 
       {/* Stats Mini Cards - Seamless border flat layouts */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 flex items-center gap-3.5 border-b-4 border-b-blue-600 border-x-slate-200 border-t-slate-200 shadow-sm">
-          <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100/50"><FolderOpen size={20} /></div>
+        <Card className="p-4 flex items-center gap-3.5 border-b-4 border-b-blue-600 border-x-slate-200 border-t-slate-200 shadow-none rounded-none">
+          <div className="p-2.5 bg-blue-50 text-blue-600 rounded-none border border-blue-100/50"><FolderOpen size={20} /></div>
           <div>
             <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Total Arsip</p>
             <h4 className="text-lg font-black text-slate-800 tracking-tight mt-0.5">{totalArsip} <span className="text-[11px] font-bold text-slate-400">File</span></h4>
           </div>
         </Card>
-        <Card className="p-4 flex items-center gap-3.5 border-b-4 border-b-emerald-600 border-x-slate-200 border-t-slate-200 shadow-sm">
-          <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100/50"><ShieldCheck size={20} /></div>
+        <Card className="p-4 flex items-center gap-3.5 border-b-4 border-b-emerald-600 border-x-slate-200 border-t-slate-200 shadow-none rounded-none">
+          <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-none border border-emerald-100/50"><ShieldCheck size={20} /></div>
           <div>
             <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Terverifikasi</p>
             <h4 className="text-lg font-black text-slate-800 tracking-tight mt-0.5">{totalVerified} <span className="text-[11px] font-bold text-slate-400">File</span></h4>
           </div>
         </Card>
-        <Card className="p-4 flex items-center gap-3.5 border-b-4 border-b-amber-500 border-x-slate-200 border-t-slate-200 shadow-sm">
-          <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl border border-amber-100/50"><Clock size={20} /></div>
+        <Card className="p-4 flex items-center gap-3.5 border-b-4 border-b-amber-500 border-x-slate-200 border-t-slate-200 shadow-none rounded-none">
+          <div className="p-2.5 bg-amber-50 text-amber-600 rounded-none border border-amber-100/50"><Clock size={20} /></div>
           <div>
             <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Menunggu</p>
             <h4 className="text-lg font-black text-slate-800 tracking-tight mt-0.5">{totalPending} <span className="text-[11px] font-bold text-slate-400">File</span></h4>
@@ -5308,8 +5784,8 @@ const SPJPage = () => {
       </div>
 
       {/* Toolbar */}
-      <Card className="p-3.5 bg-slate-50 border border-slate-200 flex flex-col md:flex-row gap-4 items-center">
-        <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-200 rounded-lg w-full md:w-96">
+      <Card className="p-3.5 bg-slate-50 border border-slate-200 flex flex-col md:flex-row gap-4 items-center rounded-none shadow-none">
+        <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-200 rounded-none w-full md:w-96">
           <Search size={16} className="text-slate-400" />
           <input
             type="text"
@@ -5320,13 +5796,18 @@ const SPJPage = () => {
           />
         </div>
         <div className="flex items-center gap-2 ml-auto w-full md:w-auto">
-          <select className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold outline-none text-slate-600 cursor-pointer">
-            <option>Semua Kategori</option>
-            <option>Liturgi</option>
-            <option>Pembangunan</option>
-            <option>Sosial</option>
+          <select 
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="bg-white border border-slate-200 rounded-none px-3 py-1.5 text-xs font-bold outline-none text-slate-600 cursor-pointer"
+          >
+            <option value="Semua Kategori">Semua Kategori</option>
+            <option value="Liturgi">Liturgi</option>
+            <option value="Pembangunan">Pembangunan</option>
+            <option value="Sosial">Sosial (PSE)</option>
+            <option value="Sekretariat">Sekretariat</option>
           </select>
-          <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200 bg-white">
+          <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200 bg-white rounded-none">
             <Filter size={14} /> Filter
           </Button>
         </div>
@@ -5395,7 +5876,7 @@ const SPJPage = () => {
                     );
                     setSelectedDoc(null);
                   }}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md flex justify-center items-center gap-1.5"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-none shadow-none flex justify-center items-center gap-1.5"
                 >
                   Verifikasi Sekarang
                 </Button>
@@ -5424,7 +5905,7 @@ import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
  */
 const UserManagementPage = () => {
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
+        <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
             {/* Header section */}
             <div className="flex justify-between items-center">
                 <div>
@@ -5606,6 +6087,7 @@ export const RouteGuard = ({ allowableRoles, children }: RouteGuardProps) => {
 --- FILE: src\shared\components\ui\AdaptiveList.tsx ---
 import React from 'react';
 import { cn } from '../../utils/cn';
+import { Inbox } from 'lucide-react';
 
 interface AdaptiveListProps<T> {
   data: T[];
@@ -5665,8 +6147,8 @@ export const AdaptiveList = <T,>({
         <div className="block md:hidden divide-y divide-slate-100">
           {Array.from({ length: skeletonRows }).map((_, i) => (
             <div key={i} className="p-3.5 animate-pulse">
-              <div className="h-3 bg-slate-100 w-3/4 mb-2" />
-              <div className="h-2.5 bg-slate-100 w-1/2" />
+              <div className="h-3 bg-slate-200/60 w-3/4 mb-2 rounded-none" />
+              <div className="h-2.5 bg-slate-200/60 w-1/2 rounded-none" />
             </div>
           ))}
         </div>
@@ -5686,8 +6168,8 @@ export const AdaptiveList = <T,>({
               {Array.from({ length: skeletonRows }).map((_, i) => (
                 <tr key={i} className="animate-pulse">
                   {desktopHeaders.map((_, j) => (
-                    <td key={j} className="px-5 py-3.5">
-                      <div className="h-3 bg-slate-100 w-full max-w-[120px]" />
+                    <td key={j} className="px-5 py-3.5 border-r border-slate-100 last:border-r-0">
+                      <div className="h-3 bg-slate-200/60 w-full max-w-[120px] rounded-none" />
                     </td>
                   ))}
                 </tr>
@@ -5748,8 +6230,11 @@ export const AdaptiveList = <T,>({
         </>
       ) : (
         /* EMPTY STATE */
-        <div className="p-10 text-center bg-white">
-          <p className="text-xs text-slate-400 font-medium">{emptyStateMessage}</p>
+        <div className="p-12 flex flex-col items-center justify-center bg-white text-center">
+          <div className="mb-3 bg-slate-100 border border-slate-200/50 p-3 rounded-none text-slate-400">
+            <Inbox size={24} />
+          </div>
+          <p className="text-xs text-slate-500 font-bold">{emptyStateMessage}</p>
         </div>
       )}
     </div>
@@ -6021,10 +6506,10 @@ export const Card = ({ children, className, ...props }: CardProps) => {
       className={cn(
         // DESIGN SYSTEM GUARD: rounded-none — zero rounded corners, no exception
         'bg-white rounded-none border border-slate-200 shadow-sm',
-        // Micro-interaction: shadow elevation naik halus saat hover
-        'hover:shadow-md hover:border-slate-300/80',
-        // Transition hanya pada shadow dan border-color, bukan transform (hemat GPU)
-        'transition-shadow duration-300 ease-in-out',
+        // Micro-interaction: hover tactile response
+        'hover:border-slate-300 hover:bg-slate-50/40 hover:shadow-none',
+        // Transition tipis dan halus
+        'transition-colors duration-200 ease-in-out',
         'overflow-hidden',
         className
       )}
@@ -6823,6 +7308,7 @@ export interface User {
   name: string;
   role: UserRole;
   email: string;
+  avatarUrl?: string | null;
 }
 
 --- FILE: src\shared\utils\cn.ts ---
@@ -6879,6 +7365,26 @@ export const formatDate = (
 
     return new Intl.DateTimeFormat('id-ID', optionsMap[formatStyle] || optionsMap.default).format(d);
 };
+
+/**
+ * Resolves an avatar path into a full URL referencing the backend server.
+ * Uses the native URL object constructor to safely resolve murni origin server.
+ *
+ * @param path - Relative or absolute avatar path.
+ * @returns Resolved absolute URL or null.
+ */
+export const getAvatarUrl = (path: string | null | undefined): string | null => {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+  try {
+    const origin = new URL(baseURL).origin;
+    return `${origin}${path}`;
+  } catch {
+    return `http://localhost:8000${path}`;
+  }
+};
+
 
 --- FILE: tailwind.config.js ---
 /** @type {import('tailwindcss').Config} */

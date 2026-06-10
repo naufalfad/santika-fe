@@ -62,7 +62,7 @@ const ApprovalPage = () => {
     };
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-4 md:space-y-6">
+        <div className="max-w-[1600px] mx-auto space-y-4 md:space-y-6 animate-fade-slide">
 
             {/* HEADER SECTION - Responsive Stack */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -71,38 +71,38 @@ const ApprovalPage = () => {
                     <p className="text-xs md:text-sm text-gray-500">Paroki St. Stefanus - Sempan</p>
                 </div>
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                    <div className="flex-1 sm:flex-none flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm">
+                    <div className="flex-1 sm:flex-none flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-none text-xs font-semibold shadow-none">
                         <Filter size={14} className="text-slate-400" />
                         <select className="outline-none bg-transparent w-full">
                             <option>Semua Komisi</option>
                         </select>
                     </div>
-                    <div className="flex-1 sm:flex-none flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm">
+                    <div className="flex-1 sm:flex-none flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-none text-xs font-semibold shadow-none">
                         <Clock size={14} className="text-slate-400" />
                         <span>Mei 2025</span>
                     </div>
                 </div>
             </div>
 
-            {/* TAB NAVIGATION - Scrollable on Mobile */}
+            {/* TAB NAVIGATION - Flat and Seamless Minimalist */}
             <div className="flex gap-6 border-b border-slate-200 overflow-x-auto no-scrollbar pb-1 text-xs md:text-sm font-bold text-gray-400">
-                <button className="pb-3 border-b-2 border-blue-600 text-blue-600 whitespace-nowrap">
-                    Menunggu <span className="ml-1 px-2 py-0.5 bg-blue-50 rounded-full text-[10px]">
+                <button className="pb-3 border-b-2 border-slate-800 text-slate-800 whitespace-nowrap">
+                    Menunggu <span className="ml-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-none text-[10px]">
                         {approvalRequests.filter((r) => r.status === 'Menunggu').length}
                     </span>
                 </button>
-                <button className="pb-3 hover:text-slate-600 whitespace-nowrap">
-                    Disetujui <span className="ml-1 px-2 py-0.5 bg-slate-50 rounded-full text-[10px]">
+                <button className="pb-3 hover:text-slate-600 whitespace-nowrap border-b-2 border-transparent hover:border-slate-300 transition-all">
+                    Disetujui <span className="ml-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-none text-[10px]">
                         {approvalRequests.filter((r) => r.status === 'Disetujui').length}
                     </span>
                 </button>
-                <button className="pb-3 hover:text-slate-600 whitespace-nowrap">
-                    Ditolak <span className="ml-1 px-2 py-0.5 bg-slate-50 rounded-full text-[10px]">
+                <button className="pb-3 hover:text-slate-600 whitespace-nowrap border-b-2 border-transparent hover:border-slate-300 transition-all">
+                    Ditolak <span className="ml-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-none text-[10px]">
                         {approvalRequests.filter((r) => r.status === 'Ditolak').length}
                     </span>
                 </button>
-                <button className="pb-3 hover:text-slate-600 whitespace-nowrap">
-                    Revisi <span className="ml-1 px-2 py-0.5 bg-slate-50 rounded-full text-[10px]">
+                <button className="pb-3 hover:text-slate-600 whitespace-nowrap border-b-2 border-transparent hover:border-slate-300 transition-all">
+                    Revisi <span className="ml-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-none text-[10px]">
                         {approvalRequests.filter((r) => r.status === 'Revisi').length}
                     </span>
                 </button>
@@ -125,10 +125,10 @@ const ApprovalPage = () => {
                             <Card
                                 key={item.id}
                                 className={cn(
-                                    "p-4 cursor-pointer transition-all duration-200 border-l-4",
+                                    "p-4 cursor-pointer transition-all duration-200 border-l-4 rounded-none shadow-none",
                                     selected.id === item.id
-                                        ? "border-l-blue-600 bg-blue-50/20 shadow-md ring-1 ring-blue-100"
-                                        : "border-l-transparent hover:bg-white hover:shadow-sm"
+                                        ? "border-l-slate-800 bg-slate-100/60 ring-0"
+                                        : "border-l-transparent hover:bg-slate-50"
                                 )}
                                 onClick={() => {
                                     setSelectedId(item.id);
@@ -136,7 +136,7 @@ const ApprovalPage = () => {
                                 }}
                             >
                                 <div className="flex gap-4">
-                                    <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl h-fit border border-indigo-100">
+                                    <div className="p-2.5 bg-slate-100 text-slate-600 rounded-none h-fit border border-slate-200">
                                         <Gift size={20} />
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -177,27 +177,27 @@ const ApprovalPage = () => {
                     </button>
 
                     {selected ? (
-                        <Card className="overflow-hidden border-slate-200 shadow-xl shadow-slate-200/50">
+                        <Card className="overflow-hidden border-slate-200 shadow-none rounded-none">
                             <div className="p-4 md:p-8">
                                 <div className="flex flex-col md:flex-row justify-between items-start gap-6 border-b border-slate-100 pb-8">
                                     <div className="flex gap-4 md:gap-6">
-                                        <div className="hidden md:block p-5 bg-purple-50 text-purple-600 rounded-2xl border border-purple-100 shadow-sm h-fit">
+                                        <div className="hidden md:block p-5 bg-slate-100 text-slate-600 rounded-none border border-slate-200 shadow-none h-fit">
                                             <Gift size={36} />
                                         </div>
                                         <div className="space-y-2">
                                             <div className="flex items-center gap-2">
-                                                <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded uppercase">{selected.komisi}</span>
+                                                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-none uppercase border border-slate-200/60">{selected.komisi}</span>
                                                 <span className="text-[10px] text-slate-400 font-mono tracking-tighter">{selected.id}</span>
                                             </div>
                                             <h3 className="text-xl md:text-2xl font-black text-slate-800 leading-tight">{selected.judul}</h3>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 pt-2 text-[12px]">
                                                 <div className="flex items-center gap-2 text-slate-600">
-                                                    <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center"><Users size={12} /></div>
+                                                    <div className="w-6 h-6 rounded-none bg-slate-100 flex items-center justify-center"><Users size={12} /></div>
                                                     <span className="font-semibold">{selected.pemohon}</span>
                                                     <span className="text-slate-400 text-[10px] uppercase">({selected.jabatanPemohon})</span>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-slate-600">
-                                                    <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center"><Clock size={12} /></div>
+                                                    <div className="w-6 h-6 rounded-none bg-slate-100 flex items-center justify-center"><Clock size={12} /></div>
                                                     <span className="font-semibold">{selected.tanggal} • {selected.waktu}</span>
                                                 </div>
                                             </div>
@@ -205,9 +205,9 @@ const ApprovalPage = () => {
                                     </div>
 
                                     <div className="w-full md:w-auto">
-                                        <div className="bg-slate-50 border border-slate-100 p-5 rounded-2xl text-center md:text-right">
+                                        <div className="bg-slate-50 border border-slate-200 p-5 rounded-none text-center md:text-right">
                                             <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Nominal Pengajuan</p>
-                                            <p className="text-2xl font-black text-blue-700 leading-none">{formatIDR(selected.nominal)}</p>
+                                            <p className="text-2xl font-black text-slate-800 leading-none">{formatIDR(selected.nominal)}</p>
                                             <div className="flex items-center justify-center md:justify-end gap-1 mt-3 text-slate-400">
                                                 <FileText size={12} />
                                                 <span className="text-[10px] font-bold">{selected.dokumen.length} Lampiran Dokumen</span>
@@ -216,32 +216,17 @@ const ApprovalPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Budget Stats - Memoized Visual Outputs */}
+                                {/* Budget Stats - Replaced rainbow colors with deep slate/white theme */}
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 my-8">
                                     {[
-                                        { label: 'Anggaran Program', val: selected.anggaranProgram, icon: Wallet, color: 'blue' as const },
-                                        { label: 'Total Realisasi', val: selected.totalRealisasi, icon: BarChart3, color: 'emerald' as const },
-                                        { label: 'Sisa Anggaran', val: selected.sisaAnggaran, icon: ShieldCheck, color: 'amber' as const },
-                                        { label: 'Pengajuan Ini', val: selected.nominal, icon: Gift, color: 'purple' as const },
+                                        { label: 'Anggaran Program', val: selected.anggaranProgram, icon: Wallet },
+                                        { label: 'Total Realisasi', val: selected.totalRealisasi, icon: BarChart3 },
+                                        { label: 'Sisa Anggaran', val: selected.sisaAnggaran, icon: ShieldCheck },
+                                        { label: 'Pengajuan Ini', val: selected.nominal, icon: Gift },
                                     ].map((stat, i) => {
-                                        const bgClasses = {
-                                            blue: 'bg-blue-50/30 border-blue-100',
-                                            emerald: 'bg-emerald-50/30 border-emerald-100',
-                                            amber: 'bg-amber-50/30 border-amber-100',
-                                            purple: 'bg-purple-50/30 border-purple-100',
-                                        };
-                                        const iconBgClasses = {
-                                            blue: 'bg-blue-600',
-                                            emerald: 'bg-emerald-600',
-                                            amber: 'bg-amber-600',
-                                            purple: 'bg-purple-600',
-                                        };
                                         return (
-                                            <div key={i} className={cn(
-                                                "p-3 rounded-2xl border flex flex-col justify-between h-24",
-                                                bgClasses[stat.color]
-                                            )}>
-                                                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm", iconBgClasses[stat.color])}>
+                                            <div key={i} className="p-3 rounded-none border border-slate-200 flex flex-col justify-between h-24 bg-slate-50/80 shadow-none">
+                                                <div className="w-8 h-8 rounded-none flex items-center justify-center bg-slate-100 text-slate-600 border border-slate-200/50">
                                                     <stat.icon size={16} />
                                                 </div>
                                                 <div>
@@ -262,12 +247,12 @@ const ApprovalPage = () => {
                                         </div>
                                         <div className="space-y-2">
                                             {selected.dokumen.map((doc, i) => (
-                                                <div key={i} className="flex justify-between items-center p-3 border border-slate-100 rounded-xl bg-white group hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer">
+                                                <div key={i} className="flex justify-between items-center p-3 border border-slate-200 rounded-none bg-white group hover:border-slate-400 transition-all cursor-pointer">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="p-1.5 bg-slate-50 text-slate-400 rounded group-hover:text-blue-500 transition-colors"><FileText size={14} /></div>
+                                                        <div className="p-1.5 bg-slate-100 text-slate-500 rounded-none group-hover:text-slate-800 transition-colors"><FileText size={14} /></div>
                                                         <span className="text-[11px] font-bold text-slate-600 truncate max-w-[120px] md:max-w-[180px]">{doc.nama}</span>
                                                     </div>
-                                                    <Download size={14} className="text-slate-300 hover:text-blue-600" />
+                                                    <Download size={14} className="text-slate-300 hover:text-slate-800" />
                                                 </div>
                                             ))}
                                         </div>
@@ -283,8 +268,8 @@ const ApprovalPage = () => {
                                             {selected.alur.map((a, i) => (
                                                 <div key={i} className="relative">
                                                     <div className={cn(
-                                                        "absolute -left-[22px] top-1 w-3 h-3 rounded-full border-2 border-white shadow-sm",
-                                                        a.status === 'done' ? "bg-emerald-500" : a.status === 'active' ? "bg-blue-600 ring-4 ring-blue-50" : "bg-slate-200"
+                                                        "absolute -left-[22px] top-1 w-3 h-3 rounded-none border-2 border-white shadow-none",
+                                                        a.status === 'done' ? "bg-emerald-600" : a.status === 'active' ? "bg-slate-800 ring-4 ring-slate-100" : "bg-slate-300"
                                                     )}></div>
                                                     <div className="flex justify-between gap-4">
                                                         <div className="min-w-0">
@@ -299,26 +284,26 @@ const ApprovalPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Action Buttons */}
+                                {/* Action Buttons - Solid robust sharp edges */}
                                 {selected.status === 'Menunggu' && (user?.role === 'PASTOR' || user?.role === 'BENDAHARA' || user?.role === 'SUPER_ADMIN') && (
                                     <div className="flex flex-col sm:flex-row gap-3 mt-12 pt-6 border-t border-slate-100">
                                         <Button
                                             onClick={() => handleActionClick('reject')}
                                             variant="outline"
-                                            className="flex-1 border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl py-6 font-bold flex justify-center items-center gap-2"
+                                            className="flex-1 border-rose-600 text-rose-600 hover:bg-rose-50 rounded-none py-6 font-bold flex justify-center items-center gap-2 active:scale-95 transition-transform"
                                         >
                                             <XCircle size={20} /> Tolak
                                         </Button>
                                         <Button
                                             onClick={() => handleActionClick('revise')}
                                             variant="outline"
-                                            className="flex-1 border-amber-200 text-amber-600 hover:bg-amber-50 rounded-xl py-6 font-bold flex justify-center items-center gap-2"
+                                            className="flex-1 border-slate-400 text-slate-600 hover:bg-slate-50 rounded-none py-6 font-bold flex justify-center items-center gap-2 active:scale-95 transition-transform"
                                         >
                                             <FileText size={20} /> Revisi
                                         </Button>
                                         <Button
                                             onClick={() => handleActionClick('approve')}
-                                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200 rounded-xl py-6 font-bold flex justify-center items-center gap-2 transition-all active:scale-95"
+                                            className="flex-1 bg-slate-800 hover:bg-slate-900 text-white rounded-none py-6 font-bold flex justify-center items-center gap-2 shadow-none active:scale-95 transition-transform"
                                         >
                                             <CheckCircle2 size={20} /> Setujui
                                         </Button>
@@ -327,7 +312,7 @@ const ApprovalPage = () => {
                             </div>
                         </Card>
                     ) : (
-                        <Card className="p-8 text-center text-slate-500">
+                        <Card className="p-8 text-center text-slate-500 rounded-none border-slate-200">
                             Tidak ada pengajuan yang dipilih.
                         </Card>
                     )}

@@ -56,12 +56,12 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-bold text-gray-700 mb-1">TANGGAL</label>
-          <input type="date" {...register('tanggal')} className="w-full p-2 border rounded-lg text-sm outline-blue-500" />
+          <input type="date" {...register('tanggal')} className="w-full p-2 border rounded-none text-sm outline-blue-500 bg-slate-50 border-slate-200" />
           {errors.tanggal && <p className="text-red-500 text-[10px] mt-1">{errors.tanggal.message}</p>}
         </div>
         <div>
           <label className="block text-xs font-bold text-gray-700 mb-1">KATEGORI</label>
-          <select {...register('kategori')} className="w-full p-2 border rounded-lg text-sm outline-blue-500">
+          <select {...register('kategori')} className="w-full p-2 border rounded-none text-sm outline-blue-500 bg-slate-50 border-slate-200">
             <option value="">Pilih Kategori</option>
             <option value="Operasional">Operasional</option>
             <option value="Liturgi">Liturgi</option>
@@ -73,13 +73,13 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
 
       <div>
         <label className="block text-xs font-bold text-gray-700 mb-1">PENERIMA / TOKO</label>
-        <input type="text" {...register('penerima')} placeholder="Contoh: Toko Buku Beriman" className="w-full p-2 border rounded-lg text-sm outline-blue-500" />
+        <input type="text" {...register('penerima')} placeholder="Contoh: Toko Buku Beriman" className="w-full p-2 border rounded-none text-sm outline-blue-500 bg-slate-50 border-slate-200" />
         {errors.penerima && <p className="text-red-500 text-[10px] mt-1">{errors.penerima.message}</p>}
       </div>
 
       <div>
         <label className="block text-xs font-bold text-gray-700 mb-1">NOMINAL (RP)</label>
-        <input type="number" {...register('jumlah', { valueAsNumber: true })} placeholder="0" className="w-full p-2 border rounded-lg text-sm outline-blue-500" />
+        <input type="number" {...register('jumlah', { valueAsNumber: true })} placeholder="0" className="w-full p-2 border rounded-none text-sm outline-blue-500 bg-slate-50 border-slate-200" />
         {errors.jumlah && <p className="text-red-500 text-[10px] mt-1">{errors.jumlah.message}</p>}
       </div>
 
@@ -87,15 +87,15 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
       <div>
         <label className="block text-xs font-bold text-gray-700 mb-1">UPLOAD BUKTI (NOTA/KUITANSI)</label>
         {!preview ? (
-          <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer relative">
+          <div className="border-2 border-dashed border-slate-200 rounded-none p-8 flex flex-col items-center justify-center hover:bg-slate-100 transition-colors cursor-pointer relative">
             <input type="file" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
-            <Upload className="text-gray-400 mb-2" size={32} />
-            <p className="text-xs text-gray-500">Klik atau seret file gambar ke sini</p>
+            <Upload className="text-slate-400 mb-2" size={32} />
+            <p className="text-xs text-slate-500">Klik atau seret file gambar ke sini</p>
           </div>
         ) : (
-          <div className="relative rounded-xl overflow-hidden border border-gray-200 h-32">
+          <div className="relative rounded-none overflow-hidden border border-slate-200 h-32">
             <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-            <button onClick={() => setPreview(null)} className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full">
+            <button onClick={() => setPreview(null)} className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-none cursor-pointer">
               <X size={14} />
             </button>
           </div>
@@ -103,7 +103,7 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
       </div>
 
       <div className="pt-4 flex gap-3">
-        <Button type="submit" disabled={isSubmitting} className="flex-1 flex justify-center items-center gap-2">
+        <Button type="submit" disabled={isSubmitting} className="flex-1 flex justify-center items-center gap-2 rounded-none">
           {isSubmitting ? 'Menyimpan...' : <><CheckCircle2 size={18} /> Simpan Transaksi</>}
         </Button>
       </div>
