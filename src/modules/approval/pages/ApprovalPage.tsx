@@ -13,6 +13,7 @@ import { useApprovalStore } from '../../../app/store/useApprovalStore';
 import { useActivityStore } from '../../../app/store/useActivityStore';
 import { useAuthStore } from '../../../app/store/useAuthStore';
 import { cn } from '../../../shared/utils/cn';
+import { formatIDR } from '../../../shared/utils/formatter';
 
 const ApprovalPage = () => {
     const approvalRequests = useApprovalStore((state) => state.approvalRequests);
@@ -22,14 +23,11 @@ const ApprovalPage = () => {
 
     const [selectedId, setSelectedId] = useState<string>(approvalRequests[0]?.id || '');
     const [showMobileDetail, setShowMobileDetail] = useState(false);
-    
+
     const [isActionModalOpen, setIsActionModalOpen] = useState(false);
     const [actionType, setActionType] = useState<'approve' | 'reject' | 'revise' | null>(null);
 
     const selected = approvalRequests.find((r) => r.id === selectedId) || approvalRequests[0];
-
-    const formatIDR = (val: number) =>
-        new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
 
     const handleActionClick = (type: 'approve' | 'reject' | 'revise') => {
         setActionType(type);
@@ -112,7 +110,7 @@ const ApprovalPage = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-                {/* LEFT COLUMN: LIST (Hidden on Mobile if Detail is shown) */}
+                {/* LEFT COLUMN: LIST */}
                 <div className={cn(
                     "lg:col-span-4 space-y-4",
                     showMobileDetail ? "hidden lg:block" : "block"
@@ -138,7 +136,6 @@ const ApprovalPage = () => {
                                 }}
                             >
                                 <div className="flex gap-4">
-                                    {/* Icon with soft background */}
                                     <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl h-fit border border-indigo-100">
                                         <Gift size={20} />
                                     </div>
@@ -167,12 +164,11 @@ const ApprovalPage = () => {
                     </div>
                 </div>
 
-                {/* RIGHT COLUMN: DETAIL (Full Screen on Mobile if shown) */}
+                {/* RIGHT COLUMN: DETAIL */}
                 <div className={cn(
                     "lg:col-span-8",
                     !showMobileDetail ? "hidden lg:block" : "block"
                 )}>
-                    {/* Back Button for Mobile */}
                     <button
                         onClick={() => setShowMobileDetail(false)}
                         className="lg:hidden flex items-center gap-2 text-blue-600 font-bold text-sm mb-4"
@@ -182,7 +178,6 @@ const ApprovalPage = () => {
 
                     {selected ? (
                         <Card className="overflow-hidden border-slate-200 shadow-xl shadow-slate-200/50">
-                            {/* Detail Header */}
                             <div className="p-4 md:p-8">
                                 <div className="flex flex-col md:flex-row justify-between items-start gap-6 border-b border-slate-100 pb-8">
                                     <div className="flex gap-4 md:gap-6">
@@ -221,7 +216,7 @@ const ApprovalPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Budget Stats - Responsive Grid */}
+                                {/* Budget Stats - Memoized Visual Outputs */}
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 my-8">
                                     {[
                                         { label: 'Anggaran Program', val: selected.anggaranProgram, icon: Wallet, color: 'blue' as const },
@@ -229,7 +224,6 @@ const ApprovalPage = () => {
                                         { label: 'Sisa Anggaran', val: selected.sisaAnggaran, icon: ShieldCheck, color: 'amber' as const },
                                         { label: 'Pengajuan Ini', val: selected.nominal, icon: Gift, color: 'purple' as const },
                                     ].map((stat, i) => {
-                                        // Dynamic color mapping to bypass Tailwind regex scan limits
                                         const bgClasses = {
                                             blue: 'bg-blue-50/30 border-blue-100',
                                             emerald: 'bg-emerald-50/30 border-emerald-100',
@@ -259,7 +253,6 @@ const ApprovalPage = () => {
                                     })}
                                 </div>
 
-                                {/* Two Columns Section - Stack on Mobile */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
                                     {/* Documents */}
                                     <div className="space-y-4">
@@ -306,7 +299,7 @@ const ApprovalPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Action Buttons (only show if status is Menunggu and user has Pastor/Bendahara role) */}
+                                {/* Action Buttons */}
                                 {selected.status === 'Menunggu' && (user?.role === 'PASTOR' || user?.role === 'BENDAHARA' || user?.role === 'SUPER_ADMIN') && (
                                     <div className="flex flex-col sm:flex-row gap-3 mt-12 pt-6 border-t border-slate-100">
                                         <Button
@@ -341,7 +334,6 @@ const ApprovalPage = () => {
                 </div>
             </div>
 
-            {/* Action Confirmation Modal */}
             <Modal
                 isOpen={isActionModalOpen}
                 onClose={() => {
@@ -352,8 +344,8 @@ const ApprovalPage = () => {
                     actionType === 'approve'
                         ? 'Persetujuan Pengeluaran'
                         : actionType === 'reject'
-                        ? 'Tolak Pengajuan'
-                        : 'Permohonan Revisi Pengajuan'
+                            ? 'Tolak Pengajuan'
+                            : 'Permohonan Revisi Pengajuan'
                 }
             >
                 {actionType && (

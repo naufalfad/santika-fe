@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { 
-  Plus, Search, Download, 
-  ArrowUpRight, AlertCircle, PieChart as PieIcon, Info, FileImage 
+import { useState, useMemo } from 'react';
+import {
+  Plus, Search, Download,
+  AlertCircle, Info, FileImage, PieChart as PieIcon, ArrowUpRight
 } from 'lucide-react';
-import { 
+import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
@@ -12,96 +12,114 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { KasKeluarForm } from '../components/KasKeluarForm';
-import { useKasStore } from '../../../app/store/useKasStore';
 import { KAS_KELUAR_STATS, CATEGORY_KELUAR_DATA, TREND_KELUAR_DATA } from '../../../shared/mock/kasKeluarData';
+import { formatIDR } from '../../../shared/utils/formatter';
+import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
+import { useKasKeluarQuery } from '../../kas-masuk/hooks/useKasMasukQuery';
 
+/**
+ * Standardized high-contrast, high-density Kas Keluar Management page.
+ * Implements optimized useMemo selectors to prevent rendering lags.
+ * Integrates React Query for async Server State and AdaptiveList for responsive layouts.
+ */
 const KasKeluarPage = () => {
-  const kasKeluar = useKasStore((state) => state.kasKeluar);
+  const { data: kasKeluar = [], isLoading } = useKasKeluarQuery();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  const formatIDR = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
 
-  const filteredData = kasKeluar.filter(item =>
-    item.penerima.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.kategori.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Memoize search query execution
+  const filteredData = useMemo(() => {
+    return kasKeluar.filter(item =>
+      item.penerima.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.kategori.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [kasKeluar, searchTerm]);
 
-  const totalKeluarBulanIni = kasKeluar.reduce((sum, item) => sum + item.jumlah, 0);
+  // Memoize expenditures total calculations
+  const totalKeluarBulanIni = useMemo(() => {
+    return kasKeluar.reduce((sum, item) => sum + item.jumlah, 0);
+  }, [kasKeluar]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Manajemen Kas Keluar</h2>
-          <p className="text-gray-500">Pantau pengeluaran operasional dan kegiatan paroki.</p>
+          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Manajemen Kas Keluar</h2>
+          <p className="text-sm text-gray-500">Pantau pengeluaran operasional dan kegiatan paroki.</p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="flex items-center gap-2">
-            <Download size={18} /> Export Laporan
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button variant="outline" className="flex-1 sm:flex-none flex items-center justify-center gap-2 text-xs border-slate-200">
+            <Download size={16} /> Export Laporan
           </Button>
-          <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 shadow-lg shadow-rose-200 bg-rose-600 hover:bg-rose-700">
-            <Plus size={18} /> Catat Pengeluaran
+          <Button onClick={() => setIsModalOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 shadow-sm text-xs bg-rose-600 hover:bg-rose-700 text-white">
+            <Plus size={16} /> Catat Pengeluaran
           </Button>
         </div>
       </div>
 
-      {/* Quick Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4 border-l-4 border-l-rose-500">
-          <p className="text-xs text-gray-500 font-medium uppercase">Total Keluar (Bulan Ini)</p>
-          <h4 className="text-xl font-bold mt-1 text-rose-600">{formatIDR(totalKeluarBulanIni)}</h4>
-          <p className="text-[10px] text-emerald-600 mt-2 font-medium">↓ {KAS_KELUAR_STATS.hematDariBulanLalu}% lebih hemat dari bulan lalu</p>
+      {/* Quick Stats Cards - Consistent padding density & Flat layout */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200">
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Total Keluar (Bulan Ini)</p>
+          <h4 className="text-lg font-black mt-1 text-rose-600 tracking-tight">{formatIDR(totalKeluarBulanIni)}</h4>
+          <p className="text-[9px] text-emerald-600 mt-2 font-bold">↓ {KAS_KELUAR_STATS.hematDariBulanLalu}% lebih hemat</p>
         </Card>
-        
-        <Card className="p-4 border-l-4 border-l-amber-500">
-          <p className="text-xs text-gray-500 font-medium uppercase">Burn Rate Anggaran</p>
-          <div className="flex items-end gap-2 mt-1">
-            <h4 className="text-xl font-bold">{KAS_KELUAR_STATS.anggaranTerpakai}%</h4>
-            <p className="text-[10px] text-gray-400 mb-1">terpakai</p>
+
+        <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200">
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Burn Rate Anggaran</p>
+          <div className="flex items-end gap-1.5 mt-1">
+            <h4 className="text-lg font-black text-slate-800 tracking-tight">{KAS_KELUAR_STATS.anggaranTerpakai}%</h4>
+            <p className="text-[9px] text-slate-400 font-bold mb-0.5">terpakai</p>
           </div>
-          <div className="w-full bg-gray-100 h-1.5 rounded-full mt-3">
-            <div className="bg-amber-500 h-1.5 rounded-full" style={{ width: `${KAS_KELUAR_STATS.anggaranTerpakai}%` }}></div>
+          <div className="w-full bg-slate-100 h-1 rounded-full mt-3 overflow-hidden">
+            <div className="bg-amber-500 h-full" style={{ width: `${KAS_KELUAR_STATS.anggaranTerpakai}%` }}></div>
           </div>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-blue-500">
-          <p className="text-xs text-gray-500 font-medium uppercase">Menunggu Verifikasi</p>
-          <h4 className="text-xl font-bold mt-1">{KAS_KELUAR_STATS.pendingVerifikasi}</h4>
-          <p className="text-[10px] text-gray-400 mt-2 italic flex items-center gap-1">
+        <Card className="p-4 border-l-4 border-l-blue-500 border-y-slate-200 border-r-slate-200">
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Menunggu Verifikasi</p>
+          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{KAS_KELUAR_STATS.pendingVerifikasi}</h4>
+          <p className="text-[9px] text-slate-400 mt-2 font-bold italic flex items-center gap-1">
             <AlertCircle size={10} /> Segera verifikasi bukti nota
           </p>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-slate-800">
-          <p className="text-xs text-gray-500 font-medium uppercase">Saldo Kas Saat Ini</p>
-          <h4 className="text-xl font-bold mt-1 text-slate-800">{formatIDR(150500000)}</h4>
-          <p className="text-[10px] text-blue-600 mt-2 font-medium">Cukup untuk 12 bulan kedepan</p>
+        <Card className="p-4 border-l-4 border-l-slate-800 border-y-slate-200 border-r-slate-200">
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Saldo Kas Saat Ini</p>
+          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(150500000)}</h4>
+          <p className="text-[9px] text-blue-600 mt-2 font-bold">Cukup untuk 12 bulan kedepan</p>
         </Card>
       </div>
 
       {/* Analytics & Side Info */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Trend Area Chart */}
-        <Card className="lg:col-span-8 p-6">
-          <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <ArrowUpRight size={18} className="text-rose-500" /> Fluktuasi Pengeluaran (Harian)
-          </h3>
-          <div className="h-[250px]">
+        <Card className="lg:col-span-8 p-5 border-slate-200">
+          <div className="mb-4">
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <ArrowUpRight size={14} className="text-rose-500" /> Fluktuasi Pengeluaran (Harian)
+            </h3>
+          </div>
+          <div className="h-[230px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={TREND_KELUAR_DATA}>
                 <defs>
                   <linearGradient id="colorKeluar" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#e11d48" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#e11d48" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#e11d48" stopOpacity={0.06} />
+                    <stop offset="95%" stopColor="#e11d48" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 11}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 11}} />
-                <Tooltip />
-                <Area type="monotone" dataKey="jumlah" stroke="#e11d48" fillOpacity={1} fill="url(#colorKeluar)" strokeWidth={2} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }} />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }}
+                  tickFormatter={(val) => formatIDR(val, { notation: 'compact' })}
+                />
+                <Tooltip contentStyle={{ border: '1px solid #f1f5f9', borderRadius: '8px', fontSize: '11px', fontWeight: 600 }} />
+                <Area type="monotone" dataKey="jumlah" stroke="#e11d48" fillOpacity={1} fill="url(#colorKeluar)" strokeWidth={2.5} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -109,9 +127,9 @@ const KasKeluarPage = () => {
 
         {/* Donut & Prosedur */}
         <div className="lg:col-span-4 space-y-6">
-          <Card className="p-6">
-            <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <PieIcon size={18} className="text-purple-500" /> Alokasi Dana
+          <Card className="p-5 border-slate-200">
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <PieIcon size={14} className="text-purple-500" /> Alokasi Dana
             </h3>
             <div className="h-[180px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -119,8 +137,8 @@ const KasKeluarPage = () => {
                   <Pie
                     data={CATEGORY_KELUAR_DATA}
                     innerRadius={50}
-                    outerRadius={70}
-                    paddingAngle={5}
+                    outerRadius={65}
+                    paddingAngle={4}
                     dataKey="value"
                   >
                     {CATEGORY_KELUAR_DATA.map((entry, index) => (
@@ -128,19 +146,19 @@ const KasKeluarPage = () => {
                     ))}
                   </Pie>
                   <Tooltip />
-                  <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{fontSize: '11px'}} />
+                  <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 700 }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           </Card>
 
-          {/* Side Info Card */}
-          <Card className="p-4 bg-amber-50 border-amber-200">
-            <h4 className="font-bold text-amber-800 flex items-center gap-2 mb-2 text-sm">
-              <Info size={16} /> Prosedur Pengeluaran
+          {/* Side Info Card - Flat, seamless, no glassmorphism */}
+          <Card className="p-4 bg-amber-50 border-amber-200 text-amber-950">
+            <h4 className="font-black text-amber-800 flex items-center gap-1.5 mb-1.5 text-xs uppercase tracking-wide">
+              <Info size={14} /> Prosedur Pengeluaran
             </h4>
-            <ul className="text-[11px] text-amber-700 space-y-2 list-disc pl-4 leading-relaxed">
-              <li>Setiap pengeluaran di atas <strong>Rp 500.000</strong> wajib mendapatkan approval Pastor.</li>
+            <ul className="text-[11px] text-amber-800 font-semibold space-y-2 list-disc pl-4 leading-relaxed">
+              <li>Setiap pengeluaran di atas <strong className="font-black text-amber-950">Rp 500.000</strong> wajib mendapatkan approval Pastor.</li>
               <li>Nota fisik harus difoto jelas dan di-upload ke sistem.</li>
               <li>Pastikan kategori sesuai dengan Rencana Anggaran Tahunan.</li>
             </ul>
@@ -148,61 +166,81 @@ const KasKeluarPage = () => {
         </div>
       </div>
 
-      {/* Main Table */}
-      <Card className="overflow-hidden">
-        <div className="p-4 border-b flex items-center bg-white justify-between">
-          <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 border rounded-lg w-full max-w-xs">
-            <Search size={16} className="text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Cari transaksi keluar..." 
-              className="bg-transparent outline-none text-sm w-full"
+      {/* Main Table - Flat with zero boxed layers inside */}
+      <div className="space-y-4">
+        <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col md:flex-row gap-4 justify-between">
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg w-full md:w-80">
+            <Search size={16} className="text-slate-400" />
+            <input
+              type="text"
+              placeholder="Cari transaksi keluar..."
+              className="bg-transparent outline-none text-xs w-full text-slate-800 font-semibold"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button variant="outline" className="text-xs">Filter Kategori</Button>
+          <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200">Filter Kategori</Button>
         </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-gray-50 text-[11px] uppercase text-gray-400 font-bold border-b">
-                <th className="px-6 py-4">ID Transaksi</th>
-                <th className="px-6 py-4">Tanggal</th>
-                <th className="px-6 py-4">Penerima Dana</th>
-                <th className="px-6 py-4">Kategori</th>
-                <th className="px-6 py-4 text-right">Nominal</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-center">Bukti</th>
+
+        {isLoading ? (
+          <div className="p-8 text-center text-slate-500 bg-white border border-slate-200 rounded-xl shadow-sm flex items-center justify-center gap-2.5 font-semibold text-xs">
+            <div className="w-4 h-4 border-2 border-rose-600 border-t-transparent rounded-full animate-spin"></div>
+            Loading data transaksi kas keluar...
+          </div>
+        ) : (
+          <AdaptiveList
+            data={filteredData}
+            desktopHeaders={[
+              'ID Transaksi',
+              'Tanggal',
+              'Penerima Dana',
+              'Kategori',
+              'Nominal',
+              'Status',
+              'Bukti'
+            ]}
+            renderDesktopRow={(item) => (
+              <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                <td className="px-5 py-3 text-xs font-black text-rose-600 border-r border-slate-100">{item.id}</td>
+                <td className="px-5 py-3 text-xs text-slate-500 font-medium border-r border-slate-100">{item.tanggal}</td>
+                <td className="px-5 py-3 text-xs font-bold text-slate-700 border-r border-slate-100">{item.penerima}</td>
+                <td className="px-5 py-3 border-r border-slate-100">
+                  <span className="text-[9px] font-black px-2 py-0.5 bg-slate-100 rounded text-slate-600 border border-slate-200 uppercase tracking-tight">
+                    {item.kategori}
+                  </span>
+                </td>
+                <td className="px-5 py-3 text-xs font-black text-right text-rose-600 border-r border-slate-100">{formatIDR(item.jumlah)}</td>
+                <td className="px-5 py-3 border-r border-slate-100">
+                  <Badge variant={item.status === 'Selesai' ? 'success' : 'warning'}>{item.status}</Badge>
+                </td>
+                <td className="px-5 py-3 text-center">
+                  <button className="p-1 hover:bg-slate-50 border border-transparent hover:border-slate-200 rounded text-gray-400 hover:text-rose-600 transition-all">
+                    <FileImage size={14} />
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filteredData.map((item) => (
-                <tr key={item.id} className="hover:bg-rose-50/20 transition-colors">
-                  <td className="px-6 py-4 text-sm font-bold text-rose-600">{item.id}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{item.tanggal}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-slate-700">{item.penerima}</td>
-                  <td className="px-6 py-4">
-                    <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded text-slate-600 uppercase border border-gray-200">
-                      {item.kategori}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-black text-right text-rose-600">{formatIDR(item.jumlah)}</td>
-                  <td className="px-6 py-4">
-                    <Badge variant={item.status === 'Selesai' ? 'success' : 'warning'}>{item.status}</Badge>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <button className="p-1.5 hover:bg-white border border-transparent hover:border-gray-200 rounded text-gray-400 hover:text-rose-600 transition-all">
-                      <FileImage size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+            )}
+            renderMobileCard={(item) => (
+              <div className="flex flex-col gap-2.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-black text-rose-600">{item.id}</span>
+                  <Badge variant={item.status === 'Selesai' ? 'success' : 'warning'}>{item.status}</Badge>
+                </div>
+                <div className="flex justify-between items-baseline">
+                  <span className="text-xs font-bold text-slate-700">{item.penerima}</span>
+                  <span className="text-sm font-black text-rose-600">{formatIDR(item.jumlah)}</span>
+                </div>
+                <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium">
+                  <span>{item.tanggal}</span>
+                  <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-bold uppercase tracking-tight">
+                    {item.kategori}
+                  </span>
+                </div>
+              </div>
+            )}
+          />
+        )}
+      </div>
 
       {/* Modal Form */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Input Pengeluaran Baru">

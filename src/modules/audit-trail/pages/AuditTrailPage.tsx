@@ -1,22 +1,28 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Search, Filter, History, Calendar, Shield } from 'lucide-react';
 import { useActivityStore } from '../../../app/store/useActivityStore';
 import { Card } from '../../../shared/components/ui/Card';
 import { Badge } from '../../../shared/components/ui/Badge';
+import { formatIDR } from '../../../shared/utils/formatter';
+import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
 
+/**
+ * Typesafe Audit Trail ledger page utilizing centralized formatters.
+ * Memoizes log filtration and utilizes AdaptiveList for responsive viewport rendering.
+ */
 const AuditTrailPage = () => {
   const logs = useActivityStore((state) => state.logs);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<string>('ALL');
 
-  const formatIDR = (val: number) =>
-    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
-
-  const filteredLogs = logs.filter((log) => {
-    const matchesSearch = log.action.toLowerCase().includes(search.toLowerCase());
-    const matchesFilter = filterType === 'ALL' || log.type.toUpperCase() === filterType;
-    return matchesSearch && matchesFilter;
-  });
+  // Memoize state filtering logic to maintain performance under large audit history datasets
+  const filteredLogs = useMemo(() => {
+    return logs.filter((log) => {
+      const matchesSearch = log.action.toLowerCase().includes(search.toLowerCase());
+      const matchesFilter = filterType === 'ALL' || log.type.toUpperCase() === filterType;
+      return matchesSearch && matchesFilter;
+    });
+  }, [logs, search, filterType]);
 
   const getBadgeVariant = (type: string) => {
     switch (type) {
@@ -43,34 +49,35 @@ const AuditTrailPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
             <History className="text-slate-500" size={24} /> Audit Trail
           </h2>
-          <p className="text-gray-500">Penelusuran historis tindakan pengguna paroki demi transparansi.</p>
+          <p className="text-sm text-gray-500">Penelusuran historis tindakan pengguna paroki demi transparansi.</p>
         </div>
       </div>
 
-      {/* Filter Toolbar */}
-      <Card className="p-4 bg-slate-50 border-none flex flex-col md:flex-row gap-4 items-center">
-        <div className="flex items-center gap-2 bg-white px-3 py-2 border rounded-lg w-full md:w-80">
-          <Search size={18} className="text-gray-400" />
+      {/* Filter Toolbar - Clean flat container with compact density */}
+      <Card className="p-4 bg-slate-50 border border-slate-200/60 flex flex-col md:flex-row gap-4 items-center">
+        <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-200 rounded-lg w-full md:w-80">
+          <Search size={16} className="text-slate-400" />
           <input
             type="text"
             placeholder="Cari aktivitas..."
-            className="bg-transparent text-sm outline-none w-full"
+            className="bg-transparent text-xs outline-none w-full font-semibold text-slate-700"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2 bg-white px-3 py-2 border rounded-lg w-full md:w-auto">
-          <Filter size={18} className="text-gray-400" />
+        <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-200 rounded-lg w-full md:w-auto">
+          <Filter size={16} className="text-slate-400" />
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="bg-transparent text-sm font-medium outline-none"
+            className="bg-transparent text-xs font-bold outline-none text-slate-600 cursor-pointer"
           >
             <option value="ALL">Semua Aktivitas</option>
             <option value="IN">Penerimaan</option>
@@ -81,64 +88,73 @@ const AuditTrailPage = () => {
             <option value="REVISE">Revisi</option>
           </select>
         </div>
-        <div className="ml-auto flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+        <div className="ml-auto flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
           <Shield size={14} className="text-slate-400" /> Kepatuhan Internal
         </div>
       </Card>
 
-      {/* Logs Table */}
-      <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-gray-50 text-[11px] uppercase text-gray-400 font-bold border-b">
-                <th className="px-6 py-4">Waktu</th>
-                <th className="px-6 py-4">Jenis Aksi</th>
-                <th className="px-6 py-4">Deskripsi Aktivitas</th>
-                <th className="px-6 py-4 text-right">Nilai Mutasi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
-              {filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 text-gray-500 font-medium whitespace-nowrap">
-                    <span className="flex items-center gap-2">
-                      <Calendar size={12} /> {log.time}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge 
-                      variant={getBadgeVariant(log.type)}
-                      className={log.type === 'out' || log.type === 'reject' ? 'bg-rose-100 text-rose-700 border border-rose-200' : ''}
-                    >
-                      {getLogTypeLabel(log.type)}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 font-semibold text-slate-800 leading-relaxed">
-                    {log.action}
-                  </td>
-                  <td className="px-6 py-4 text-right font-black">
-                    {log.amount > 0 ? (
-                      <span className={log.type === 'in' ? 'text-emerald-600' : log.type === 'out' ? 'text-rose-600' : 'text-slate-700'}>
-                        {log.type === 'in' ? '+' : log.type === 'out' ? '-' : ''} {formatIDR(log.amount)}
-                      </span>
-                    ) : (
-                      <span className="text-slate-400">-</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {filteredLogs.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="p-8 text-center text-slate-400 font-medium">
-                    Tidak ada catatan aktivitas yang cocok dengan pencarian Anda.
-                  </td>
-                </tr>
+      {/* Logs Table - Replaced with AdaptiveList */}
+      <AdaptiveList
+        data={filteredLogs}
+        desktopHeaders={[
+          'Waktu',
+          'Jenis Aksi',
+          'Deskripsi Aktivitas',
+          'Nilai Mutasi'
+        ]}
+        renderDesktopRow={(log) => (
+          <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+            <td className="px-5 py-2.5 text-xs text-slate-500 font-bold border-r border-slate-100 whitespace-nowrap">
+              <span className="flex items-center gap-1.5">
+                <Calendar size={12} className="text-slate-400" /> {log.time}
+              </span>
+            </td>
+            <td className="px-5 py-2.5 border-r border-slate-100">
+              <Badge
+                variant={getBadgeVariant(log.type)}
+                className={log.type === 'out' || log.type === 'reject' ? 'bg-rose-100 text-rose-700 border border-rose-200/50' : ''}
+              >
+                {getLogTypeLabel(log.type)}
+              </Badge>
+            </td>
+            <td className="px-5 py-2.5 text-xs font-semibold text-slate-800 leading-relaxed border-r border-slate-100">
+              {log.action}
+            </td>
+            <td className="px-5 py-2.5 text-xs text-right font-black">
+              {log.amount > 0 ? (
+                <span className={log.type === 'in' ? 'text-emerald-600' : log.type === 'out' ? 'text-rose-600' : 'text-slate-700'}>
+                  {log.type === 'in' ? '+' : log.type === 'out' ? '-' : ''} {formatIDR(log.amount)}
+                </span>
+              ) : (
+                <span className="text-slate-400">-</span>
               )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+            </td>
+          </tr>
+        )}
+        renderMobileCard={(log) => (
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                <Calendar size={12} className="text-slate-400" /> {log.time}
+              </span>
+              <Badge
+                variant={getBadgeVariant(log.type)}
+                className={log.type === 'out' || log.type === 'reject' ? 'bg-rose-100 text-rose-700 border border-rose-200/50' : ''}
+              >
+                {getLogTypeLabel(log.type)}
+              </Badge>
+            </div>
+            <div className="text-xs font-semibold text-slate-800 leading-relaxed">{log.action}</div>
+            {log.amount > 0 && (
+              <div className="text-right pt-1 text-xs font-black">
+                <span className={log.type === 'in' ? 'text-emerald-600' : log.type === 'out' ? 'text-rose-600' : 'text-slate-700'}>
+                  {log.type === 'in' ? '+' : '-'} {formatIDR(log.amount)}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      />
     </div>
   );
 };

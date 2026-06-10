@@ -4,8 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Upload, X, CheckCircle2 } from 'lucide-react';
 import { Button } from '../../../shared/components/ui/Button';
-import { useKasStore } from '../../../app/store/useKasStore';
 import { useActivityStore } from '../../../app/store/useActivityStore';
+import { useAddKasKeluarMutation } from '../../kas-masuk/hooks/useKasMasukQuery';
 
 const schema = z.object({
   tanggal: z.string().min(1, 'Tanggal wajib diisi'),
@@ -18,7 +18,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
-  const addKasKeluar = useKasStore((state) => state.addKasKeluar);
+  const addMutation = useAddKasKeluarMutation();
   const addLog = useActivityStore((state) => state.addLog);
 
   const [preview, setPreview] = useState<string | null>(null);
@@ -28,24 +28,22 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
   });
 
   const onSubmit = async (data: FormData) => {
-    // Add to Zustand Kas store
-    addKasKeluar({
+    addMutation.mutate({
       tanggal: data.tanggal,
       kategori: data.kategori,
       penerima: data.penerima,
       jumlah: data.jumlah,
       buktiUrl: preview || undefined,
+    }, {
+      onSuccess: () => {
+        addLog(
+          `Pengeluaran Kas - ${data.penerima} (${data.kategori})`,
+          data.jumlah,
+          'out'
+        );
+        onSuccess();
+      }
     });
-
-    // Record to activity log
-    addLog(
-      `Pengeluaran Kas - ${data.penerima} (${data.kategori})`,
-      data.jumlah,
-      'out'
-    );
-
-    await new Promise(resolve => setTimeout(resolve, 600)); // simulated short delay
-    onSuccess();
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

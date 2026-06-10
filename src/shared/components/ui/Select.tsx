@@ -1,47 +1,135 @@
 import React, { forwardRef } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
+  hint?: string;
   icon?: React.ReactNode;
+  placeholder?: string;
 }
 
+/**
+ * GRASP: Information Expert + High Cohesion
+ * Select memiliki kohesi yang identik dengan Input secara semantik —
+ * keduanya adalah form controls dengan pola label → wrapper → field → feedback.
+ * Dipertahankan sebagai komponen terpisah (bukan merge) karena:
+ * 1. HTMLSelectElement != HTMLInputElement — interface berbeda, tipe berbeda.
+ * 2. Select memiliki keunikan: custom chevron arrow, placeholder option, appearance-none.
+ *
+ * DESIGN SYSTEM GUARD:
+ * - rounded-none: MUTLAK. Dropdown tidak boleh berbentuk kapsul.
+ * - focus:ring DIHAPUS → focus:border-slate-700 konsisten dengan Input.
+ * - ChevronDown dari lucide menggantikan SVG inline manual (lebih maintainable).
+ * - appearance-none DIPERTAHANKAN agar chevron custom terlihat di semua browser.
+ *
+ * ZERO DATA CLIPPING:
+ * - pr-9 pada select memastikan teks value tidak tertumpuk ikon chevron kanan.
+ */
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, children, label, error, icon, ...props }, ref) => {
+  ({ className, children, label, error, hint, icon, placeholder, ...props }, ref) => {
+    const hasError = Boolean(error);
+
     return (
-      <div className="space-y-1.5 w-full">
+      <div className="space-y-1 w-full min-w-0">
+        {/* LABEL */}
         {label && (
-          <label className="text-[11px] font-black text-slate-500 uppercase flex items-center gap-2">
+          <label
+            className={cn(
+              'text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5',
+              hasError ? 'text-rose-500' : 'text-slate-500'
+            )}
+          >
             {label}
+            {props.required && (
+              <span className="text-rose-500 text-xs leading-none" aria-hidden="true">
+                *
+              </span>
+            )}
           </label>
         )}
-        <div className="relative">
+
+        {/* SELECT WRAPPER */}
+        <div className="relative flex items-center">
+          {/* Left Icon Slot */}
           {icon && (
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10">
               {icon}
             </div>
           )}
+
           <select
             ref={ref}
             className={cn(
-              "w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none",
-              icon && "pl-11",
-              error && "border-rose-500 focus:ring-rose-500/20 focus:border-rose-500",
+              'w-full bg-white text-sm text-slate-800 font-medium',
+              'border border-slate-200 outline-none',
+              // DESIGN SYSTEM GUARD: rounded-none — zero kapsul dropdown
+              'rounded-none',
+              // Padding presisi — pr-9 mencegah zero data clipping di atas chevron
+              'px-4 py-2.5 pr-9',
+              // Hapus appearance browser default, gunakan chevron custom
+              'appearance-none',
+              // Micro-interaction: border berubah warna saat fokus (bukan ring)
+              'transition-colors duration-150',
+              'focus:border-slate-700 focus:bg-white',
+              // Cursor
+              'cursor-pointer',
+              // Icon offset kiri
+              icon && 'pl-9',
+              // State error
+              hasError
+                ? 'border-rose-400 focus:border-rose-500 bg-rose-50/30'
+                : '',
+              // State disabled
+              'disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-50',
               className
             )}
+            aria-invalid={hasError ? 'true' : undefined}
+            aria-describedby={
+              hasError
+                ? `${props.id ?? props.name}-error`
+                : hint
+                ? `${props.id ?? props.name}-hint`
+                : undefined
+            }
             {...props}
           >
+            {/* Placeholder option — disabled agar tidak bisa dipilih kembali */}
+            {placeholder && (
+              <option value="" disabled>
+                {placeholder}
+              </option>
+            )}
             {children}
           </select>
-          {/* Custom arrow indicator since we used appearance-none */}
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-            <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-            </svg>
+
+          {/* Custom Chevron Arrow — pointer-events-none agar klik menembus ke select */}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 z-10">
+            <ChevronDown size={14} strokeWidth={2.5} />
           </div>
         </div>
-        {error && <p className="text-[10px] text-rose-500 font-bold">{error}</p>}
+
+        {/* ERROR MESSAGE */}
+        {hasError && (
+          <p
+            id={`${props.id ?? props.name}-error`}
+            className="text-[10px] text-rose-500 font-bold tracking-wide"
+            role="alert"
+          >
+            {error}
+          </p>
+        )}
+
+        {/* HINT MESSAGE */}
+        {!hasError && hint && (
+          <p
+            id={`${props.id ?? props.name}-hint`}
+            className="text-[10px] text-slate-400 font-medium"
+          >
+            {hint}
+          </p>
+        )}
       </div>
     );
   }
