@@ -24,11 +24,7 @@ const SPJPage = () => {
   const [selectedDoc, setSelectedDoc] = useState<SpjDocument | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [search, setSearch] = useState('');
-<<<<<<< HEAD
   const [statusFilter, setStatusFilter] = useState('ALL');
-=======
-  const [categoryFilter, setCategoryFilter] = useState('Semua Kategori');
->>>>>>> 63673c40b5b166a37a4b7459f872da025e45db29
 
   // Memoize static metrics calculations from SPJ query state
   const { totalArsip, totalVerified, totalPending } = useMemo(() => {
@@ -42,13 +38,12 @@ const SPJPage = () => {
   // Memoize search and status query filtering
   const filteredDocs = useMemo(() => {
     return spjDocuments.filter(doc => {
-<<<<<<< HEAD
       const category = doc.cashTransaction?.expenseType?.name || doc.kegiatan?.namaKegiatan || 'Umum';
       const matchesSearch = doc.title.toLowerCase().includes(search.toLowerCase()) ||
-                            category.toLowerCase().includes(search.toLowerCase());
-      
+        category.toLowerCase().includes(search.toLowerCase());
+
       const matchesStatus = statusFilter === 'ALL' || doc.status === statusFilter;
-      
+
       return matchesSearch && matchesStatus;
     });
   }, [spjDocuments, search, statusFilter]);
@@ -62,21 +57,13 @@ const SPJPage = () => {
     const isPdf = firstLampiran?.fileType === 'PDF';
     const fileType: 'pdf' | 'image' = isPdf ? 'pdf' : 'image';
     const category = selectedDoc.cashTransaction?.expenseType?.name || selectedDoc.kegiatan?.namaKegiatan || 'Umum';
-    
+
     return {
       fileUrl,
       fileType,
       category,
     };
   }, [selectedDoc]);
-=======
-      const matchSearch = doc.title.toLowerCase().includes(search.toLowerCase()) ||
-                          doc.category.toLowerCase().includes(search.toLowerCase());
-      const matchCategory = categoryFilter === 'Semua Kategori' || doc.category === categoryFilter;
-      return matchSearch && matchCategory;
-    });
-  }, [spjDocuments, search, categoryFilter]);
->>>>>>> 63673c40b5b166a37a4b7459f872da025e45db29
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
@@ -129,8 +116,7 @@ const SPJPage = () => {
           />
         </div>
         <div className="flex items-center gap-2 ml-auto w-full md:w-auto">
-          <select 
-<<<<<<< HEAD
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold outline-none text-slate-600 cursor-pointer"
@@ -141,19 +127,6 @@ const SPJPage = () => {
             <option value="REJECTED">Ditolak</option>
           </select>
           <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200 bg-white" disabled>
-=======
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="bg-white border border-slate-200 rounded-none px-3 py-1.5 text-xs font-bold outline-none text-slate-600 cursor-pointer"
-          >
-            <option value="Semua Kategori">Semua Kategori</option>
-            <option value="Liturgi">Liturgi</option>
-            <option value="Pembangunan">Pembangunan</option>
-            <option value="Sosial">Sosial (PSE)</option>
-            <option value="Sekretariat">Sekretariat</option>
-          </select>
-          <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200 bg-white rounded-none">
->>>>>>> 63673c40b5b166a37a4b7459f872da025e45db29
             <Filter size={14} /> Filter
           </Button>
         </div>
@@ -234,12 +207,8 @@ const SPJPage = () => {
                       }
                     });
                   }}
-<<<<<<< HEAD
                   disabled={verifyMutation.isPending}
                   className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md flex justify-center items-center gap-1.5"
-=======
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-none shadow-none flex justify-center items-center gap-1.5"
->>>>>>> 63673c40b5b166a37a4b7459f872da025e45db29
                 >
                   {verifyMutation.isPending ? 'Memproses...' : 'Verifikasi Sekarang'}
                 </Button>
