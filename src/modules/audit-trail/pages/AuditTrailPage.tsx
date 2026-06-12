@@ -9,6 +9,7 @@ import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
 /**
  * Typesafe Audit Trail ledger page utilizing centralized formatters.
  * Memoizes log filtration and utilizes AdaptiveList for responsive viewport rendering.
+ * Pure flat design with zero overlapping component animations.
  */
 const AuditTrailPage = () => {
   const logs = useActivityStore((state) => state.logs);
@@ -61,8 +62,8 @@ const AuditTrailPage = () => {
       </div>
 
       {/* Filter Toolbar - Clean flat container with compact density */}
-      <Card className="p-4 bg-slate-50 border border-slate-200/60 flex flex-col md:flex-row gap-4 items-center">
-        <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-200 rounded-lg w-full md:w-80">
+      <Card className="p-4 bg-slate-50 border border-slate-200/60 flex flex-col md:flex-row gap-4 items-center rounded-none shadow-sm">
+        <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-200 rounded-none w-full md:w-80 transition-colors focus-within:border-slate-700">
           <Search size={16} className="text-slate-400" />
           <input
             type="text"
@@ -72,7 +73,7 @@ const AuditTrailPage = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-200 rounded-lg w-full md:w-auto">
+        <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-200 rounded-none w-full md:w-auto transition-colors focus-within:border-slate-700">
           <Filter size={16} className="text-slate-400" />
           <select
             value={filterType}
@@ -93,7 +94,7 @@ const AuditTrailPage = () => {
         </div>
       </Card>
 
-      {/* Logs Table - Replaced with AdaptiveList */}
+      {/* Logs Table - Powered by AdaptiveList */}
       <AdaptiveList
         data={filteredLogs}
         desktopHeaders={[

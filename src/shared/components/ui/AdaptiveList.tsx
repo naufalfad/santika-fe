@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
+import { Inbox } from 'lucide-react';
 
 interface AdaptiveListProps<T> {
   data: T[];
@@ -59,8 +60,8 @@ export const AdaptiveList = <T,>({
         <div className="block md:hidden divide-y divide-slate-100">
           {Array.from({ length: skeletonRows }).map((_, i) => (
             <div key={i} className="p-3.5 animate-pulse">
-              <div className="h-3 bg-slate-100 w-3/4 mb-2" />
-              <div className="h-2.5 bg-slate-100 w-1/2" />
+              <div className="h-3 bg-slate-200/60 w-3/4 mb-2 rounded-none" />
+              <div className="h-2.5 bg-slate-200/60 w-1/2 rounded-none" />
             </div>
           ))}
         </div>
@@ -80,8 +81,8 @@ export const AdaptiveList = <T,>({
               {Array.from({ length: skeletonRows }).map((_, i) => (
                 <tr key={i} className="animate-pulse">
                   {desktopHeaders.map((_, j) => (
-                    <td key={j} className="px-5 py-3.5">
-                      <div className="h-3 bg-slate-100 w-full max-w-[120px]" />
+                    <td key={j} className="px-5 py-3.5 border-r border-slate-100 last:border-r-0">
+                      <div className="h-3 bg-slate-200/60 w-full max-w-[120px] rounded-none" />
                     </td>
                   ))}
                 </tr>
@@ -142,8 +143,11 @@ export const AdaptiveList = <T,>({
         </>
       ) : (
         /* EMPTY STATE */
-        <div className="p-10 text-center bg-white">
-          <p className="text-xs text-slate-400 font-medium">{emptyStateMessage}</p>
+        <div className="p-12 flex flex-col items-center justify-center bg-white text-center">
+          <div className="mb-3 bg-slate-100 border border-slate-200/50 p-3 rounded-none text-slate-400">
+            <Inbox size={24} />
+          </div>
+          <p className="text-xs text-slate-500 font-bold">{emptyStateMessage}</p>
         </div>
       )}
     </div>

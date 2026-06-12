@@ -63,7 +63,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
 
     const handleSaveIncomeType = async () => {
         setAddTypeError(null);
-        
+
         const cleanCode = newTypeCode.trim().toUpperCase();
         const cleanName = newTypeName.trim();
         const cleanDesc = newTypeDesc.trim();
@@ -87,7 +87,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
             if (result && result.id) {
                 // Auto select the newly created income type
                 setValue('income_type_id', result.id);
-                
+
                 // Reset states and close inline form
                 setNewTypeCode('');
                 setNewTypeName('');
@@ -113,11 +113,10 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                         setValue('fund_category_id', '');
                         setValue('description', '');
                     }}
-                    className={`flex-1 py-2 rounded-lg text-xs font-black transition-all uppercase tracking-wider ${
-                        classification === 'NORMAL'
+                    className={`flex-1 py-2 rounded-lg text-xs font-black transition-all uppercase tracking-wider ${classification === 'NORMAL'
                             ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
                             : 'text-slate-500 hover:text-slate-700'
-                    }`}
+                        }`}
                 >
                     Pemasukan Normal
                 </button>
@@ -129,11 +128,10 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                         setValue('fund_category_id', '');
                         setValue('description', '');
                     }}
-                    className={`flex-1 py-2 rounded-lg text-xs font-black transition-all uppercase tracking-wider ${
-                        classification === 'REFUND'
+                    className={`flex-1 py-2 rounded-lg text-xs font-black transition-all uppercase tracking-wider ${classification === 'REFUND'
                             ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
                             : 'text-slate-500 hover:text-slate-700'
-                    }`}
+                        }`}
                 >
                     Refund Uang Muka (SPJ)
                 </button>
@@ -154,7 +152,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                             if (found) {
                                 setValue('fund_category_id', found.fundCategoryId);
                                 setValue('description', `Refund Sisa Uang Muka - ${found.transactionNo} - ${found.description}`);
-                                
+
                                 // Auto-select PENDAPATAN_LAINNYA code if available
                                 const defType = incomeTypes.find((t) => t.code === 'PENDAPATAN_LAINNYA')?.id || '';
                                 if (defType) {
@@ -175,7 +173,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                         ))}
                     </select>
                     {errors.parent_transaction_id && <p className="text-[10px] text-rose-500 font-bold">{errors.parent_transaction_id.message}</p>}
-                    
+
                     {/* Refund Estimation / Hint */}
                     {selectedParent && (
                         <div className="p-3.5 bg-blue-50/50 border border-blue-100 rounded-xl text-xs font-semibold text-blue-800 space-y-1">
@@ -378,14 +376,14 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                     type="button"
                     variant="outline"
                     onClick={onCancel}
-                    className="flex-1 py-3 rounded-xl font-bold text-slate-500"
+                    className="flex-1 py-3 rounded-none font-bold text-slate-500"
                 >
                     Batal
                 </Button>
                 <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-100 flex justify-center items-center gap-2"
+                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-none font-bold shadow-none flex justify-center items-center gap-2"
                 >
                     {isSubmitting ? 'Menyimpan...' : <><CheckCircle2 size={18} /> Simpan Data</>}
                 </Button>

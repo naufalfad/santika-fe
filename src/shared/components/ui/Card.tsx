@@ -23,10 +23,10 @@ export const Card = ({ children, className, ...props }: CardProps) => {
       className={cn(
         // DESIGN SYSTEM GUARD: rounded-none — zero rounded corners, no exception
         'bg-white rounded-none border border-slate-200 shadow-sm',
-        // Micro-interaction: shadow elevation naik halus saat hover
-        'hover:shadow-md hover:border-slate-300/80',
-        // Transition hanya pada shadow dan border-color, bukan transform (hemat GPU)
-        'transition-shadow duration-300 ease-in-out',
+        // Micro-interaction: hover tactile response
+        'hover:border-slate-300 hover:bg-slate-50/40 hover:shadow-none',
+        // Transition tipis dan halus
+        'transition-colors duration-200 ease-in-out',
         'overflow-hidden',
         className
       )}

@@ -109,7 +109,7 @@ const AnggaranPage = () => {
     }, [budgets]);
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
+        <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
             {/* Header section */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
@@ -359,7 +359,7 @@ const AnggaranPage = () => {
                         />
                     )}
 
-                    <div className="p-3.5 bg-amber-50/60 border border-amber-200/50 rounded-xl flex items-center gap-2.5 text-amber-900 shadow-sm">
+                    <div className="p-3.5 bg-amber-50/60 border border-amber-200/50 rounded-none flex items-center gap-2.5 text-amber-900 shadow-none">
                         <ShieldAlert size={16} className="text-amber-700 shrink-0" />
                         <p className="text-[11px] font-semibold leading-normal">
                             Sistem akan memberikan peringatan otomatis jika pengajuan dana melebihi sisa anggaran di setiap Pos.

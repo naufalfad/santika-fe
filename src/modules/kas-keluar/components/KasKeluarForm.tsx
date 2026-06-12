@@ -34,7 +34,7 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
 
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
-  
+
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -127,8 +127,8 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
             <HelpCircle size={13} className="text-slate-400" />
           </span>
         </label>
-        <select 
-          {...register('permohonan_anggaran_id')} 
+        <select
+          {...register('permohonan_anggaran_id')}
           className="w-full p-2 border rounded-lg text-sm outline-blue-500 font-semibold text-slate-800 cursor-pointer"
         >
           <option value="">-- Bukan Pengeluaran Kegiatan / Proposal --</option>
@@ -149,8 +149,8 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
         </div>
         <div>
           <label className="block text-xs font-bold text-gray-700 mb-1">POS DANA (KAS ASAL)</label>
-          <select 
-            {...register('fund_category_id')} 
+          <select
+            {...register('fund_category_id')}
             className="w-full p-2 border rounded-lg text-sm outline-blue-500 font-semibold text-slate-800"
             disabled={!!selectedPermohonanId}
             onChange={(e) => {
@@ -180,8 +180,8 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
         </div>
         <div>
           <label className="block text-xs font-bold text-gray-700 mb-1">ITEM ANGGARAN TAHUNAN (OPSIONAL)</label>
-          <select 
-            {...register('budget_item_id')} 
+          <select
+            {...register('budget_item_id')}
             className="w-full p-2 border rounded-lg text-sm outline-blue-500 font-semibold text-slate-800"
             disabled={!selectedFundCategoryId || budgetItems.length === 0}
           >
@@ -195,10 +195,10 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
       </div>
 
       <div className="flex items-center gap-2 py-1">
-        <input 
-          type="checkbox" 
-          id="is_uang_muka" 
-          {...register('is_uang_muka')} 
+        <input
+          type="checkbox"
+          id="is_uang_muka"
+          {...register('is_uang_muka')}
           disabled={!!selectedPermohonanId}
           className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
         />

@@ -5,6 +5,7 @@ import { formatIDR } from '../../../shared/utils/formatter';
 /**
  * High-density tabular summary showing dynamic budget realizations.
  * Computes complex metrics via useMemo for optimal client performance.
+ * Sharp-corner styling.
  */
 export const BudgetSummary = () => {
     const kasKeluar = useKasStore((state) => state.kasKeluar);
@@ -75,8 +76,8 @@ export const BudgetSummary = () => {
                             <td className="py-2.5 text-right font-bold text-slate-700">{formatIDR(item.sisa)}</td>
                             <td className="py-2.5 px-3">
                                 <div className="flex items-center gap-1.5">
-                                    <div className="flex-1 bg-slate-100 h-1 rounded-full overflow-hidden">
-                                        <div className="bg-emerald-500 h-full" style={{ width: `${Math.min(item.persen, 100)}%` }}></div>
+                                    <div className="flex-1 bg-slate-100 h-1 rounded-none overflow-hidden">
+                                        <div className="bg-emerald-500 h-full rounded-none" style={{ width: `${Math.min(item.persen, 100)}%` }}></div>
                                     </div>
                                     <span className="font-bold text-slate-500 w-5 text-right text-[10px]">{item.persen}%</span>
                                 </div>
@@ -92,8 +93,8 @@ export const BudgetSummary = () => {
                         <td className="py-2.5 text-right font-black">{formatIDR(totalSisa)}</td>
                         <td className="py-2.5 px-3">
                             <div className="flex items-center gap-1.5">
-                                <div className="flex-1 bg-blue-100 h-1 rounded-full overflow-hidden">
-                                    <div className="bg-blue-600 h-full" style={{ width: `${Math.min(totalPersen, 100)}%` }}></div>
+                                <div className="flex-1 bg-blue-100 h-1 rounded-none overflow-hidden">
+                                    <div className="bg-blue-600 h-full rounded-none" style={{ width: `${Math.min(totalPersen, 100)}%` }}></div>
                                 </div>
                                 <span className="text-blue-600 font-black w-5 text-right text-[10px]">{totalPersen}%</span>
                             </div>

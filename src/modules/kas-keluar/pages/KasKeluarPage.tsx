@@ -24,12 +24,13 @@ import { useAnggaranQuery } from '../../anggaran/hooks/useAnggaranQuery';
  * Standardized high-contrast, high-density Kas Keluar Management page.
  * Implements optimized useMemo selectors to prevent rendering lags.
  * Integrates React Query for async Server State and AdaptiveList for responsive layouts.
+ * Fully interactive with dynamic chart updates, sharp-edge visual styling, and receipt preview modal.
  */
 const KasKeluarPage = () => {
   const { data: kasKeluar = [], isLoading } = useKasKeluarQuery();
   const { data: fundBalances = [] } = useFundBalancesQuery();
   const { data: budgets = [] } = useAnggaranQuery();
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSpjUploadOpen, setIsSpjUploadOpen] = useState(false);
@@ -72,7 +73,7 @@ const KasKeluarPage = () => {
   const totalPlafon = useMemo(() => {
     return budgets.reduce((sum, b) => sum + Number(b.totalPlafon || 0), 0);
   }, [budgets]);
-  
+
   const totalRealisasi = useMemo(() => {
     return budgets.reduce((sum, b) => sum + Number(b.totalRealisasi || 0), 0);
   }, [budgets]);
@@ -144,7 +145,7 @@ const KasKeluarPage = () => {
   }, [kasKeluar]);
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -152,10 +153,10 @@ const KasKeluarPage = () => {
           <p className="text-sm text-gray-500">Pantau pengeluaran operasional dan kegiatan paroki secara real-time.</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button variant="outline" className="flex-1 sm:flex-none flex items-center justify-center gap-2 text-xs border-slate-200">
+          <Button variant="outline" className="flex-1 sm:flex-none flex items-center justify-center gap-2 text-xs border-slate-200 rounded-none">
             <Download size={16} /> Export Laporan
           </Button>
-          <Button onClick={() => setIsModalOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 shadow-sm text-xs bg-rose-600 hover:bg-rose-700 text-white">
+          <Button onClick={() => setIsModalOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 shadow-none text-xs bg-rose-600 hover:bg-rose-700 text-white rounded-none">
             <Plus size={16} /> Catat Pengeluaran
           </Button>
         </div>
@@ -271,8 +272,8 @@ const KasKeluarPage = () => {
 
       {/* Main Table */}
       <div className="space-y-4">
-        <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col md:flex-row gap-4 justify-between">
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg w-full md:w-80">
+        <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col md:flex-row gap-4 justify-between">
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-none w-full md:w-80">
             <Search size={16} className="text-slate-400" />
             <input
               type="text"
@@ -288,8 +289,8 @@ const KasKeluarPage = () => {
         </div>
 
         {isLoading ? (
-          <div className="p-8 text-center text-slate-500 bg-white border border-slate-200 rounded-xl shadow-sm flex items-center justify-center gap-2.5 font-semibold text-xs">
-            <div className="w-4 h-4 border-2 border-rose-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="p-8 text-center text-slate-500 bg-white border border-slate-200 rounded-none shadow-sm flex items-center justify-center gap-2.5 font-semibold text-xs">
+            <div className="w-4 h-4 border-2 border-rose-600 border-t-transparent rounded-none animate-spin"></div>
             Loading data transaksi kas keluar...
           </div>
         ) : (
@@ -344,9 +345,9 @@ const KasKeluarPage = () => {
                 </td>
                 <td className="px-5 py-3.5 text-center">
                   {item.attachment?.fileUrl ? (
-                    <a 
-                      href={`${apiAssetUrl}${item.attachment.fileUrl}`} 
-                      target="_blank" 
+                    <a
+                      href={`${apiAssetUrl}${item.attachment.fileUrl}`}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 inline-block hover:bg-slate-100 border border-slate-200 rounded text-rose-600 hover:text-rose-700 transition-all"
                       title={item.attachment.fileName}
@@ -395,11 +396,33 @@ const KasKeluarPage = () => {
                     </span>
                   </div>
                 </div>
+                <button
+                  onClick={() => setSelectedBuktiUrl(item.buktiUrl || 'https://via.placeholder.com/600x800?text=Nota+Pembayaran+Fisik')}
+                  className="mt-2 text-[10px] text-rose-600 hover:text-rose-700 font-black text-left uppercase tracking-wider cursor-pointer"
+                >
+                  Lihat Bukti
+                </button>
               </div>
             )}
           />
         )}
       </div>
+
+      {/* Receipt Preview Modal */}
+      <Modal isOpen={!!selectedBuktiUrl} onClose={() => setSelectedBuktiUrl(null)} title="Bukti Transaksi Kas Keluar">
+        {selectedBuktiUrl && (
+          <div className="space-y-4">
+            <div className="border border-slate-200 rounded-none overflow-hidden h-96 bg-slate-50 flex items-center justify-center">
+              <img src={selectedBuktiUrl} alt="Bukti Pengeluaran" className="max-w-full max-h-full object-contain" />
+            </div>
+            <div className="flex justify-end pt-4 border-t border-slate-100">
+              <Button onClick={() => setSelectedBuktiUrl(null)} variant="outline" size="sm" className="rounded-none">
+                Tutup Preview
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Modal Form */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Input Pengeluaran Baru">
@@ -407,9 +430,9 @@ const KasKeluarPage = () => {
       </Modal>
 
       {/* SPJ Upload Modal */}
-      <Modal 
-        isOpen={isSpjUploadOpen} 
-        onClose={() => { setIsSpjUploadOpen(false); setSelectedTransactionId(undefined); }} 
+      <Modal
+        isOpen={isSpjUploadOpen}
+        onClose={() => { setIsSpjUploadOpen(false); setSelectedTransactionId(undefined); }}
         title="Upload Dokumen Pertanggungjawaban Baru"
       >
         <SPJUploadModal

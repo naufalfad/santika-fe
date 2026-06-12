@@ -4,28 +4,54 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-slate-900 antialiased;
+    @apply text-slate-900 antialiased;
+    /* Latar belakang flat dengan tekstur titik-titik mikro premium ala Stripe */
+    background-color: #f8fafc;
+    background-image: radial-gradient(#e2e8f0 1.2px, transparent 1.2px);
+    background-size: 20px 20px;
   }
+}
+
+/* Micro-Aesthetic: Transisi halaman slide-up & fade-in */
+@keyframes santika-fade-slide {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-slide {
+  animation: santika-fade-slide 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Custom Scrollbar Utility */
 @layer utilities {
   .sidebar-scrollbar::-webkit-scrollbar {
-    width: 4px; /* Sangat tipis agar elegan */
+    width: 4px;
+    /* Sangat tipis agar elegan */
   }
 
   .sidebar-scrollbar::-webkit-scrollbar-track {
-    background: transparent; /* Track transparan agar menyatu dengan sidebar */
+    background: transparent;
+    /* Track transparan agar menyatu dengan sidebar */
   }
 
   .sidebar-scrollbar::-webkit-scrollbar-thumb {
-    background: #334155; /* Slate-700: Warna yang senada namun sedikit lebih terang dari Slate-900 */
-    border-radius: 20px;
-    transition: all 0.3s ease;
+    background: #334155;
+    /* Slate-700: Warna yang senada namun sedikit lebih terang dari Slate-900 */
+    /* ABSOLUTE SHARP CORNERS GUARD: border-radius: 20px DIHAPUS. Wajib rata dan tajam. */
+    border-radius: 0px;
+    transition: background-color 0.3s ease;
   }
 
   .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #475569; /* Slate-600: Sedikit lebih terang saat kursor di atasnya */
+    background: #475569;
+    /* Slate-600: Sedikit lebih terang saat kursor di atasnya */
   }
 
   /* Sembunyikan scrollbar saat tidak di-hover (opsional untuk look yang lebih bersih) */

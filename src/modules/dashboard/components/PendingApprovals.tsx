@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Wallet, Gift, Users, Briefcase, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+<<<<<<< HEAD
 import { useKegiatanQuery, usePermohonanAnggaranQuery } from '../../approval/hooks/useApprovalQuery';
 import { useAuthStore } from '../../../app/store/useAuthStore';
 import { cn } from '../../../shared/utils/cn';
@@ -13,6 +14,20 @@ export const PendingApprovals = () => {
     // Fetch live activities & budget requests
     const { data: kegiatanList = [], isLoading: isKegiatanLoading } = useKegiatanQuery();
     const { data: anggaranList = [], isLoading: isAnggaranLoading } = usePermohonanAnggaranQuery();
+=======
+import { useApprovalStore } from '../../../app/store/useApprovalStore';
+import { cn } from '../../../shared/utils/cn';
+import { formatIDR } from '../../../shared/utils/formatter';
+
+/**
+ * Unified and seamless list for pending expense approvals.
+ * Standardized spacing without bulky bounding boxes.
+ * Sharp-corner styling and dynamic navigation to approvals.
+ */
+export const PendingApprovals = () => {
+    const approvalRequests = useApprovalStore((state) => state.approvalRequests);
+    const navigate = useNavigate();
+>>>>>>> 63673c40b5b166a37a4b7459f872da025e45db29
 
     // Filter pending items based on user role
     const pendingItems = useMemo(() => {
@@ -90,6 +105,7 @@ export const PendingApprovals = () => {
                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">
                     Menunggu Persetujuan
                 </h3>
+<<<<<<< HEAD
                 <span className="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 text-[9px] font-black rounded-full">
                     {isLoading ? '...' : `${pendingItems.length} Antrean`}
                 </span>
@@ -97,6 +113,40 @@ export const PendingApprovals = () => {
 
             <div className="divide-y divide-slate-100/80 max-h-[300px] overflow-y-auto pr-1">
                 {isLoading ? (
+=======
+                <span className="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 text-[9px] font-black rounded-none">
+                    {pendingRequests.length} Antrean
+                </span>
+            </div>
+
+            <div className="divide-y divide-slate-100/80">
+                {pendingRequests.slice(0, 4).map((req) => (
+                    <div
+                        key={req.id}
+                        className="flex items-center gap-3 py-2.5 transition-colors group cursor-pointer hover:bg-slate-50/40"
+                        onClick={() => navigate('/approval')}
+                    >
+                        <div className={cn("p-1.5 rounded-none shrink-0", getColorClass(req.komisi))}>
+                            {getIcon(req.komisi)}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                            <h4 className="text-xs font-bold text-slate-800 truncate group-hover:text-blue-600 transition-colors">
+                                {req.judul}
+                            </h4>
+                            <p className="text-[10px] text-slate-400 font-semibold">{req.komisi}</p>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                            <p className="text-xs font-black text-slate-800 tracking-tight">
+                                {formatIDR(req.nominal)}
+                            </p>
+                            <p className="text-[9px] text-slate-400 font-bold tracking-tight">{req.tanggal}</p>
+                        </div>
+                    </div>
+                ))}
+                {pendingRequests.length === 0 && (
+>>>>>>> 63673c40b5b166a37a4b7459f872da025e45db29
                     <p className="text-[11px] text-center text-slate-400 font-medium py-8">
                         Memuat data antrean...
                     </p>
@@ -133,11 +183,19 @@ export const PendingApprovals = () => {
                 )}
             </div>
 
+<<<<<<< HEAD
             <button
                 onClick={() => navigate('/approval')}
                 className="w-full pt-3.5 pb-1 text-[10px] font-black text-blue-600 flex items-center justify-between border-t border-slate-100 hover:text-blue-700 transition-colors"
             >
                 LIHAT ANTRIAN PERSETUJUAN <ChevronRight size={12} />
+=======
+            <button 
+                onClick={() => navigate('/approval')}
+                className="w-full pt-3.5 pb-1 text-[10px] font-black text-blue-600 flex items-center justify-between border-t border-slate-100 hover:text-blue-700 transition-colors cursor-pointer rounded-none"
+            >
+                LIHAT SEMUA PENGAJUAN <ChevronRight size={12} />
+>>>>>>> 63673c40b5b166a37a4b7459f872da025e45db29
             </button>
         </div>
     );

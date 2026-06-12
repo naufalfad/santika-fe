@@ -3,6 +3,7 @@ import {
   Wallet, Building2, Heart, TrendingUp, TrendingDown,
   Calendar, ChevronRight
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../app/store/useAuthStore';
 import { useKasStore } from '../../../app/store/useKasStore';
 import { Card } from '../../../shared/components/ui/Card';
@@ -19,6 +20,7 @@ const DashboardPage = () => {
   const { user } = useAuthStore();
   const kasMasuk = useKasStore((state) => state.kasMasuk);
   const kasKeluar = useKasStore((state) => state.kasKeluar);
+  const navigate = useNavigate();
 
   // Memoized aggregation to prevent unnecessary computational renders
   const totalIn = useMemo(() => {
@@ -57,9 +59,9 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="space-y-6 pb-10 max-w-[1600px] mx-auto">
+    <div className="space-y-6 pb-10 max-w-[1600px] mx-auto animate-fade-slide">
       {/* 1. HERO SECTION - High Contrast & High Density */}
-      <div className="relative overflow-hidden bg-white p-5 rounded-xl border border-slate-200">
+      <div className="relative overflow-hidden bg-white p-5 rounded-none border border-slate-200 shadow-sm">
         <div className="absolute right-0 top-0 h-full w-[28%] hidden lg:block">
           <img
             src="src/assets/church-bg.png"
@@ -87,8 +89,8 @@ const DashboardPage = () => {
           </div>
 
           <div className="flex justify-center lg:justify-center">
-            <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-xl">
-              <div className="p-2 bg-white text-blue-600 rounded-lg shadow-sm border border-slate-100">
+            <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-none">
+              <div className="p-2 bg-white text-blue-600 rounded-none shadow-none border border-slate-100">
                 <Calendar size={18} />
               </div>
               <div>
@@ -105,7 +107,7 @@ const DashboardPage = () => {
       {/* 2. STAT CARDS SECTION - Standardized Spacing & Hover States */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {stats.map((item, idx) => (
-          <Card key={idx} className="p-0 border-slate-200 hover:shadow-md hover:border-slate-300 transition-all duration-300 flex flex-col">
+          <Card key={idx} className="p-0 border-slate-200 hover:shadow-none hover:border-slate-300 transition-all duration-300 flex flex-col rounded-none shadow-sm">
             <div className={cn("h-1",
               item.color === 'blue' ? 'bg-blue-600' :
                 item.color === 'emerald' ? 'bg-emerald-600' :
@@ -115,11 +117,11 @@ const DashboardPage = () => {
 
             <div className="p-4 flex-1 flex flex-col justify-between">
               <div className="flex items-center gap-2 mb-3">
-                <div className={cn("p-1.5 rounded-lg",
-                  item.color === 'blue' ? 'bg-blue-50 text-blue-600' :
-                    item.color === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
-                      item.color === 'purple' ? 'bg-purple-50 text-purple-600' :
-                        item.color === 'orange' ? 'bg-orange-50 text-orange-600' : 'bg-cyan-50 text-cyan-600'
+                <div className={cn("p-1.5 rounded-none border",
+                  item.color === 'blue' ? 'bg-blue-50 text-blue-600 border-blue-100/50' :
+                    item.color === 'emerald' ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' :
+                      item.color === 'purple' ? 'bg-purple-50 text-purple-600 border-purple-100/50' :
+                        item.color === 'orange' ? 'bg-orange-50 text-orange-600 border-orange-100/50' : 'bg-cyan-50 text-cyan-600 border-cyan-100/50'
                 )}>
                   {getIcon(item.icon)}
                 </div>
@@ -134,7 +136,16 @@ const DashboardPage = () => {
               </div>
             </div>
 
-            <button className="px-4 py-2 text-[10px] font-bold text-blue-600 border-t border-slate-100 flex items-center justify-between hover:bg-slate-50 transition-colors">
+            <button
+              onClick={() => {
+                if (item.label === 'SALDO OPERASIONAL') navigate('/kas-keluar');
+                else if (item.label === 'PENDAPATAN BULAN INI') navigate('/kas-masuk');
+                else if (item.label === 'PENGELUARAN BULAN INI') navigate('/kas-keluar');
+                else if (item.label === 'DANA PEMBANGUNAN') navigate('/dana-khusus');
+                else if (item.label === 'DANA SOSIAL (PSE)') navigate('/dana-khusus');
+              }}
+              className="px-4 py-2 text-[10px] font-bold text-blue-600 border-t border-slate-100 flex items-center justify-between hover:bg-slate-50 hover:text-blue-700 transition-colors cursor-pointer rounded-none text-left"
+            >
               Lihat Detail <ChevronRight size={10} />
             </button>
           </Card>
@@ -143,11 +154,11 @@ const DashboardPage = () => {
 
       {/* 3. MIDDLE SECTION: Charts & Pending Requests */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <Card className="lg:col-span-8 p-5 border-slate-200">
+        <Card className="lg:col-span-8 p-5 border-slate-200 rounded-none shadow-sm">
           <FinancialChart />
         </Card>
 
-        <Card className="lg:col-span-4 p-5 border-slate-200">
+        <Card className="lg:col-span-4 p-5 border-slate-200 rounded-none shadow-sm">
           <PendingApprovals />
         </Card>
       </div>
@@ -155,22 +166,22 @@ const DashboardPage = () => {
       {/* 4. BOTTOM SECTION: Budget, Balances, & Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Budget Summary (Left wide) */}
-        <Card className="lg:col-span-6 p-5 border-slate-200">
+        <Card className="lg:col-span-6 p-5 border-slate-200 rounded-none shadow-sm">
           <BudgetSummary />
         </Card>
 
         {/* Balance Position (Middle) */}
-        <Card className="lg:col-span-3 p-5 border-slate-200">
+        <Card className="lg:col-span-3 p-5 border-slate-200 rounded-none shadow-sm">
           <BalancePosition />
         </Card>
 
         {/* Recent Activity (Right) */}
-        <Card className="lg:col-span-3 p-5 border-slate-200">
+        <Card className="lg:col-span-3 p-5 border-slate-200 rounded-none shadow-sm">
           <RecentActivity />
         </Card>
       </div>
 
-      <footer className="mt-12 text-center text-[10px] text-gray-400 font-medium tracking-wide">
+      <footer className="mt-12 text-center text-[10px] text-slate-400 font-medium tracking-wide">
         <p>SANTIKA - Sistem Akuntansi dan Tata Kelola Keuangan Gereja</p>
         <p>© 2025 Paroki St. Stefanus - Sempan. Semua hak dilindungi.</p>
       </footer>
