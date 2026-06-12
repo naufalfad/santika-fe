@@ -1,9 +1,14 @@
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { KasMasukSchema } from '../types/kas-masuk';
 import type { KasMasukInput } from '../types/kas-masuk';
 import { Button } from '../../../shared/components/ui/Button';
 import { Wallet, Calendar, Tag, FileText, CheckCircle2 } from 'lucide-react';
+import { useFundCategoriesQuery, useIncomeTypesQuery, useAddIncomeTypeMutation } from '../hooks/useKasMasukQuery';
+import { useKasKeluarQuery } from '../../kas-keluar/hooks/useKasKeluarQuery';
+import { useAuthStore } from '../../../app/store/useAuthStore';
+import { formatIDR } from '../../../shared/utils/formatter';
 
 interface Props {
     onSubmit: (data: KasMasukInput) => void;
@@ -11,19 +16,183 @@ interface Props {
 }
 
 export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
+    const { data: fundCategories = [], isLoading: isLoadingFunds } = useFundCategoriesQuery();
+    const { data: incomeTypes = [], isLoading: isLoadingTypes } = useIncomeTypesQuery();
+    const { data: kasKeluar = [] } = useKasKeluarQuery();
+    const addIncomeTypeMutation = useAddIncomeTypeMutation();
+    const { user } = useAuthStore();
+    const isBendahara = user?.role === 'BENDAHARA';
+
+    const [classification, setClassification] = useState<'NORMAL' | 'REFUND'>('NORMAL');
+
+    // State for inline adding income type
+    const [isAddingType, setIsAddingType] = useState(false);
+    const [newTypeCode, setNewTypeCode] = useState('');
+    const [newTypeName, setNewTypeName] = useState('');
+    const [newTypeDesc, setNewTypeDesc] = useState('');
+    const [addTypeError, setAddTypeError] = useState<string | null>(null);
+
+    const pendingUangMuka = useMemo(() => {
+        return kasKeluar.filter((item) => item.isUangMuka && item.status === 'MENUNGGU_SPJ');
+    }, [kasKeluar]);
+
     const {
         register,
         handleSubmit,
+        setValue,
+        watch,
         formState: { errors, isSubmitting },
     } = useForm<KasMasukInput>({
         resolver: zodResolver(KasMasukSchema),
         defaultValues: {
-            tanggal: new Date().toISOString().split('T')[0],
+            transaction_date: new Date().toISOString().split('T')[0],
+            fund_category_id: '',
+            income_type_id: '',
+            amount: undefined,
+            description: '',
+            parent_transaction_id: null,
         }
     });
 
+    const selectedParentId = watch('parent_transaction_id');
+
+    const selectedParent = useMemo(() => {
+        if (!selectedParentId) return null;
+        return pendingUangMuka.find((item) => item.id === selectedParentId) || null;
+    }, [selectedParentId, pendingUangMuka]);
+
+    const handleSaveIncomeType = async () => {
+        setAddTypeError(null);
+        
+        const cleanCode = newTypeCode.trim().toUpperCase();
+        const cleanName = newTypeName.trim();
+        const cleanDesc = newTypeDesc.trim();
+
+        if (cleanCode.length < 2) {
+            setAddTypeError('Kode minimal harus 2 karakter.');
+            return;
+        }
+        if (cleanName.length < 2) {
+            setAddTypeError('Nama Jenis minimal harus 2 karakter.');
+            return;
+        }
+
+        try {
+            const result = await addIncomeTypeMutation.mutateAsync({
+                code: cleanCode,
+                name: cleanName,
+                description: cleanDesc || undefined,
+            });
+
+            if (result && result.id) {
+                // Auto select the newly created income type
+                setValue('income_type_id', result.id);
+                
+                // Reset states and close inline form
+                setNewTypeCode('');
+                setNewTypeName('');
+                setNewTypeDesc('');
+                setIsAddingType(false);
+            }
+        } catch (err: any) {
+            console.error('Failed to create income type:', err);
+            const errMsg = err?.response?.data?.message || err?.message || 'Gagal menyimpan Jenis Penerimaan.';
+            setAddTypeError(errMsg);
+        }
+    };
+
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            {/* Classification Tab Selection */}
+            <div className="bg-slate-100 p-1.5 rounded-xl border border-slate-200 flex gap-2">
+                <button
+                    type="button"
+                    onClick={() => {
+                        setClassification('NORMAL');
+                        setValue('parent_transaction_id', null);
+                        setValue('fund_category_id', '');
+                        setValue('description', '');
+                    }}
+                    className={`flex-1 py-2 rounded-lg text-xs font-black transition-all uppercase tracking-wider ${
+                        classification === 'NORMAL'
+                            ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
+                            : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                    Pemasukan Normal
+                </button>
+                <button
+                    type="button"
+                    onClick={() => {
+                        setClassification('REFUND');
+                        setValue('parent_transaction_id', '');
+                        setValue('fund_category_id', '');
+                        setValue('description', '');
+                    }}
+                    className={`flex-1 py-2 rounded-lg text-xs font-black transition-all uppercase tracking-wider ${
+                        classification === 'REFUND'
+                            ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
+                            : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                    Refund Uang Muka (SPJ)
+                </button>
+            </div>
+
+            {/* Refund Dropdown Selector */}
+            {classification === 'REFUND' && (
+                <div className="space-y-1.5">
+                    <label className="text-[11px] font-black text-slate-500 uppercase flex items-center gap-2">
+                        <Tag size={14} className="text-blue-500" /> Transaksi Uang Muka Asal
+                    </label>
+                    <select
+                        {...register('parent_transaction_id')}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setValue('parent_transaction_id', val);
+                            const found = pendingUangMuka.find((tx) => tx.id === val);
+                            if (found) {
+                                setValue('fund_category_id', found.fundCategoryId);
+                                setValue('description', `Refund Sisa Uang Muka - ${found.transactionNo} - ${found.description}`);
+                                
+                                // Auto-select PENDAPATAN_LAINNYA code if available
+                                const defType = incomeTypes.find((t) => t.code === 'PENDAPATAN_LAINNYA')?.id || '';
+                                if (defType) {
+                                    setValue('income_type_id', defType);
+                                }
+                            } else {
+                                setValue('fund_category_id', '');
+                                setValue('description', '');
+                            }
+                        }}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                    >
+                        <option value="">Pilih Transaksi Uang Muka</option>
+                        {pendingUangMuka.map((tx) => (
+                            <option key={tx.id} value={tx.id}>
+                                {tx.transactionNo} - {tx.description} ({formatIDR(Number(tx.amount))})
+                            </option>
+                        ))}
+                    </select>
+                    {errors.parent_transaction_id && <p className="text-[10px] text-rose-500 font-bold">{errors.parent_transaction_id.message}</p>}
+                    
+                    {/* Refund Estimation / Hint */}
+                    {selectedParent && (
+                        <div className="p-3.5 bg-blue-50/50 border border-blue-100 rounded-xl text-xs font-semibold text-blue-800 space-y-1">
+                            <p>💰 <strong className="font-bold">Nominal Uang Muka:</strong> {formatIDR(Number(selectedParent.amount))}</p>
+                            {selectedParent.spj ? (
+                                <>
+                                    <p>📝 <strong className="font-bold">Total Belanja SPJ:</strong> {formatIDR(Number(selectedParent.spj.amount))}</p>
+                                    <p>⚖️ <strong className="font-bold">Sisa Refund Estimasi:</strong> {formatIDR(Number(selectedParent.amount) - Number(selectedParent.spj.amount))}</p>
+                                </>
+                            ) : (
+                                <p className="text-amber-700 font-medium">⚠️ Belum ada dokumen SPJ yang diverifikasi untuk transaksi ini.</p>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Tanggal */}
                 <div className="space-y-1.5">
@@ -32,44 +201,158 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                     </label>
                     <input
                         type="date"
-                        {...register('tanggal')}
+                        {...register('transaction_date')}
                         className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                     />
-                    {errors.tanggal && <p className="text-[10px] text-rose-500 font-bold">{errors.tanggal.message}</p>}
+                    {errors.transaction_date && <p className="text-[10px] text-rose-500 font-bold">{errors.transaction_date.message}</p>}
                 </div>
 
-                {/* Kategori */}
+                {/* Pos Dana */}
                 <div className="space-y-1.5">
                     <label className="text-[11px] font-black text-slate-500 uppercase flex items-center gap-2">
-                        <Tag size={14} className="text-emerald-500" /> Kategori Dana
+                        <Tag size={14} className="text-emerald-500" /> Pos Dana
                     </label>
-                    <select
-                        {...register('kategori')}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none"
-                    >
-                        <option value="">Pilih Kategori</option>
-                        <option value="Kolekte">Kolekte</option>
-                        <option value="Donasi">Donasi</option>
-                        <option value="Pembangunan">Dana Pembangunan</option>
-                        <option value="Persembahan">Persembahan</option>
-                        <option value="Lainnya">Lain-lain</option>
-                    </select>
-                    {errors.kategori && <p className="text-[10px] text-rose-500 font-bold">{errors.kategori.message}</p>}
+                    {classification === 'REFUND' && selectedParent ? (
+                        <>
+                            <input type="hidden" {...register('fund_category_id')} />
+                            <div className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 flex items-center h-10 border-l-4 border-l-emerald-500">
+                                {selectedParent.fundCategory?.name}
+                            </div>
+                        </>
+                    ) : (
+                        <select
+                            {...register('fund_category_id')}
+                            disabled={isLoadingFunds}
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none"
+                        >
+                            <option value="">{isLoadingFunds ? 'Memuat Pos Dana...' : 'Pilih Pos Dana'}</option>
+                            {fundCategories.map((fund) => (
+                                <option key={fund.id} value={fund.id}>
+                                    {fund.name}
+                                </option>
+                            ))}
+                        </select>
+                    )}
+                    {errors.fund_category_id && <p className="text-[10px] text-rose-500 font-bold">{errors.fund_category_id.message}</p>}
                 </div>
             </div>
 
-            {/* Sumber */}
+            <div className="grid grid-cols-1 gap-4">
+                {/* Jenis Penerimaan */}
+                <div className="space-y-1.5">
+                    <div className="flex justify-between items-center">
+                        <label className="text-[11px] font-black text-slate-500 uppercase flex items-center gap-2">
+                            <Tag size={14} className="text-blue-500" /> Jenis Penerimaan
+                        </label>
+                        {isBendahara && classification === 'NORMAL' && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsAddingType(!isAddingType);
+                                    setAddTypeError(null);
+                                }}
+                                className="text-[11px] font-bold text-blue-600 hover:text-blue-700 transition-colors uppercase"
+                            >
+                                {isAddingType ? 'Batal Tambah' : '+ Tambah Jenis Baru'}
+                            </button>
+                        )}
+                    </div>
+                    <select
+                        {...register('income_type_id')}
+                        disabled={isLoadingTypes || isAddingType}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none"
+                    >
+                        <option value="">{isLoadingTypes ? 'Memuat Jenis Penerimaan...' : 'Pilih Jenis Penerimaan'}</option>
+                        {incomeTypes.map((type) => (
+                            <option key={type.id} value={type.id}>
+                                {type.name} ({type.code})
+                            </option>
+                        ))}
+                    </select>
+                    {errors.income_type_id && <p className="text-[10px] text-rose-500 font-bold">{errors.income_type_id.message}</p>}
+
+                    {/* Inline Creator Subform */}
+                    {isAddingType && classification === 'NORMAL' && (
+                        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 mt-2">
+                            <h4 className="text-[11px] font-black text-slate-600 uppercase">Tambah Jenis Penerimaan Baru</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase">Kode Jenis</label>
+                                    <input
+                                        type="text"
+                                        value={newTypeCode}
+                                        onChange={(e) => setNewTypeCode(e.target.value)}
+                                        placeholder="Misal: KKM"
+                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all uppercase"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase">Nama Jenis</label>
+                                    <input
+                                        type="text"
+                                        value={newTypeName}
+                                        onChange={(e) => setNewTypeName(e.target.value)}
+                                        placeholder="Misal: Kolekte Misa"
+                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-slate-400 uppercase">Deskripsi / Keterangan (Opsional)</label>
+                                <input
+                                    type="text"
+                                    value={newTypeDesc}
+                                    onChange={(e) => setNewTypeDesc(e.target.value)}
+                                    placeholder="Keterangan singkat..."
+                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                />
+                            </div>
+                            {addTypeError && (
+                                <p className="text-[10px] text-rose-500 font-bold">{addTypeError}</p>
+                            )}
+                            <div className="flex gap-2 justify-end pt-1">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        setIsAddingType(false);
+                                        setAddTypeError(null);
+                                        setNewTypeCode('');
+                                        setNewTypeName('');
+                                        setNewTypeDesc('');
+                                    }}
+                                    className="px-3 py-1.5 text-xs font-bold rounded-xl"
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    disabled={addIncomeTypeMutation.isPending}
+                                    onClick={handleSaveIncomeType}
+                                    className="px-4 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+                                >
+                                    {addIncomeTypeMutation.isPending ? 'Menyimpan...' : 'Simpan Jenis'}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Deskripsi / Sumber */}
             <div className="space-y-1.5">
                 <label className="text-[11px] font-black text-slate-500 uppercase flex items-center gap-2">
-                    <FileText size={14} className="text-purple-500" /> Sumber / Keterangan Singkat
+                    <FileText size={14} className="text-purple-500" /> Keterangan / Sumber
                 </label>
                 <input
                     type="text"
                     placeholder="Misal: Kolekte Misa Minggu Pagi"
-                    {...register('sumber')}
+                    {...register('description')}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                 />
-                {errors.sumber && <p className="text-[10px] text-rose-500 font-bold">{errors.sumber.message}</p>}
+                {errors.description && <p className="text-[10px] text-rose-500 font-bold">{errors.description.message}</p>}
             </div>
 
             {/* Nominal */}
@@ -82,11 +365,11 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                     <input
                         type="number"
                         placeholder="0"
-                        {...register('jumlah', { valueAsNumber: true })}
+                        {...register('amount', { valueAsNumber: true })}
                         className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-lg font-black text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                     />
                 </div>
-                {errors.jumlah && <p className="text-[10px] text-rose-500 font-bold">{errors.jumlah.message}</p>}
+                {errors.amount && <p className="text-[10px] text-rose-500 font-bold">{errors.amount.message}</p>}
             </div>
 
             {/* Footer Buttons */}

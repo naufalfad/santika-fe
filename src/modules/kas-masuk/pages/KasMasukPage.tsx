@@ -14,10 +14,9 @@ import { Badge } from '../../../shared/components/ui/Badge';
 import { KasMasukForm } from '../components/KasMasukForm';
 import type { KasMasukInput } from '../types/kas-masuk';
 import { useActivityStore } from '../../../app/store/useActivityStore';
-import { KAS_MASUK_STATS, TREND_MASUK_DATA, CATEGORY_DATA } from '../../../shared/mock/kasMasukData';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
-import { useKasMasukQuery, useAddKasMasukMutation } from '../hooks/useKasMasukQuery';
+import { useKasMasukQuery, useAddKasMasukMutation, useFundBalancesQuery } from '../hooks/useKasMasukQuery';
 
 /**
  * Standardized high-contrast, high-density Kas Masuk Management page.
@@ -26,6 +25,7 @@ import { useKasMasukQuery, useAddKasMasukMutation } from '../hooks/useKasMasukQu
  */
 const KasMasukPage = () => {
   const { data: kasMasuk = [], isLoading } = useKasMasukQuery();
+  const { data: fundBalances = [] } = useFundBalancesQuery();
   const addMutation = useAddKasMasukMutation();
   const addLog = useActivityStore((state) => state.addLog);
 
@@ -37,16 +37,17 @@ const KasMasukPage = () => {
 
   const onFormSubmit = (data: KasMasukInput) => {
     addMutation.mutate({
-      tanggal: data.tanggal,
-      kategori: data.kategori as 'Kolekte' | 'Donasi' | 'Persembahan' | 'Pembangunan' | 'Lainnya',
-      sumber: data.sumber,
-      jumlah: data.jumlah,
-      keterangan: data.keterangan || '',
+      transaction_date: data.transaction_date,
+      fund_category_id: data.fund_category_id,
+      income_type_id: data.income_type_id,
+      amount: data.amount,
+      description: data.description,
+      parent_transaction_id: data.parent_transaction_id || undefined,
     }, {
       onSuccess: () => {
         addLog(
-          `Penerimaan Kas - ${data.sumber} (${data.kategori})`,
-          data.jumlah,
+          `Penerimaan Kas - ${data.description}`,
+          data.amount,
           'in'
         );
         handleCloseModal();
@@ -57,15 +58,104 @@ const KasMasukPage = () => {
   // Memoize search query execution
   const filteredData = useMemo(() => {
     return kasMasuk.filter(item =>
-      item.sumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.kategori.toLowerCase().includes(searchTerm.toLowerCase())
+      item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.transactionNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.fundCategory?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.incomeType?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [kasMasuk, searchTerm]);
 
   // Memoize analytical calculations
   const totalBulanIni = useMemo(() => {
-    return kasMasuk.reduce((sum, item) => sum + item.jumlah, 0);
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    return kasMasuk.reduce((sum, item) => {
+      const d = new Date(item.transactionDate);
+      if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+        return sum + Number(item.amount);
+      }
+      return sum;
+    }, 0);
   }, [kasMasuk]);
+
+  // Target Penerimaan (bulanan): Rp 50.000.000
+  const targetBulanan = 50000000;
+  const progressTarget = useMemo(() => {
+    return Math.min(Math.round((totalBulanIni / targetBulanan) * 100), 100);
+  }, [totalBulanIni]);
+
+  // Sumber Terbesar
+  const sumberTerbesar = useMemo(() => {
+    if (kasMasuk.length === 0) {
+      return { description: 'Belum ada data', amount: 0, percentage: 0 };
+    }
+    const maxTx = kasMasuk.reduce((prev, current) => {
+      return (Number(prev.amount) > Number(current.amount)) ? prev : current;
+    });
+    const total = kasMasuk.reduce((sum, item) => sum + Number(item.amount), 0);
+    const percentage = total > 0 ? Math.round((Number(maxTx.amount) / total) * 100) : 0;
+    return {
+      description: maxTx.description,
+      amount: Number(maxTx.amount),
+      percentage,
+    };
+  }, [kasMasuk]);
+
+  // Transaksi hari ini
+  const totalHariIni = useMemo(() => {
+    const todayStr = new Date().toDateString();
+    return kasMasuk.reduce((sum, item) => {
+      const txStr = new Date(item.transactionDate).toDateString();
+      if (txStr === todayStr) {
+        return sum + Number(item.amount);
+      }
+      return sum;
+    }, 0);
+  }, [kasMasuk]);
+
+  const countHariIni = useMemo(() => {
+    const todayStr = new Date().toDateString();
+    return kasMasuk.filter(item => {
+      return new Date(item.transactionDate).toDateString() === todayStr;
+    }).length;
+  }, [kasMasuk]);
+
+  // Tren 30 hari
+  const trendData = useMemo(() => {
+    const dataMap = new Map<string, number>();
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+      dataMap.set(key, 0);
+    }
+    kasMasuk.forEach((item) => {
+      const d = new Date(item.transactionDate);
+      const key = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+      if (dataMap.has(key)) {
+        dataMap.set(key, dataMap.get(key)! + Number(item.amount));
+      }
+    });
+    return Array.from(dataMap.entries()).map(([date, jumlah]) => ({
+      date,
+      jumlah,
+    }));
+  }, [kasMasuk]);
+
+  // Komposisi Dana (PieChart)
+  const categoryData = useMemo(() => {
+    const colors = ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#3b82f6', '#14b8a6', '#f43f5e'];
+    const activeBalances = fundBalances.filter(item => item.income > 0);
+    if (activeBalances.length === 0) {
+      return [{ name: 'Belum ada penerimaan', value: 1, color: '#e2e8f0' }];
+    }
+    return activeBalances.map((item, index) => ({
+      name: item.fund,
+      value: Number(item.income),
+      color: colors[index % colors.length]
+    }));
+  }, [fundBalances]);
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
@@ -92,25 +182,29 @@ const KasMasukPage = () => {
           <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(totalBulanIni)}</h4>
           <div className="flex items-center gap-1 mt-2 text-emerald-600 font-bold text-[10px]">
             <TrendingUp size={12} />
-            <span>+{KAS_MASUK_STATS.growth}%</span>
+            <span>Target: {formatIDR(targetBulanan, { notation: 'compact' })}</span>
           </div>
         </Card>
         <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Target Penerimaan</p>
-          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(KAS_MASUK_STATS.targetBulan)}</h4>
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Pencapaian Target</p>
+          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{progressTarget}%</h4>
           <div className="w-full bg-slate-100 h-1 rounded-full mt-3 overflow-hidden">
-            <div className="bg-emerald-500 h-full" style={{ width: '90%' }}></div>
+            <div className="bg-emerald-500 h-full transition-all duration-500" style={{ width: `${progressTarget}%` }}></div>
           </div>
         </Card>
         <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200">
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Sumber Terbesar</p>
-          <h4 className="text-sm font-black mt-2 text-slate-800 truncate tracking-tight">{KAS_MASUK_STATS.sumberTerbesar}</h4>
-          <p className="text-[9px] text-slate-400 mt-2 font-bold italic">Kontribusi 55% dari total</p>
+          <h4 className="text-sm font-black mt-2 text-slate-800 truncate tracking-tight text-slate-800" title={sumberTerbesar.description}>
+            {sumberTerbesar.description}
+          </h4>
+          <p className="text-[9px] text-slate-400 mt-2 font-bold italic">
+            {sumberTerbesar.amount > 0 ? `Kontribusi ${sumberTerbesar.percentage}% (${formatIDR(sumberTerbesar.amount, { notation: 'compact' })})` : 'Belum ada transaksi'}
+          </p>
         </Card>
         <Card className="p-4 border-l-4 border-l-purple-600 border-y-slate-200 border-r-slate-200">
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Hari Ini</p>
-          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(1250000)}</h4>
-          <p className="text-[9px] text-slate-400 mt-2 font-bold italic">3 Transaksi masuk</p>
+          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(totalHariIni)}</h4>
+          <p className="text-[9px] text-slate-400 mt-2 font-bold italic">{countHariIni} Transaksi masuk</p>
         </Card>
       </div>
 
@@ -125,7 +219,7 @@ const KasMasukPage = () => {
           </div>
           <div className="h-[230px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={TREND_MASUK_DATA}>
+              <LineChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }} />
                 <YAxis
@@ -151,13 +245,13 @@ const KasMasukPage = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={CATEGORY_DATA}
+                    data={categoryData}
                     innerRadius={50}
                     outerRadius={65}
                     paddingAngle={4}
                     dataKey="value"
                   >
-                    {CATEGORY_DATA.map((entry, index) => (
+                    {categoryData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -210,28 +304,37 @@ const KasMasukPage = () => {
           <AdaptiveList
             data={filteredData}
             desktopHeaders={[
-              'ID Transaksi',
+              'No. Transaksi',
               'Tanggal',
-              'Kategori',
-              'Keterangan Sumber',
+              'Pos Dana / Jenis',
+              'Keterangan / Sumber',
               'Jumlah (IDR)',
               'Status',
               'Aksi'
             ]}
             renderDesktopRow={(item) => (
               <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="px-5 py-3 text-xs font-black text-blue-600 border-r border-slate-100">{item.id}</td>
-                <td className="px-5 py-3 text-xs text-slate-500 font-medium border-r border-slate-100">{item.tanggal}</td>
-                <td className="px-5 py-3 border-r border-slate-100">
-                  <span className="text-[9px] font-black px-2 py-0.5 bg-slate-100 rounded text-slate-600 border border-slate-200 uppercase tracking-tight">
-                    {item.kategori}
-                  </span>
+                <td className="px-5 py-3 text-xs font-black text-blue-600 border-r border-slate-100">{item.transactionNo}</td>
+                <td className="px-5 py-3 text-xs text-slate-500 font-medium border-r border-slate-100">
+                  {new Date(item.transactionDate).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' })}
                 </td>
-                <td className="px-5 py-3 text-xs font-bold text-slate-700 border-r border-slate-100">{item.sumber}</td>
-                <td className="px-5 py-3 text-xs font-black text-right text-emerald-600 border-r border-slate-100">{formatIDR(item.jumlah)}</td>
                 <td className="px-5 py-3 border-r border-slate-100">
-                  <Badge variant={item.status === 'Selesai' ? 'success' : 'warning'}>
-                    {item.status}
+                  <div className="flex flex-col gap-0.5 items-start">
+                    <span className="text-[9px] font-black px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded border border-blue-100/50 uppercase tracking-tight">
+                      {item.fundCategory?.name}
+                    </span>
+                    {item.incomeType?.name && (
+                      <span className="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 border border-slate-200 uppercase tracking-tight mt-0.5">
+                        {item.incomeType.name}
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td className="px-5 py-3 text-xs font-bold text-slate-700 border-r border-slate-100">{item.description}</td>
+                <td className="px-5 py-3 text-xs font-black text-right text-emerald-600 border-r border-slate-100">{formatIDR(Number(item.amount))}</td>
+                <td className="px-5 py-3 border-r border-slate-100">
+                  <Badge variant="success">
+                    Selesai
                   </Badge>
                 </td>
                 <td className="px-5 py-3 text-center">
@@ -244,20 +347,27 @@ const KasMasukPage = () => {
             renderMobileCard={(item) => (
               <div className="flex flex-col gap-2.5">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-black text-blue-600">{item.id}</span>
-                  <Badge variant={item.status === 'Selesai' ? 'success' : 'warning'}>
-                    {item.status}
+                  <span className="text-xs font-black text-blue-600">{item.transactionNo}</span>
+                  <Badge variant="success">
+                    Selesai
                   </Badge>
                 </div>
                 <div className="flex justify-between items-baseline">
-                  <span className="text-xs font-bold text-slate-700">{item.sumber}</span>
-                  <span className="text-sm font-black text-emerald-600">{formatIDR(item.jumlah)}</span>
+                  <span className="text-xs font-bold text-slate-700">{item.description}</span>
+                  <span className="text-sm font-black text-emerald-600">{formatIDR(Number(item.amount))}</span>
                 </div>
                 <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium">
-                  <span>{item.tanggal}</span>
-                  <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-bold uppercase tracking-tight">
-                    {item.kategori}
-                  </span>
+                  <span>{new Date(item.transactionDate).toLocaleDateString('id-ID')}</span>
+                  <div className="flex gap-1.5">
+                    <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded font-bold uppercase tracking-tight">
+                      {item.fundCategory?.name}
+                    </span>
+                    {item.incomeType?.name && (
+                      <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-bold uppercase tracking-tight">
+                        {item.incomeType.name}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

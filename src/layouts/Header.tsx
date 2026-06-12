@@ -1,7 +1,6 @@
-import { Bell, Menu, Search, User } from 'lucide-react';
+import { Bell, Menu, Search, User, LogOut } from 'lucide-react';
 import { useAuthStore } from '../app/store/useAuthStore';
 import { cn } from '../shared/utils/cn';
-import type { UserRole } from '../shared/types/auth';
 import { getAvatarUrl } from '../shared/utils/formatter';
 
 /**
@@ -44,17 +43,7 @@ interface HeaderProps {
  *   - Flat solid colors, zero glassmorphism, zero shadow berwarna.
  */
 export const Header = ({ isOpen, onToggle }: HeaderProps) => {
-  const { user, setRole } = useAuthStore();
-
-  const roles: UserRole[] = [
-    'SUPER_ADMIN',
-    'PASTOR',
-    'BENDAHARA',
-    'DEWAN_KEUANGAN',
-    'KETUA_KOMISI',
-    'TIM_PEMBANGUNAN',
-    'SEKRETARIAT',
-  ];
+  const { user, logout } = useAuthStore();
 
   return (
     <header
@@ -125,29 +114,6 @@ export const Header = ({ isOpen, onToggle }: HeaderProps) => {
           ══════════════════════════════════════════ */}
       <div className="flex items-center gap-3 flex-shrink-0">
 
-        {/* MOCK ROLE SWITCHER — Development Only
-            DESIGN SYSTEM GUARD: rounded-none */}
-        <div
-          className="hidden sm:flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-none px-2.5 py-1"
-          title="Mock Role Switcher — Development Only"
-        >
-          <span className="text-[9px] font-black text-amber-600 tracking-widest uppercase whitespace-nowrap">
-            DEV:
-          </span>
-          <select
-            id="select-mock-role"
-            className="bg-transparent text-[11px] font-semibold outline-none text-amber-800 cursor-pointer"
-            value={user?.role}
-            onChange={(e) => setRole(e.target.value as UserRole)}
-            aria-label="Pilih role mock untuk development"
-          >
-            {roles.map((r) => (
-              <option key={r} value={r}>
-                {r.replace(/_/g, ' ')}
-              </option>
-            ))}
-          </select>
-        </div>
 
         {/* TOMBOL NOTIFIKASI
             DESIGN SYSTEM GUARD: rounded-none pada tombol dan badge status */}
@@ -193,6 +159,17 @@ export const Header = ({ isOpen, onToggle }: HeaderProps) => {
             ) : (
               <User size={15} />
             )}
+          </button>
+
+          {/* Logout Button */}
+          <button
+            id="btn-logout"
+            onClick={() => logout()}
+            className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors duration-150 cursor-pointer"
+            title="Keluar dari Aplikasi"
+            aria-label="Keluar dari Aplikasi"
+          >
+            <LogOut size={16} />
           </button>
         </div>
       </div>

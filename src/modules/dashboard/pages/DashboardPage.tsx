@@ -36,9 +36,9 @@ const DashboardPage = () => {
   // Memoized statistics tailored based on the authenticated user role
   const stats = useMemo(() => {
     const dynamicStats = [
-      { label: 'SALDO OPERASIONAL', val: currentSaldo, sub: 'Kas + Bank', color: 'blue', icon: 'wallet', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'SUPER_ADMIN'] },
-      { label: 'DANA PEMBANGUNAN', val: 785000000, sub: 'Saldo Dana Pembangunan', color: 'emerald', icon: 'building', visible: ['PASTOR', 'BENDAHARA', 'TIM_PEMBANGUNAN', 'SUPER_ADMIN'] },
-      { label: 'DANA SOSIAL (PSE)', val: 58000000, sub: 'Saldo Dana Sosial', color: 'purple', icon: 'heart', visible: ['PASTOR', 'BENDAHARA', 'KETUA_KOMISI', 'SUPER_ADMIN'] },
+      { label: 'DANA OPERASIONAL', val: currentSaldo, sub: 'Dana Operasional', color: 'blue', icon: 'wallet', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'SUPER_ADMIN'] },
+      { label: 'DANA PEMBANGUNAN', val: 785000000, sub: 'Dana Pembangunan', color: 'emerald', icon: 'building', visible: ['PASTOR', 'BENDAHARA', 'TIM_PEMBANGUNAN', 'SUPER_ADMIN'] },
+      { label: 'DANA SOSIAL (PSE)', val: 58000000, sub: 'Dana Sosial', color: 'purple', icon: 'heart', visible: ['PASTOR', 'BENDAHARA', 'KETUA_KOMISI', 'SUPER_ADMIN'] },
       { label: 'PENDAPATAN BULAN INI', val: totalIn, sub: 'Mei 2025', color: 'orange', icon: 'trending-up', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'SEKRETARIAT', 'SUPER_ADMIN'] },
       { label: 'PENGELUARAN BULAN INI', val: totalOut, sub: 'Mei 2025', color: 'cyan', icon: 'trending-down', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'KETUA_KOMISI', 'SUPER_ADMIN'] },
     ];

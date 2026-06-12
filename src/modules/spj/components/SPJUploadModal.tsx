@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Upload, X, CheckCircle2, FileText, Image } from 'lucide-react';
+import { Upload, X, CheckCircle2, FileText, Image, AlertCircle } from 'lucide-react';
 import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
 import { Select } from '../../../shared/components/ui/Select';
-import { useSPJStore } from '../../../app/store/useSPJStore';
-import { useActivityStore } from '../../../app/store/useActivityStore';
-import { useAuthStore } from '../../../app/store/useAuthStore';
+import { useKasKeluarQuery } from '../../kas-keluar/hooks/useKasKeluarQuery';
+import { useUploadSpjMutation } from '../hooks/useSpjQuery';
+import { formatIDR } from '../../../shared/utils/formatter';
 
 const schema = z.object({
   title: z.string().min(3, 'Nama dokumen minimal 3 karakter'),
-  category: z.string().min(1, 'Kategori wajib dipilih'),
+  cash_transaction_id: z.string().uuid('Transaksi Kas Keluar wajib dipilih'),
   amount: z.number().min(1000, 'Minimal nilai transaksi Rp 1.000'),
   fileType: z.enum(['pdf', 'image'] as const),
 });
@@ -22,20 +22,32 @@ type FormData = z.infer<typeof schema>;
 interface SPJUploadModalProps {
   onSuccess: () => void;
   onCancel: () => void;
+  defaultCashTransactionId?: string;
 }
 
-export const SPJUploadModal = ({ onSuccess, onCancel }: SPJUploadModalProps) => {
-  const addSPJDocument = useSPJStore((state) => state.addSPJDocument);
-  const addLog = useActivityStore((state) => state.addLog);
-  const user = useAuthStore((state) => state.user);
+export const SPJUploadModal = ({ onSuccess, onCancel, defaultCashTransactionId }: SPJUploadModalProps) => {
+  const { data: kasKeluar = [], isLoading: isLoadingKasKeluar } = useKasKeluarQuery();
+  const uploadMutation = useUploadSpjMutation();
 
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const pendingTransactions = useMemo(() => {
+    const filtered = kasKeluar.filter((item) => item.isUangMuka && item.status === 'MENUNGGU_SPJ');
+    if (defaultCashTransactionId && !filtered.some((item) => item.id === defaultCashTransactionId)) {
+      const defaultTx = kasKeluar.find((item) => item.id === defaultCashTransactionId);
+      if (defaultTx) {
+        filtered.push(defaultTx);
+      }
+    }
+    return filtered;
+  }, [kasKeluar, defaultCashTransactionId]);
+
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
+      cash_transaction_id: defaultCashTransactionId || '',
       fileType: 'pdf',
     }
   });
@@ -86,34 +98,27 @@ export const SPJUploadModal = ({ onSuccess, onCancel }: SPJUploadModalProps) => 
       return;
     }
 
-    const payload = {
+    uploadMutation.mutate({
       title: data.title,
-      category: data.category,
       amount: data.amount,
-      fileType: data.fileType,
-      date: new Date().toISOString().split('T')[0],
-      uploadedBy: user?.name || 'User Paroki',
-      thumbnail: preview || undefined,
-    };
-
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    // Save to Zustand
-    addSPJDocument(payload);
-    
-    // Log Activity
-    addLog(
-      `SPJ Diunggah - ${data.title} (${data.category}) oleh ${payload.uploadedBy}`,
-      data.amount,
-      'spj'
-    );
-
-    onSuccess();
+      cash_transaction_id: data.cash_transaction_id,
+      file: file,
+    }, {
+      onSuccess: () => {
+        onSuccess();
+      }
+    });
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {uploadMutation.isError && (
+        <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-600 font-semibold flex items-center gap-2">
+          <AlertCircle size={16} className="shrink-0" />
+          <span>{(uploadMutation.error as any)?.response?.data?.message || 'Gagal mengunggah dokumen SPJ'}</span>
+        </div>
+      )}
+
       <Input
         label="NAMA DOKUMEN SPJ"
         placeholder="Contoh: Belanja Bunga Altar Paskah"
@@ -121,17 +126,19 @@ export const SPJUploadModal = ({ onSuccess, onCancel }: SPJUploadModalProps) => 
         {...register('title')}
       />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Select
-          label="KATEGORI"
-          error={errors.category?.message}
-          {...register('category')}
+          label="TRANSAKSI KAS KELUAR (UANG MUKA)"
+          error={errors.cash_transaction_id?.message}
+          {...register('cash_transaction_id')}
+          disabled={isLoadingKasKeluar}
         >
-          <option value="">Pilih Kategori</option>
-          <option value="Liturgi">Liturgi</option>
-          <option value="Pembangunan">Pembangunan</option>
-          <option value="Sosial">Sosial (PSE)</option>
-          <option value="Sekretariat">Sekretariat</option>
+          <option value="">{isLoadingKasKeluar ? 'Memuat...' : 'Pilih Transaksi Uang Muka'}</option>
+          {pendingTransactions.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.transactionNo} - {item.description} ({formatIDR(Number(item.amount))})
+            </option>
+          ))}
         </Select>
 
         <Select
@@ -208,10 +215,10 @@ export const SPJUploadModal = ({ onSuccess, onCancel }: SPJUploadModalProps) => 
         </Button>
         <Button
           type="submit"
-          disabled={isSubmitting}
+          disabled={uploadMutation.isPending}
           className="flex-1 py-3 font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 flex justify-center items-center gap-2"
         >
-          {isSubmitting ? 'Mengunggah...' : <><CheckCircle2 size={18} /> Simpan & Upload</>}
+          {uploadMutation.isPending ? 'Mengunggah...' : <><CheckCircle2 size={18} /> Simpan & Upload</>}
         </Button>
       </div>
     </form>

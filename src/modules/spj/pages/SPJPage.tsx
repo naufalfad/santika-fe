@@ -6,42 +6,63 @@ import { Modal } from '../../../shared/components/ui/Modal';
 import { SPJCard } from '../components/SPJCard';
 import { FilePreview } from '../components/FilePreview';
 import { SPJUploadModal } from '../components/SPJUploadModal';
-import { useSPJStore } from '../../../app/store/useSPJStore';
-import { useActivityStore } from '../../../app/store/useActivityStore';
 import { useAuthStore } from '../../../app/store/useAuthStore';
-import type { SPJDocument } from '../../../shared/mock/spjData';
+import { useSpjsQuery, useVerifySpjMutation } from '../hooks/useSpjQuery';
+import type { SpjDocument } from '../hooks/useSpjQuery';
 import { formatIDR } from '../../../shared/utils/formatter';
 
 /**
- * Optimised SPJ Document management page.
+ * Optimised SPJ Document management page integrated with backend.
  * Implements clean layouts, zero box-in-a-box frames, and memoized metrics.
  */
 const SPJPage = () => {
-  const spjDocuments = useSPJStore((state) => state.spjDocuments);
-  const verifySPJDocument = useSPJStore((state) => state.verifySPJDocument);
-  const addLog = useActivityStore((state) => state.addLog);
+  const { data: spjDocuments = [], isLoading } = useSpjsQuery();
+  const verifyMutation = useVerifySpjMutation();
   const user = useAuthStore((state) => state.user);
 
-  const [selectedDoc, setSelectedDoc] = useState<SPJDocument | null>(null);
+  const [selectedDoc, setSelectedDoc] = useState<SpjDocument | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
 
-  // Memoize static metrics calculations from SPJ store state
+  // Memoize static metrics calculations from SPJ query state
   const { totalArsip, totalVerified, totalPending } = useMemo(() => {
     return {
       totalArsip: spjDocuments.length,
-      totalVerified: spjDocuments.filter((doc) => doc.status === 'Verified').length,
-      totalPending: spjDocuments.filter((doc) => doc.status === 'Pending').length,
+      totalVerified: spjDocuments.filter((doc) => doc.status === 'VERIFIED').length,
+      totalPending: spjDocuments.filter((doc) => doc.status === 'PENDING').length,
     };
   }, [spjDocuments]);
 
-  // Memoize search query sorting
+  // Memoize search and status query filtering
   const filteredDocs = useMemo(() => {
-    return spjDocuments.filter(doc =>
-      doc.title.toLowerCase().includes(search.toLowerCase()) ||
-      doc.category.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [spjDocuments, search]);
+    return spjDocuments.filter(doc => {
+      const category = doc.cashTransaction?.expenseType?.name || doc.kegiatan?.namaKegiatan || 'Umum';
+      const matchesSearch = doc.title.toLowerCase().includes(search.toLowerCase()) ||
+                            category.toLowerCase().includes(search.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'ALL' || doc.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [spjDocuments, search, statusFilter]);
+
+  // Extract preview file info for the selected document
+  const previewInfo = useMemo(() => {
+    if (!selectedDoc) return null;
+    const firstLampiran = selectedDoc.lampiran?.[0]?.attachment;
+    const apiAssetUrl = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace('/api', '');
+    const fileUrl = firstLampiran ? `${apiAssetUrl}${firstLampiran.fileUrl}` : undefined;
+    const isPdf = firstLampiran?.fileType === 'PDF';
+    const fileType: 'pdf' | 'image' = isPdf ? 'pdf' : 'image';
+    const category = selectedDoc.cashTransaction?.expenseType?.name || selectedDoc.kegiatan?.namaKegiatan || 'Umum';
+    
+    return {
+      fileUrl,
+      fileType,
+      category,
+    };
+  }, [selectedDoc]);
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
@@ -94,24 +115,39 @@ const SPJPage = () => {
           />
         </div>
         <div className="flex items-center gap-2 ml-auto w-full md:w-auto">
-          <select className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold outline-none text-slate-600 cursor-pointer">
-            <option>Semua Kategori</option>
-            <option>Liturgi</option>
-            <option>Pembangunan</option>
-            <option>Sosial</option>
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold outline-none text-slate-600 cursor-pointer"
+          >
+            <option value="ALL">Semua Kategori Status</option>
+            <option value="PENDING">Menunggu Verifikasi</option>
+            <option value="VERIFIED">Terverifikasi</option>
+            <option value="REJECTED">Ditolak</option>
           </select>
-          <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200 bg-white">
+          <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200 bg-white" disabled>
             <Filter size={14} /> Filter
           </Button>
         </div>
       </Card>
 
-      {/* Grid View */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {filteredDocs.map(doc => (
-          <SPJCard key={doc.id} doc={doc} onPreview={setSelectedDoc} />
-        ))}
-      </div>
+      {/* Loading & Grid View */}
+      {isLoading ? (
+        <div className="p-8 text-center text-slate-500 bg-white border border-slate-200 rounded-xl shadow-sm flex items-center justify-center gap-2.5 font-semibold text-xs">
+          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          Loading dokumen SPJ...
+        </div>
+      ) : filteredDocs.length === 0 ? (
+        <div className="p-12 text-center text-slate-400 bg-white border border-slate-200 rounded-xl shadow-sm font-semibold text-xs">
+          Tidak ada dokumen SPJ ditemukan
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {filteredDocs.map(doc => (
+            <SPJCard key={doc.id} doc={doc} onPreview={setSelectedDoc} />
+          ))}
+        </div>
+      )}
 
       {/* Upload Modal */}
       <Modal
@@ -131,12 +167,12 @@ const SPJPage = () => {
         onClose={() => setSelectedDoc(null)}
         title={`Preview: ${selectedDoc?.title}`}
       >
-        {selectedDoc && (
+        {selectedDoc && previewInfo && (
           <div className="space-y-4">
             <FilePreview
-              fileUrl={selectedDoc.thumbnail}
+              fileUrl={previewInfo.fileUrl}
               fileName={selectedDoc.title}
-              fileType={selectedDoc.fileType}
+              fileType={previewInfo.fileType}
               onClose={() => setSelectedDoc(null)}
             />
             {/* Flat details section - no boxes inside a box */}
@@ -146,32 +182,51 @@ const SPJPage = () => {
                 <span className="text-slate-400">ID Dokumen</span>
                 <span className="font-bold text-slate-700 text-right">{selectedDoc.id}</span>
                 <span className="text-slate-400">Kategori</span>
-                <span className="font-bold text-slate-700 text-right">{selectedDoc.category}</span>
+                <span className="font-bold text-slate-700 text-right">{previewInfo.category}</span>
                 <span className="text-slate-400">Nilai Transaksi</span>
                 <span className="font-black text-emerald-600 text-right">{formatIDR(selectedDoc.amount)}</span>
                 <span className="text-slate-400">Status</span>
-                <span className={`font-black text-right uppercase tracking-tight text-[11px] ${selectedDoc.status === 'Verified' ? 'text-emerald-600' : selectedDoc.status === 'Pending' ? 'text-amber-500' : 'text-rose-500'}`}>
+                <span className={`font-black text-right uppercase tracking-tight text-[11px] ${selectedDoc.status === 'VERIFIED' ? 'text-emerald-600' : selectedDoc.status === 'PENDING' ? 'text-amber-500' : 'text-rose-500'}`}>
                   {selectedDoc.status}
                 </span>
               </div>
             </div>
 
-            {/* Action buttons (only show verify if status is Pending and user is BENDAHARA/SUPER_ADMIN) */}
-            {selectedDoc.status === 'Pending' && (user?.role === 'BENDAHARA' || user?.role === 'SUPER_ADMIN') && (
+            {/* Action buttons (only show verify if status is PENDING and user is BENDAHARA/SUPER_ADMIN) */}
+            {selectedDoc.status === 'PENDING' && (user?.role === 'BENDAHARA' || user?.role === 'SUPER_ADMIN') && (
               <div className="flex gap-2 pt-4 border-t border-slate-100">
                 <Button
                   onClick={() => {
-                    verifySPJDocument(selectedDoc.id);
-                    addLog(
-                      `SPJ Diverifikasi - ${selectedDoc.title} oleh ${user?.name || 'Bendahara'}`,
-                      selectedDoc.amount,
-                      'spj'
-                    );
-                    setSelectedDoc(null);
+                    verifyMutation.mutate({
+                      id: selectedDoc.id,
+                      status: 'VERIFIED',
+                    }, {
+                      onSuccess: () => {
+                        setSelectedDoc(null);
+                      }
+                    });
                   }}
+                  disabled={verifyMutation.isPending}
                   className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md flex justify-center items-center gap-1.5"
                 >
-                  Verifikasi Sekarang
+                  {verifyMutation.isPending ? 'Memproses...' : 'Verifikasi Sekarang'}
+                </Button>
+                <Button
+                  onClick={() => {
+                    verifyMutation.mutate({
+                      id: selectedDoc.id,
+                      status: 'REJECTED',
+                    }, {
+                      onSuccess: () => {
+                        setSelectedDoc(null);
+                      }
+                    });
+                  }}
+                  disabled={verifyMutation.isPending}
+                  variant="outline"
+                  className="flex-1 border-rose-200 text-rose-600 hover:bg-rose-50 font-bold py-3 rounded-xl shadow-md flex justify-center items-center gap-1.5"
+                >
+                  {verifyMutation.isPending ? 'Memproses...' : 'Tolak SPJ'}
                 </Button>
               </div>
             )}

@@ -3,38 +3,48 @@ import { FileText, Image as ImageIcon, Eye, CheckCircle, Clock, AlertCircle } fr
 import { Card } from '../../../shared/components/ui/Card';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { formatIDR } from '../../../shared/utils/formatter';
-import type { SPJDocument } from '../../../shared/mock/spjData';
+import type { SpjDocument } from '../hooks/useSpjQuery';
 
 interface SPJCardProps {
-  doc: SPJDocument;
-  onPreview: (doc: SPJDocument) => void;
+  doc: SpjDocument;
+  onPreview: (doc: SpjDocument) => void;
 }
 
-/**
- * Typesafe SPJ Document card widget.
- * Styled with seamless container elements and centralized formats.
- */
 export const SPJCard: React.FC<SPJCardProps> = ({ doc, onPreview }) => {
   const statusIcons = {
-    Verified: <CheckCircle size={12} className="text-emerald-500" />,
-    Pending: <Clock size={12} className="text-amber-500" />,
-    Rejected: <AlertCircle size={12} className="text-rose-500" />,
+    VERIFIED: <CheckCircle size={12} className="text-emerald-500" />,
+    PENDING: <Clock size={12} className="text-amber-500" />,
+    REJECTED: <AlertCircle size={12} className="text-rose-500" />,
   };
+
+  const firstLampiran = doc.lampiran?.[0]?.attachment;
+  const apiAssetUrl = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace('/api', '');
+  const fileUrl = firstLampiran ? `${apiAssetUrl}${firstLampiran.fileUrl}` : undefined;
+  const isPdf = firstLampiran?.fileType === 'PDF';
+  const fileType = isPdf ? 'pdf' : 'image';
+  const thumbnail = isPdf ? undefined : fileUrl;
+
+  const category = doc.cashTransaction?.expenseType?.name || doc.kegiatan?.namaKegiatan || 'Umum';
+  const formattedDate = new Date(doc.createdAt).toLocaleDateString('id-ID', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
 
   return (
     <Card className="group hover:shadow-md hover:border-slate-300 transition-all duration-300 border-slate-200 overflow-hidden bg-white flex flex-col justify-between">
       {/* Thumbnail/Icon Area - Flat Separator */}
       <div className="relative h-28 bg-slate-50 flex items-center justify-center border-b border-slate-100 overflow-hidden">
-        {doc.thumbnail ? (
+        {thumbnail ? (
           <img
-            src={doc.thumbnail}
+            src={thumbnail}
             alt={doc.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <div className="flex flex-col items-center gap-1.5 text-slate-400">
-            {doc.fileType === 'pdf' ? <FileText size={32} /> : <ImageIcon size={32} />}
-            <span className="text-[9px] font-black uppercase tracking-wider">{doc.fileType}</span>
+            {fileType === 'pdf' ? <FileText size={32} /> : <ImageIcon size={32} />}
+            <span className="text-[9px] font-black uppercase tracking-wider">{fileType}</span>
           </div>
         )}
         {/* Soft overlay on hover */}
@@ -53,15 +63,15 @@ export const SPJCard: React.FC<SPJCardProps> = ({ doc, onPreview }) => {
         <div>
           <div className="flex justify-between items-center mb-2">
             <Badge
-              variant={doc.status === 'Verified' ? 'success' : doc.status === 'Pending' ? 'warning' : 'default'}
+              variant={doc.status === 'VERIFIED' ? 'success' : doc.status === 'PENDING' ? 'warning' : 'default'}
               className="text-[9px] px-2 py-0.5"
             >
               <div className="flex items-center gap-1">
                 {statusIcons[doc.status]}
-                <span>{doc.status}</span>
+                <span>{doc.status === 'VERIFIED' ? 'Verified' : doc.status === 'PENDING' ? 'Pending' : 'Rejected'}</span>
               </div>
             </Badge>
-            <span className="text-[9px] text-slate-400 font-black uppercase tracking-tight">{doc.category}</span>
+            <span className="text-[9px] text-slate-400 font-black uppercase tracking-tight">{category}</span>
           </div>
 
           <h4 className="font-bold text-slate-800 text-xs truncate leading-snug" title={doc.title}>
@@ -72,7 +82,7 @@ export const SPJCard: React.FC<SPJCardProps> = ({ doc, onPreview }) => {
         <div className="flex justify-between items-end mt-4 pt-3 border-t border-slate-100/80">
           <div className="text-[9px] text-slate-400 font-semibold leading-tight">
             <p className="text-slate-500 font-bold truncate max-w-[100px]">{doc.uploadedBy}</p>
-            <p className="mt-0.5">{doc.date}</p>
+            <p className="mt-0.5">{formattedDate}</p>
           </div>
           <p className="text-xs font-black text-slate-800 tracking-tight leading-none">
             {formatIDR(doc.amount)}

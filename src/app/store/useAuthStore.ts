@@ -5,8 +5,12 @@ import { queryClient } from '../providers/QueryProvider';
 
 interface AuthState {
   user: User | null;
+  isLoading: boolean;
   setRole: (role: UserRole) => void;
   syncBackend: (role: UserRole) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  initialize: () => Promise<void>;
 }
 
 const roleEmailMap: Record<UserRole, string> = {
@@ -39,8 +43,8 @@ const getFallbackUser = (role: UserRole): User => {
 };
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  // Default user saat aplikasi dibuka (gunakan BENDAHARA agar sinkron dengan mock lama)
-  user: getFallbackUser('BENDAHARA'),
+  user: null,
+  isLoading: true,
 
   setRole: (role: UserRole) => {
     // 1. Update state secara lokal agar UI responsif dan langsung berubah
@@ -57,6 +61,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!email) return;
 
     try {
+      set({ isLoading: true });
       // Lakukan login ke backend
       const response = await axiosInstance.post('/v1/auth/login', {
         email,
@@ -77,17 +82,82 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           email: user.email,
           avatarUrl: user.avatarUrl,
         },
+        isLoading: false,
       });
 
       // Clear query cache instan agar cache user lama terhapus bersih dan dipaksa refetch
       queryClient.clear();
     } catch (error) {
       console.warn('Backend sync failed (offline or database not seeded). Using frontend fallback.', error);
+      set({ isLoading: false });
+    }
+  },
+
+  login: async (email, password) => {
+    set({ isLoading: true });
+    try {
+      const response = await axiosInstance.post('/v1/auth/login', {
+        email,
+        password,
+      });
+
+      const { user, tokens } = response.data.data;
+
+      // Simpan token ke localStorage
+      localStorage.setItem('token', tokens.accessToken);
+
+      set({
+        user: {
+          id: user.id,
+          name: user.name,
+          role: user.role as UserRole,
+          email: user.email,
+          avatarUrl: user.avatarUrl,
+        },
+        isLoading: false,
+      });
+
+      queryClient.clear();
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  logout: () => {
+    localStorage.removeItem('token');
+    set({ user: null, isLoading: false });
+    queryClient.clear();
+  },
+
+  initialize: async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      set({ user: null, isLoading: false });
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.get('/v1/auth/me');
+      const { user } = response.data.data;
+
+      set({
+        user: {
+          id: user.id,
+          name: user.name,
+          role: user.role as UserRole,
+          email: user.email,
+          avatarUrl: user.avatarUrl,
+        },
+        isLoading: false,
+      });
+    } catch (error) {
+      console.warn('Initial session check failed. Logging out.', error);
+      localStorage.removeItem('token');
+      set({ user: null, isLoading: false });
     }
   },
 }));
 
-// Auto-run sinkronisasi awal saat file ini di-load (agar session awal valid)
-const initialRole = useAuthStore.getState().user?.role || 'BENDAHARA';
-useAuthStore.getState().syncBackend(initialRole).catch(() => {});
-
+// Auto-run inisialisasi awal saat store file pertama kali dimuat
+useAuthStore.getState().initialize().catch(() => {});
