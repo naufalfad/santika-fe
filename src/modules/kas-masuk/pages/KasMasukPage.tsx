@@ -193,7 +193,7 @@ const KasMasukPage = () => {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Manajemen Kas Masuk</h2>
+          <h2 className="text-2xl font-medium text-slate-800 tracking-tight">Manajemen Kas Masuk</h2>
           <p className="text-sm text-gray-500">Pantau dan catat seluruh penerimaan paroki.</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
@@ -207,7 +207,7 @@ const KasMasukPage = () => {
       </div>
 
       {/* Tab Selector */}
-      <div className="flex gap-6 border-b border-slate-200 overflow-x-auto no-scrollbar pb-0 text-sm font-bold text-slate-400">
+      <div className="flex gap-6 border-b border-slate-200 overflow-x-auto no-scrollbar pb-0 text-sm font-medium text-slate-400">
         <button
           onClick={() => setActiveTab('PERMANENT')}
           className={`pb-3 whitespace-nowrap transition-colors duration-200 rounded-none border-b-2 ${activeTab === 'PERMANENT'
@@ -231,11 +231,11 @@ const KasMasukPage = () => {
       {/* Stats Cards Section - Compact Space Padding & Flat border styling */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 border-l-4 border-l-blue-600 border-y-slate-200 border-r-slate-200">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+          <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Total Bulan Ini' : 'Pemasukan Dana Khusus (Bulan Ini)'}
           </p>
-          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(totalBulanIni)}</h4>
-          <div className="flex items-center gap-1 mt-2 text-emerald-600 font-bold text-[10px]">
+          <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(totalBulanIni)}</h4>
+          <div className="flex items-center gap-1 mt-2 text-emerald-600 font-medium text-[10px]">
             <TrendingUp size={12} />
             <span>
               {activeTab === 'PERMANENT' ? `Target: ${formatIDR(targetBulanan, { notation: 'compact' })}` : 'Program Dana Khusus'}
@@ -245,17 +245,17 @@ const KasMasukPage = () => {
 
         {activeTab === 'PERMANENT' ? (
           <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Pencapaian Target</p>
-            <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{progressTarget}%</h4>
-            <div className="w-full bg-slate-100 h-1 rounded-full mt-3 overflow-hidden">
+            <p className="text-[10px] text-slate-400 font-semibold">Pencapaian Target</p>
+            <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{progressTarget}%</h4>
+            <div className="w-full bg-slate-100 h-1 rounded-none mt-3 overflow-hidden">
               <div className="bg-emerald-500 h-full transition-all duration-500" style={{ width: `${progressTarget}%` }}></div>
             </div>
           </Card>
         ) : (
           <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Rata-rata Sumbangan</p>
-            <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(avgSpecialIncome)}</h4>
-            <div className="flex items-center gap-1 mt-2 text-emerald-600 font-bold text-[10px]">
+            <p className="text-[10px] text-slate-400 font-semibold">Rata-rata Sumbangan</p>
+            <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(avgSpecialIncome)}</h4>
+            <div className="flex items-center gap-1 mt-2 text-emerald-600 font-medium text-[10px]">
               <TrendingUp size={12} />
               <span>Rata-rata Bulan Ini</span>
             </div>
@@ -263,21 +263,21 @@ const KasMasukPage = () => {
         )}
 
         <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+          <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Sumber Terbesar' : 'Sumbangan Terbesar'}
           </p>
-          <h4 className="text-sm font-black mt-2 text-slate-800 truncate tracking-tight text-slate-800" title={sumberTerbesar.description}>
+          <h4 className="text-sm font-semibold mt-2 text-slate-800 truncate tracking-tight text-slate-800" title={sumberTerbesar.description}>
             {sumberTerbesar.description}
           </h4>
-          <p className="text-[9px] text-slate-400 mt-2 font-bold italic">
+          <p className="text-[9px] text-slate-400 mt-2 font-medium">
             {sumberTerbesar.amount > 0 ? `Kontribusi ${sumberTerbesar.percentage}% (${formatIDR(sumberTerbesar.amount, { notation: 'compact' })})` : 'Belum ada transaksi'}
           </p>
         </Card>
 
         <Card className="p-4 border-l-4 border-l-purple-600 border-y-slate-200 border-r-slate-200">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Hari Ini</p>
-          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(totalHariIni)}</h4>
-          <p className="text-[9px] text-slate-400 mt-2 font-bold italic">{countHariIni} Transaksi masuk</p>
+          <p className="text-[10px] text-slate-400 font-semibold">Hari Ini</p>
+          <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(totalHariIni)}</h4>
+          <p className="text-[9px] text-slate-400 mt-2 font-medium">{countHariIni} Transaksi masuk</p>
         </Card>
       </div>
 
@@ -286,7 +286,7 @@ const KasMasukPage = () => {
         {/* Trend Chart - Aspect containment instead of hardcoded pixels */}
         <Card className="lg:col-span-8 p-5 border-slate-200">
           <div className="mb-4">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <h3 className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
               <Calendar size={14} className="text-blue-500" /> Tren {activeTab === 'PERMANENT' ? 'Penerimaan' : 'Pemasukan Dana Khusus'} 30 Hari Terakhir
             </h3>
           </div>
@@ -311,7 +311,7 @@ const KasMasukPage = () => {
         {/* Donut Chart & Info */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="p-5 border-slate-200">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <h3 className="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-1.5">
               <Target size={14} className="text-emerald-500" /> {activeTab === 'PERMANENT' ? 'Komposisi Dana' : 'Penyebaran Program'}
             </h3>
             <div className="h-[180px]">
@@ -336,14 +336,14 @@ const KasMasukPage = () => {
           </Card>
 
           {/* Sidebar Info Card - Flat, seamless, without glassmorphism */}
-          <Card className="p-4 bg-blue-50 border-blue-100/60 text-blue-900">
-            <h4 className="font-black text-blue-800 flex items-center gap-1.5 mb-1.5 text-xs uppercase tracking-wide">
+          <Card className="p-4 bg-blue-50 /60 text-blue-900">
+            <h4 className="font-semibold text-blue-800 flex items-center gap-1.5 mb-1.5 text-xs">
               <Info size={14} /> Informasi Kas
             </h4>
             <p className="text-[11px] text-blue-700/90 leading-relaxed font-semibold">
               Jangan lupa melakukan verifikasi fisik (hitung uang cash) sebelum menekan status "Selesai" pada input Kolekte.
             </p>
-            <button className="mt-3 text-[10px] bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-black transition-colors uppercase tracking-wide">
+            <button className="mt-3 text-[10px] bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-none font-semibold transition-colors">
               Baca Panduan Input
             </button>
           </Card>
@@ -352,8 +352,8 @@ const KasMasukPage = () => {
 
       {/* Main Table Section - Flat & Seamless border structures */}
       <div className="space-y-4">
-        <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col md:flex-row gap-4 justify-between">
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg w-full md:w-80">
+        <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col md:flex-row gap-4 justify-between">
+          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-none w-full md:w-80">
             <Search size={16} className="text-slate-400" />
             <input
               type="text"
@@ -369,8 +369,8 @@ const KasMasukPage = () => {
         </div>
 
         {isLoading ? (
-          <div className="p-8 text-center text-slate-500 bg-white border border-slate-200 rounded-xl shadow-sm flex items-center justify-center gap-2.5 font-semibold text-xs">
-            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="p-8 text-center text-slate-500 bg-white rounded-none shadow-sm flex items-center justify-center gap-2.5 font-semibold text-xs">
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-none animate-spin"></div>
             Loading data transaksi kas masuk...
           </div>
         ) : (
@@ -387,31 +387,31 @@ const KasMasukPage = () => {
             ]}
             renderDesktopRow={(item) => (
               <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="px-5 py-3 text-xs font-black text-blue-600 border-r border-slate-100">{item.transactionNo}</td>
-                <td className="px-5 py-3 text-xs text-slate-500 font-medium border-r border-slate-100">
+                <td className="px-5 py-3 text-xs font-semibold text-blue-600 border-r">{item.transactionNo}</td>
+                <td className="px-5 py-3 text-xs text-slate-500 font-medium border-r">
                   {new Date(item.transactionDate).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' })}
                 </td>
-                <td className="px-5 py-3 border-r border-slate-100">
+                <td className="px-5 py-3 border-r">
                   <div className="flex flex-col gap-0.5 items-start">
-                    <span className="text-[9px] font-black px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded border border-blue-100/50 uppercase tracking-tight">
+                    <span className="text-[9px] font-semibold px-1.5 py-0.5 text-blue-600 rounded-none tracking-tight">
                       {item.fundCategory?.name}
                     </span>
                     {item.incomeType?.name && (
-                      <span className="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 border border-slate-200 uppercase tracking-tight mt-0.5">
+                      <span className="text-[10px] font-semibold text-slate-600 tracking-tight mt-0.5">
                         {item.incomeType.name}
                       </span>
                     )}
                   </div>
                 </td>
-                <td className="px-5 py-3 text-xs font-bold text-slate-700 border-r border-slate-100">{item.description}</td>
-                <td className="px-5 py-3 text-xs font-black text-right text-emerald-600 border-r border-slate-100">{formatIDR(Number(item.amount))}</td>
-                <td className="px-5 py-3 border-r border-slate-100">
+                <td className="px-5 py-3 text-xs font-medium text-slate-700 border-r">{item.description}</td>
+                <td className="px-5 py-3 text-xs font-semibold text-right text-emerald-600 border-r">{formatIDR(Number(item.amount))}</td>
+                <td className="px-5 py-3 border-r">
                   <Badge variant="success">
                     Selesai
                   </Badge>
                 </td>
                 <td className="px-5 py-3 text-center">
-                  <button className="p-1 hover:bg-slate-50 border border-transparent hover:border-slate-200 rounded shadow-sm text-gray-400 hover:text-blue-600 transition-all">
+                  <button className="p-1 hover:bg-slate-50 border border-transparent hover: rounded-none shadow-sm text-gray-400 hover:text-blue-600 transition-all">
                     <MoreVertical size={14} />
                   </button>
                 </td>
@@ -420,23 +420,23 @@ const KasMasukPage = () => {
             renderMobileCard={(item) => (
               <div className="flex flex-col gap-2.5">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-black text-blue-600">{item.transactionNo}</span>
+                  <span className="text-xs font-semibold text-blue-600">{item.transactionNo}</span>
                   <Badge variant="success">
                     Selesai
                   </Badge>
                 </div>
                 <div className="flex justify-between items-baseline">
-                  <span className="text-xs font-bold text-slate-700">{item.description}</span>
-                  <span className="text-sm font-black text-emerald-600">{formatIDR(Number(item.amount))}</span>
+                  <span className="text-xs font-medium text-slate-700">{item.description}</span>
+                  <span className="text-sm font-semibold text-emerald-600">{formatIDR(Number(item.amount))}</span>
                 </div>
                 <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium">
                   <span>{new Date(item.transactionDate).toLocaleDateString('id-ID')}</span>
                   <div className="flex gap-1.5">
-                    <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded font-bold uppercase tracking-tight">
+                    <span className="px-2 py-0.5 text-blue-600 rounded-none font-medium tracking-tight">
                       {item.fundCategory?.name}
                     </span>
                     {item.incomeType?.name && (
-                      <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-bold uppercase tracking-tight">
+                      <span className="px-2 py-0.5 bg-slate-100 rounded-none text-slate-600 font-medium tracking-tight">
                         {item.incomeType.name}
                       </span>
                     )}
@@ -454,8 +454,8 @@ const KasMasukPage = () => {
         onClose={handleCloseModal}
         title="Input Penerimaan Kas Baru"
       >
-        <div className="mb-4 p-4 bg-blue-50 rounded-xl flex gap-3 items-center">
-          <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100">
+        <div className="mb-4 p-4 bg-blue-50 rounded-none flex gap-3 items-center">
+          <div className="p-2 bg-white rounded-none text-blue-600 shadow-sm">
             <Info size={16} />
           </div>
           <p className="text-[11px] text-blue-700 leading-normal font-semibold">

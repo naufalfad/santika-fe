@@ -122,7 +122,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Classification Tab Selection */}
-            <div className="bg-slate-100 p-1.5 rounded-xl border border-slate-200 flex gap-2">
+            <div className="bg-slate-100 p-1.5 rounded-none border border-slate-200 flex gap-2">
                 <button
                     type="button"
                     onClick={() => {
@@ -132,7 +132,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                         setValue('fund_category_id', '');
                         setValue('description', '');
                     }}
-                    className={`flex-1 py-2 rounded-lg text-[10px] font-black transition-all uppercase tracking-wider ${classification === 'NORMAL'
+                    className={`flex-1 py-2 rounded-none text-[10px] font-semibold transition-all   ${classification === 'NORMAL'
                             ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
                             : 'text-slate-500 hover:text-slate-700'
                         }`}
@@ -148,7 +148,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                         setValue('fund_category_id', '');
                         setValue('description', '');
                     }}
-                    className={`flex-1 py-2 rounded-lg text-[10px] font-black transition-all uppercase tracking-wider ${classification === 'SPECIAL_FUND'
+                    className={`flex-1 py-2 rounded-none text-[10px] font-semibold transition-all   ${classification === 'SPECIAL_FUND'
                             ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
                             : 'text-slate-500 hover:text-slate-700'
                         }`}
@@ -164,7 +164,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                         setValue('fund_category_id', '');
                         setValue('description', '');
                     }}
-                    className={`flex-1 py-2 rounded-lg text-[10px] font-black transition-all uppercase tracking-wider ${classification === 'REFUND'
+                    className={`flex-1 py-2 rounded-none text-[10px] font-semibold transition-all   ${classification === 'REFUND'
                             ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
                             : 'text-slate-500 hover:text-slate-700'
                         }`}
@@ -176,7 +176,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
             {/* Refund Dropdown Selector */}
             {classification === 'REFUND' && (
                 <div className="space-y-1.5">
-                    <label className="text-[11px] font-black text-slate-500 uppercase flex items-center gap-2">
+                    <label className="text-[11px] font-semibold text-slate-500 flex items-center gap-2">
                         <Tag size={14} className="text-blue-500" /> Transaksi Uang Muka Asal
                     </label>
                     <select
@@ -199,7 +199,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                                 setValue('description', '');
                             }
                         }}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                        className="w-full px-4 py-2.5 bg-slate-50 rounded-none text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                     >
                         <option value="">Pilih Transaksi Uang Muka</option>
                         {pendingUangMuka.map((tx) => (
@@ -208,16 +208,16 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                             </option>
                         ))}
                     </select>
-                    {errors.parent_transaction_id && <p className="text-[10px] text-rose-500 font-bold">{errors.parent_transaction_id.message}</p>}
+                    {errors.parent_transaction_id && <p className="text-[10px] text-rose-500 font-medium">{errors.parent_transaction_id.message}</p>}
 
                     {/* Refund Estimation / Hint */}
                     {selectedParent && (
-                        <div className="p-3.5 bg-blue-50/50 border border-blue-100 rounded-xl text-xs font-semibold text-blue-800 space-y-1">
-                            <p>💰 <strong className="font-bold">Nominal Uang Muka:</strong> {formatIDR(Number(selectedParent.amount))}</p>
+                        <div className="p-3.5 bg-blue-50/50 rounded-none text-xs font-semibold text-blue-800 space-y-1">
+                            <p>💰 <strong className="font-medium">Nominal Uang Muka:</strong> {formatIDR(Number(selectedParent.amount))}</p>
                             {selectedParent.spj ? (
                                 <>
-                                    <p>📝 <strong className="font-bold">Total Belanja SPJ:</strong> {formatIDR(Number(selectedParent.spj.amount))}</p>
-                                    <p>⚖️ <strong className="font-bold">Sisa Refund Estimasi:</strong> {formatIDR(Number(selectedParent.amount) - Number(selectedParent.spj.amount))}</p>
+                                    <p>📝 <strong className="font-medium">Total Belanja SPJ:</strong> {formatIDR(Number(selectedParent.spj.amount))}</p>
+                                    <p>⚖️ <strong className="font-medium">Sisa Refund Estimasi:</strong> {formatIDR(Number(selectedParent.amount) - Number(selectedParent.spj.amount))}</p>
                                 </>
                             ) : (
                                 <p className="text-amber-700 font-medium">⚠️ Belum ada dokumen SPJ yang diverifikasi untuk transaksi ini.</p>
@@ -230,7 +230,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
             {/* Dana Khusus Dropdown Selector */}
             {classification === 'SPECIAL_FUND' && (
                 <div className="space-y-1.5">
-                    <label className="text-[11px] font-black text-slate-500 uppercase flex items-center gap-2">
+                    <label className="text-[11px] font-semibold text-slate-500 flex items-center gap-2">
                         <Wallet size={14} className="text-blue-500" /> Program Dana Khusus
                     </label>
                     <select
@@ -247,7 +247,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                                 setValue('description', '');
                             }
                         }}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                        className="w-full px-4 py-2.5 bg-slate-50 rounded-none text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                     >
                         <option value="">Pilih Program Dana Khusus</option>
                         {specialFunds.map((fund) => (
@@ -256,40 +256,40 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                             </option>
                         ))}
                     </select>
-                    {errors.special_fund_id && <p className="text-[10px] text-rose-500 font-bold">{errors.special_fund_id.message}</p>}
+                    {errors.special_fund_id && <p className="text-[10px] text-rose-500 font-medium">{errors.special_fund_id.message}</p>}
                 </div>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Tanggal */}
                 <div className="space-y-1.5">
-                    <label className="text-[11px] font-black text-slate-500 uppercase flex items-center gap-2">
+                    <label className="text-[11px] font-semibold text-slate-500 flex items-center gap-2">
                         <Calendar size={14} className="text-blue-500" /> Tanggal Transaksi
                     </label>
                     <input
                         type="date"
                         {...register('transaction_date')}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                        className="w-full px-4 py-2.5 bg-slate-50 rounded-none text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                     />
-                    {errors.transaction_date && <p className="text-[10px] text-rose-500 font-bold">{errors.transaction_date.message}</p>}
+                    {errors.transaction_date && <p className="text-[10px] text-rose-500 font-medium">{errors.transaction_date.message}</p>}
                 </div>
 
                 {/* Pos Dana */}
                 <div className="space-y-1.5">
-                    <label className="text-[11px] font-black text-slate-500 uppercase flex items-center gap-2">
+                    <label className="text-[11px] font-semibold text-slate-500 flex items-center gap-2">
                         <Tag size={14} className="text-emerald-500" /> Pos Dana
                     </label>
                     {classification === 'REFUND' && selectedParent ? (
                         <>
                             <input type="hidden" {...register('fund_category_id')} />
-                            <div className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 flex items-center h-10 border-l-4 border-l-emerald-500">
+                            <div className="w-full px-4 py-2.5 bg-slate-100 rounded-none text-sm font-medium text-slate-600 flex items-center h-10 border-l-4 border-l-emerald-500">
                                 {selectedParent.fundCategory?.name}
                             </div>
                         </>
                     ) : classification === 'SPECIAL_FUND' && selectedSpecialFundId ? (
                         <>
                             <input type="hidden" {...register('fund_category_id')} />
-                            <div className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 flex items-center h-10 border-l-4 border-l-emerald-500">
+                            <div className="w-full px-4 py-2.5 bg-slate-100 rounded-none text-sm font-medium text-slate-600 flex items-center h-10 border-l-4 border-l-emerald-500">
                                 {specialFunds.find((f) => f.id === selectedSpecialFundId)?.name
                                     ? `Dana Khusus: ${specialFunds.find((f) => f.id === selectedSpecialFundId)?.name}`
                                     : 'Dana Khusus'}
@@ -299,7 +299,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                         <select
                             {...register('fund_category_id')}
                             disabled={isLoadingFunds}
-                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none"
+                            className="w-full px-4 py-2.5 bg-slate-50 rounded-none text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none"
                         >
                             <option value="">{isLoadingFunds ? 'Memuat Pos Dana...' : 'Pilih Pos Dana'}</option>
                             {fundCategories.map((fund) => (
@@ -309,7 +309,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                             ))}
                         </select>
                     )}
-                    {errors.fund_category_id && <p className="text-[10px] text-rose-500 font-bold">{errors.fund_category_id.message}</p>}
+                    {errors.fund_category_id && <p className="text-[10px] text-rose-500 font-medium">{errors.fund_category_id.message}</p>}
                 </div>
             </div>
 
@@ -317,7 +317,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                 {/* Jenis Penerimaan */}
                 <div className="space-y-1.5">
                     <div className="flex justify-between items-center">
-                        <label className="text-[11px] font-black text-slate-500 uppercase flex items-center gap-2">
+                        <label className="text-[11px] font-semibold text-slate-500 flex items-center gap-2">
                             <Tag size={14} className="text-blue-500" /> Jenis Penerimaan
                         </label>
                         {isBendahara && classification === 'NORMAL' && (
@@ -327,7 +327,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                                     setIsAddingType(!isAddingType);
                                     setAddTypeError(null);
                                 }}
-                                className="text-[11px] font-bold text-blue-600 hover:text-blue-700 transition-colors uppercase"
+                                className="text-[11px] font-medium text-blue-600 hover:text-blue-700 transition-colors"
                             >
                                 {isAddingType ? 'Batal Tambah' : '+ Tambah Jenis Baru'}
                             </button>
@@ -336,7 +336,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                     <select
                         {...register('income_type_id')}
                         disabled={isLoadingTypes || isAddingType}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none"
+                        className="w-full px-4 py-2.5 bg-slate-50 rounded-none text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none"
                     >
                         <option value="">{isLoadingTypes ? 'Memuat Jenis Penerimaan...' : 'Pilih Jenis Penerimaan'}</option>
                         {incomeTypes.map((type) => (
@@ -345,46 +345,46 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                             </option>
                         ))}
                     </select>
-                    {errors.income_type_id && <p className="text-[10px] text-rose-500 font-bold">{errors.income_type_id.message}</p>}
+                    {errors.income_type_id && <p className="text-[10px] text-rose-500 font-medium">{errors.income_type_id.message}</p>}
 
                     {/* Inline Creator Subform */}
                     {isAddingType && classification === 'NORMAL' && (
-                        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 mt-2">
-                            <h4 className="text-[11px] font-black text-slate-600 uppercase">Tambah Jenis Penerimaan Baru</h4>
+                        <div className="p-4 bg-slate-50 rounded-none space-y-3 mt-2">
+                            <h4 className="text-[11px] font-semibold text-slate-600">Tambah Jenis Penerimaan Baru</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase">Kode Jenis</label>
+                                    <label className="text-[10px] font-semibold text-slate-400">Kode Jenis</label>
                                     <input
                                         type="text"
                                         value={newTypeCode}
                                         onChange={(e) => setNewTypeCode(e.target.value)}
                                         placeholder="Misal: KKM"
-                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all uppercase"
+                                        className="w-full px-3 py-2 bg-white rounded-none text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase">Nama Jenis</label>
+                                    <label className="text-[10px] font-semibold text-slate-400">Nama Jenis</label>
                                     <input
                                         type="text"
                                         value={newTypeName}
                                         onChange={(e) => setNewTypeName(e.target.value)}
                                         placeholder="Misal: Kolekte Misa"
-                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                        className="w-full px-3 py-2 bg-white rounded-none text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                     />
                                 </div>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-black text-slate-400 uppercase">Deskripsi / Keterangan (Opsional)</label>
+                                <label className="text-[10px] font-semibold text-slate-400">Deskripsi / Keterangan (Opsional)</label>
                                 <input
                                     type="text"
                                     value={newTypeDesc}
                                     onChange={(e) => setNewTypeDesc(e.target.value)}
                                     placeholder="Keterangan singkat..."
-                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                    className="w-full px-3 py-2 bg-white rounded-none text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                 />
                             </div>
                             {addTypeError && (
-                                <p className="text-[10px] text-rose-500 font-bold">{addTypeError}</p>
+                                <p className="text-[10px] text-rose-500 font-medium">{addTypeError}</p>
                             )}
                             <div className="flex gap-2 justify-end pt-1">
                                 <Button
@@ -398,7 +398,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                                         setNewTypeName('');
                                         setNewTypeDesc('');
                                     }}
-                                    className="px-3 py-1.5 text-xs font-bold rounded-xl"
+                                    className="px-3 py-1.5 text-xs font-medium rounded-none"
                                 >
                                     Batal
                                 </Button>
@@ -407,7 +407,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                                     size="sm"
                                     disabled={addIncomeTypeMutation.isPending}
                                     onClick={handleSaveIncomeType}
-                                    className="px-4 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+                                    className="px-4 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-none"
                                 >
                                     {addIncomeTypeMutation.isPending ? 'Menyimpan...' : 'Simpan Jenis'}
                                 </Button>
@@ -422,49 +422,49 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
 
             {/* Deskripsi / Sumber */}
             <div className="space-y-1.5">
-                <label className="text-[11px] font-black text-slate-500 uppercase flex items-center gap-2">
+                <label className="text-[11px] font-semibold text-slate-500 flex items-center gap-2">
                     <FileText size={14} className="text-purple-500" /> Keterangan / Sumber
                 </label>
                 <input
                     type="text"
                     placeholder="Misal: Kolekte Misa Minggu Pagi"
                     {...register('description')}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-50 rounded-none text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                 />
-                {errors.description && <p className="text-[10px] text-rose-500 font-bold">{errors.description.message}</p>}
+                {errors.description && <p className="text-[10px] text-rose-500 font-medium">{errors.description.message}</p>}
             </div>
 
             {/* Nominal */}
             <div className="space-y-1.5">
-                <label className="text-[11px] font-black text-slate-500 uppercase flex items-center gap-2">
+                <label className="text-[11px] font-semibold text-slate-500 flex items-center gap-2">
                     <Wallet size={14} className="text-amber-500" /> Nominal (IDR)
                 </label>
                 <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">Rp</div>
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 font-medium text-slate-400 text-sm">Rp</div>
                     <input
                         type="number"
                         placeholder="0"
                         {...register('amount', { valueAsNumber: true })}
-                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-lg font-black text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 rounded-none text-lg font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                     />
                 </div>
-                {errors.amount && <p className="text-[10px] text-rose-500 font-bold">{errors.amount.message}</p>}
+                {errors.amount && <p className="text-[10px] text-rose-500 font-medium">{errors.amount.message}</p>}
             </div>
 
             {/* Footer Buttons */}
-            <div className="flex gap-3 pt-4 border-t border-slate-100">
+            <div className="flex gap-3 pt-4 border-t">
                 <Button
                     type="button"
                     variant="outline"
                     onClick={onCancel}
-                    className="flex-1 py-3 rounded-none font-bold text-slate-500"
+                    className="flex-1 py-3 rounded-none font-medium text-slate-500"
                 >
                     Batal
                 </Button>
                 <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-none font-bold shadow-none flex justify-center items-center gap-2"
+                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-none font-medium shadow-none flex justify-center items-center gap-2"
                 >
                     {isSubmitting ? 'Menyimpan...' : <><CheckCircle2 size={18} /> Simpan Data</>}
                 </Button>

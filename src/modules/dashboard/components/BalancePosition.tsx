@@ -9,7 +9,7 @@ import { formatIDR } from '../../../shared/utils/formatter';
 export const BalancePosition = () => {
     return (
         <div className="space-y-4">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-slate-400">
                 Posisi Saldo Per Rekening
             </h3>
 
@@ -25,7 +25,7 @@ export const BalancePosition = () => {
                             </div>
                             <span className="font-semibold text-slate-600">{bank.name}</span>
                         </div>
-                        <span className="font-black text-slate-800 tracking-tight">
+                        <span className="font-semibold text-slate-800 tracking-tight">
                             {formatIDR(bank.amount)}
                         </span>
                     </div>
@@ -33,10 +33,10 @@ export const BalancePosition = () => {
             </div>
 
             <div className="pt-3 border-t border-slate-200 flex justify-between items-center">
-                <p className="text-[10px] font-black text-blue-600 uppercase tracking-wider">
+                <p className="text-[10px] font-semibold text-blue-600">
                     Total Saldo
                 </p>
-                <p className="text-sm font-black text-blue-600 tracking-tight">
+                <p className="text-sm font-semibold text-blue-600 tracking-tight">
                     {formatIDR(985500000)}
                 </p>
             </div>

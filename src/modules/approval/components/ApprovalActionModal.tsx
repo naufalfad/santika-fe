@@ -30,7 +30,7 @@ export const ApprovalActionModal = ({ actionType, onConfirm, onCancel }: Approva
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">
+        <label className="block text-xs font-medium text-gray-700 mb-2">
           Catatan / Alasan {actionType === 'approve' ? '(Opsional)' : '(Wajib)'}
         </label>
         <textarea
@@ -43,17 +43,17 @@ export const ApprovalActionModal = ({ actionType, onConfirm, onCancel }: Approva
               ? 'Tulis catatan persetujuan Anda di sini...'
               : 'Tulis alasan penolakan atau instruksi revisi secara rinci...'
           }
-          className="w-full p-3 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 transition-all resize-none"
+          className="w-full p-3 border rounded-none text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 transition-all resize-none"
         />
       </div>
 
-      <div className="flex gap-3 pt-4 border-t border-slate-100">
+      <div className="flex gap-3 pt-4 border-t">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1 py-3">
           Batal
         </Button>
         <Button
           type="submit"
-          className={`flex-1 py-3 font-bold ${buttonColors[actionType]}`}
+          className={`flex-1 py-3 font-medium ${buttonColors[actionType]}`}
         >
           {actionText[actionType]}
         </Button>

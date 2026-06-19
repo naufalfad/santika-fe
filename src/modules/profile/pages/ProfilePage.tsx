@@ -124,7 +124,7 @@ const ProfilePage = () => {
           <div className="h-4 bg-slate-200/60 w-48 mb-8 rounded-none" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-slate-200 bg-white">
-          <div className="p-8 border-b md:border-b-0 md:border-r border-slate-100 animate-pulse">
+          <div className="p-8 border-b md:border-b-0 md:border-r animate-pulse">
             <div className="w-32 h-32 bg-slate-200/60 mx-auto mb-4 rounded-none" />
             <div className="h-4 bg-slate-200/60 w-3/4 mx-auto mb-2 rounded-none" />
             <div className="h-3 bg-slate-200/60 w-1/2 mx-auto rounded-none" />
@@ -145,7 +145,7 @@ const ProfilePage = () => {
     <div className="max-w-4xl mx-auto pb-10 space-y-0 animate-fade-slide">
       {/* ── PAGE HEADER ── */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+        <h2 className="text-2xl font-medium text-slate-800 tracking-tight">
           Pengaturan Profil
         </h2>
         <p className="text-sm text-slate-500 font-medium mt-0.5">
@@ -157,7 +157,7 @@ const ProfilePage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3">
 
           {/* ── KOLOM KIRI: Avatar + Identitas Read-Only ── */}
-          <div className="p-6 md:p-8 flex flex-col items-center border-b md:border-b-0 md:border-r border-slate-100">
+          <div className="p-6 md:p-8 flex flex-col items-center border-b md:border-b-0 md:border-r">
             <div className="relative group mb-5">
               <div
                 className={cn(
@@ -173,7 +173,7 @@ const ProfilePage = () => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-4xl font-black text-slate-400 select-none">
+                  <span className="text-4xl font-semibold text-slate-400 select-none">
                     {displayName.charAt(0).toUpperCase()}
                   </span>
                 )}
@@ -196,7 +196,7 @@ const ProfilePage = () => {
                 ) : (
                   <>
                     <Camera size={16} className="text-white" />
-                    <span className="text-white text-[10px] font-bold uppercase tracking-wider">
+                    <span className="text-white text-[10px] font-medium">
                       Ubah
                     </span>
                   </>
@@ -225,32 +225,32 @@ const ProfilePage = () => {
             </Button>
 
             {updateAvatarMutation.isError && (
-              <div className="flex items-center gap-1.5 mb-4 w-full bg-rose-50 p-2 border border-rose-100 rounded-none">
+              <div className="flex items-center gap-1.5 mb-4 w-full bg-rose-50 p-2 rounded-none">
                 <AlertCircle size={12} className="text-rose-500 shrink-0" />
-                <p className="text-[9px] text-rose-600 font-bold uppercase tracking-wider leading-tight">
+                <p className="text-[9px] text-rose-600 font-medium leading-tight">
                   {(updateAvatarMutation.error as any)?.response?.data?.message
                     ?? 'Gagal mengunggah foto.'}
                 </p>
               </div>
             )}
 
-            <div className="w-full space-y-0 border-t border-slate-100 pt-5">
-              <div className="py-3 border-b border-slate-100">
+            <div className="w-full space-y-0 border-t pt-5">
+              <div className="py-3 border-b">
                 <div className="flex items-center gap-2 mb-1">
                   <User size={11} className="text-slate-400" />
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                  <span className="text-[9px] font-semibold text-slate-400">
                     Nama Lengkap
                   </span>
                 </div>
-                <p className="text-xs font-bold text-slate-800 pl-[19px] tracking-tight">
+                <p className="text-xs font-medium text-slate-800 pl-[19px] tracking-tight">
                   {displayName}
                 </p>
               </div>
 
-              <div className="py-3 border-b border-slate-100">
+              <div className="py-3 border-b">
                 <div className="flex items-center gap-2 mb-1">
                   <Mail size={11} className="text-slate-400" />
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                  <span className="text-[9px] font-semibold text-slate-400">
                     Surat Elektronik
                   </span>
                 </div>
@@ -259,10 +259,10 @@ const ProfilePage = () => {
                 </p>
               </div>
 
-              <div className="py-3 border-b border-slate-100">
+              <div className="py-3 border-b">
                 <div className="flex items-center gap-2 mb-2">
                   <Shield size={11} className="text-slate-400" />
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                  <span className="text-[9px] font-semibold text-slate-400">
                     Peran Otorisasi
                   </span>
                 </div>
@@ -276,7 +276,7 @@ const ProfilePage = () => {
               <div className="py-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Building2 size={11} className="text-slate-400" />
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                  <span className="text-[9px] font-semibold text-slate-400">
                     Paroki
                   </span>
                 </div>
@@ -286,19 +286,19 @@ const ProfilePage = () => {
               </div>
             </div>
 
-            <p className="text-[9px] text-slate-400 text-center leading-relaxed mt-4 font-medium border border-slate-100 bg-slate-50 p-2 rounded-none">
+            <p className="text-[9px] text-slate-400 text-center leading-relaxed mt-4 font-medium bg-slate-50 p-2 rounded-none">
               Data identitas sistem di atas terkunci secara permanen dan tidak dapat diubah secara mandiri untuk menjaga integritas Audit Trail paroki.
             </p>
           </div>
 
           {/* ── KOLOM KANAN: Form Ubah Kata Sandi ── */}
           <div className="md:col-span-2 p-6 md:p-8 bg-white">
-            <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-slate-100">
+            <div className="flex items-center gap-2.5 mb-6 pb-4 border-b">
               <div className="w-7 h-7 bg-slate-800 flex items-center justify-center rounded-none shadow-sm">
                 <KeyRound size={14} className="text-white" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-800 tracking-tight">
+                <h3 className="text-sm font-medium text-slate-800 tracking-tight">
                   Ubah Kata Sandi
                 </h3>
                 <p className="text-[10px] text-slate-400 font-medium mt-0.5">
@@ -333,7 +333,7 @@ const ProfilePage = () => {
                 {...register('oldPassword')}
               />
 
-              <div className="border-t border-slate-100 my-2" />
+              <div className="border-t my-2" />
 
               <Input
                 id="newPassword"
@@ -378,18 +378,18 @@ const ProfilePage = () => {
               />
 
               {passwordSuccessMsg && (
-                <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-4 py-3 rounded-none">
+                <div className="flex items-center gap-2 bg-emerald-50 px-4 py-3 rounded-none">
                   <CheckCircle size={14} className="text-emerald-600 shrink-0" />
-                  <p className="text-xs font-bold text-emerald-700 tracking-tight">
+                  <p className="text-xs font-medium text-emerald-700 tracking-tight">
                     {passwordSuccessMsg}
                   </p>
                 </div>
               )}
 
               {updatePasswordMutation.isError && (
-                <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 px-4 py-3 rounded-none">
+                <div className="flex items-center gap-2 bg-rose-50 px-4 py-3 rounded-none">
                   <AlertCircle size={14} className="text-rose-600 shrink-0" />
-                  <p className="text-xs font-bold text-rose-700 tracking-tight">
+                  <p className="text-xs font-medium text-rose-700 tracking-tight">
                     {(updatePasswordMutation.error as any)?.response?.data?.message
                       ?? 'Gagal memperbarui kata sandi. Periksa kata sandi lama Anda.'}
                   </p>
@@ -410,8 +410,8 @@ const ProfilePage = () => {
               </div>
             </form>
 
-            <div className="mt-8 pt-5 border-t border-slate-100">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">
+            <div className="mt-8 pt-5 border-t">
+              <p className="text-[9px] font-semibold text-slate-400 mb-2">
                 Kebijakan Keamanan
               </p>
               <ul className="space-y-1.5 text-[10px] text-slate-500 font-medium">

@@ -176,14 +176,14 @@ const SaldoPosDanaPage = () => {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Saldo Pos Dana</h2>
+          <h2 className="text-2xl font-medium text-slate-800 tracking-tight">Saldo Pos Dana</h2>
           <p className="text-sm text-gray-500">Informasi saldo keseluruhan, total pemasukan, dan pengeluaran setiap pos dana.</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           {isBendaharaOrAdmin && activeTab === 'PERMANENT' && (
             <Button
               onClick={() => setIsTransferModalOpen(true)}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 text-xs bg-slate-800 hover:bg-slate-700 text-white rounded-none shadow-none font-bold"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 text-xs bg-slate-800 hover:bg-slate-700 text-white rounded-none shadow-none font-medium"
             >
               <ArrowLeftRight size={14} />
               Transfer Saldo
@@ -202,7 +202,7 @@ const SaldoPosDanaPage = () => {
       </div>
 
       {/* Tab Selector */}
-      <div className="flex gap-6 border-b border-slate-200 overflow-x-auto no-scrollbar pb-0 text-sm font-bold text-slate-400">
+      <div className="flex gap-6 border-b border-slate-200 overflow-x-auto no-scrollbar pb-0 text-sm font-medium text-slate-400">
         <button
           onClick={() => setActiveTab('PERMANENT')}
           className={`pb-3 whitespace-nowrap transition-colors duration-200 rounded-none border-b-2 ${
@@ -228,48 +228,48 @@ const SaldoPosDanaPage = () => {
       {/* Metrics Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 border-l-4 border-l-blue-600 border-y-slate-200 border-r-slate-200">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+          <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Total Saldo' : 'Saldo Dana Khusus'}
           </p>
-          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">
+          <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(metrics.totalBalance)}
           </h4>
-          <div className="flex items-center gap-1 mt-2 text-blue-600 font-bold text-[10px]">
+          <div className="flex items-center gap-1 mt-2 text-blue-600 font-medium text-[10px]">
             <Wallet size={12} />
             <span>{activeTab === 'PERMANENT' ? 'Seluruh Pos Dana' : 'Seluruh Dana Khusus'}</span>
           </div>
         </Card>
 
         <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Total Pemasukan</p>
-          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">
+          <p className="text-[10px] text-slate-400 font-semibold">Total Pemasukan</p>
+          <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(metrics.totalIncome)}
           </h4>
-          <div className="flex items-center gap-1 mt-2 text-emerald-600 font-bold text-[10px]">
+          <div className="flex items-center gap-1 mt-2 text-emerald-600 font-medium text-[10px]">
             <TrendingUp size={12} />
             <span>Akumulasi Penerimaan</span>
           </div>
         </Card>
 
         <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Total Pengeluaran</p>
-          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">
+          <p className="text-[10px] text-slate-400 font-semibold">Total Pengeluaran</p>
+          <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(metrics.totalExpense)}
           </h4>
-          <div className="flex items-center gap-1 mt-2 text-rose-500 font-bold text-[10px]">
+          <div className="flex items-center gap-1 mt-2 text-rose-500 font-medium text-[10px]">
             <TrendingDown size={12} />
             <span>Akumulasi Pengeluaran</span>
           </div>
         </Card>
 
         <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+          <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Pos Dana Aktif' : 'Program Dana Khusus Aktif'}
           </p>
-          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">
+          <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : `${metrics.activeCount} / ${currentBalances.length}`}
           </h4>
-          <div className="flex items-center gap-1 mt-2 text-amber-600 font-bold text-[10px]">
+          <div className="flex items-center gap-1 mt-2 text-amber-600 font-medium text-[10px]">
             <CheckCircle size={12} />
             <span>Siap Digunakan</span>
           </div>
@@ -282,7 +282,7 @@ const SaldoPosDanaPage = () => {
           {/* Bar Chart: Income vs Expense comparison */}
           <Card className="lg:col-span-8 p-5 border-slate-200">
             <div className="mb-4">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <h3 className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                 <Coins size={14} className="text-blue-500" /> {activeTab === 'PERMANENT' ? 'Pemasukan vs Pengeluaran per Pos Dana' : 'Pemasukan vs Pengeluaran per Dana Khusus'}
               </h3>
             </div>
@@ -316,7 +316,7 @@ const SaldoPosDanaPage = () => {
 
           {/* Pie Chart: Balance Distribution */}
           <Card className="lg:col-span-4 p-5 border-slate-200 flex flex-col">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <h3 className="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-1.5">
               <Wallet size={14} className="text-emerald-500" /> {activeTab === 'PERMANENT' ? 'Distribusi Saldo Aktif' : 'Distribusi Saldo Dana Khusus'}
             </h3>
             <div className="h-[180px] flex-1 min-h-[180px] relative">
@@ -339,7 +339,7 @@ const SaldoPosDanaPage = () => {
             </div>
             
             {/* Custom high-contrast legend list for donut */}
-            <div className="mt-4 max-h-[80px] overflow-y-auto divide-y divide-slate-100 text-[10px] font-bold text-slate-600">
+            <div className="mt-4 max-h-[80px] overflow-y-auto divide-y divide-slate-100 text-[10px] font-medium text-slate-600">
               {pieChartData.map((entry: any, index: number) => (
                 <div key={index} className="flex justify-between items-center py-1">
                   <div className="flex items-center gap-1.5 truncate">
@@ -358,7 +358,7 @@ const SaldoPosDanaPage = () => {
       <div className="space-y-4">
         {/* Filters Controls */}
         <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col md:flex-row gap-4 justify-between">
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-none w-full md:w-80">
+          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-none w-full md:w-80">
             <Search size={16} className="text-slate-400" />
             <input
               type="text"
@@ -370,11 +370,11 @@ const SaldoPosDanaPage = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-slate-400 font-black uppercase tracking-wider hidden sm:inline">Status:</span>
+            <span className="text-[10px] text-slate-400 font-semibold hidden sm:inline">Status:</span>
             <div className="flex border border-slate-200 rounded-none overflow-hidden">
               <button
                 onClick={() => setStatusFilter('ALL')}
-                className={`px-3 py-1 text-xs font-black transition-colors ${
+                className={`px-3 py-1 text-xs font-semibold transition-colors ${
                   statusFilter === 'ALL' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
                 }`}
               >
@@ -382,7 +382,7 @@ const SaldoPosDanaPage = () => {
               </button>
               <button
                 onClick={() => setStatusFilter('ACTIVE')}
-                className={`px-3 py-1 text-xs font-black transition-colors ${
+                className={`px-3 py-1 text-xs font-semibold transition-colors ${
                   statusFilter === 'ACTIVE' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
                 }`}
               >
@@ -390,7 +390,7 @@ const SaldoPosDanaPage = () => {
               </button>
               <button
                 onClick={() => setStatusFilter('INACTIVE')}
-                className={`px-3 py-1 text-xs font-black transition-colors ${
+                className={`px-3 py-1 text-xs font-semibold transition-colors ${
                   statusFilter === 'INACTIVE' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
                 }`}
               >
@@ -414,20 +414,20 @@ const SaldoPosDanaPage = () => {
           ]}
           renderDesktopRow={(item) => (
             <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-              <td className="px-5 py-3 text-xs font-black text-blue-600 border-r border-slate-100 uppercase">
+              <td className="px-5 py-3 text-xs font-semibold text-blue-600 border-r">
                 {item.code}
               </td>
-              <td className="px-5 py-3 text-xs font-bold text-slate-700 border-r border-slate-100">
+              <td className="px-5 py-3 text-xs font-medium text-slate-700 border-r">
                 {activeTab === 'PERMANENT' ? item.fund : item.fund.replace('Dana Khusus: ', '')}
               </td>
-              <td className="px-5 py-3 text-xs font-semibold text-right text-emerald-600 border-r border-slate-100">
+              <td className="px-5 py-3 text-xs font-semibold text-right text-emerald-600 border-r">
                 {formatIDR(Number(item.income))}
               </td>
-              <td className="px-5 py-3 text-xs font-semibold text-right text-rose-500 border-r border-slate-100">
+              <td className="px-5 py-3 text-xs font-semibold text-right text-rose-500 border-r">
                 {formatIDR(Number(item.expense))}
               </td>
-              <td className={`px-5 py-3 text-xs font-black text-right border-r border-slate-100 ${
-                Number(item.balance) < 0 ? 'text-rose-600 bg-rose-50/20' : 'text-slate-800'
+              <td className={`px-5 py-3 text-xs font-semibold text-right border-r  ${
+                Number(item.balance) < 0 ? 'text-rose-600/20' : 'text-slate-800'
               }`}>
                 {formatIDR(Number(item.balance))}
               </td>
@@ -441,28 +441,28 @@ const SaldoPosDanaPage = () => {
           renderMobileCard={(item) => (
             <div className="flex flex-col gap-2">
               <div className="flex justify-between items-center">
-                <span className="text-xs font-black text-blue-600 uppercase">{item.code}</span>
+                <span className="text-xs font-semibold text-blue-600">{item.code}</span>
                 <Badge variant={item.isActive ? 'success' : 'danger'}>
                   {item.isActive ? 'Aktif' : 'Non-Aktif'}
                 </Badge>
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-700">
+                <p className="text-xs font-medium text-slate-700">
                   {activeTab === 'PERMANENT' ? item.fund : item.fund.replace('Dana Khusus: ', '')}
                 </p>
               </div>
-              <div className="grid grid-cols-3 gap-1 pt-2 border-t border-slate-100 mt-1">
+              <div className="grid grid-cols-3 gap-1 pt-2 border-t mt-1">
                 <div>
-                  <p className="text-[8px] text-slate-400 font-bold uppercase">Pemasukan</p>
+                  <p className="text-[8px] text-slate-400 font-medium">Pemasukan</p>
                   <p className="text-[10px] font-semibold text-emerald-600 mt-0.5">{formatIDR(Number(item.income))}</p>
                 </div>
                 <div>
-                  <p className="text-[8px] text-slate-400 font-bold uppercase">Pengeluaran</p>
+                  <p className="text-[8px] text-slate-400 font-medium">Pengeluaran</p>
                   <p className="text-[10px] font-semibold text-rose-500 mt-0.5">{formatIDR(Number(item.expense))}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[8px] text-slate-400 font-bold uppercase">Saldo</p>
-                  <p className={`text-[10px] font-black mt-0.5 ${
+                  <p className="text-[8px] text-slate-400 font-medium">Saldo</p>
+                  <p className={`text-[10px] font-semibold mt-0.5 ${
                     Number(item.balance) < 0 ? 'text-rose-600' : 'text-slate-800'
                   }`}>
                     {formatIDR(Number(item.balance))}
@@ -486,7 +486,7 @@ const SaldoPosDanaPage = () => {
       >
         <form onSubmit={handleSubmit(onTransferSubmit)} className="space-y-4">
           {transferMutation.isError && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-600 font-semibold flex items-center gap-2">
+            <div className="p-3 bg-rose-50 rounded-none text-xs text-rose-600 font-semibold flex items-center gap-2">
               <RotateCw size={14} className="shrink-0 animate-spin" />
               <span>{(transferMutation.error as any)?.response?.data?.message || 'Gagal melakukan transfer saldo.'}</span>
             </div>
@@ -495,10 +495,10 @@ const SaldoPosDanaPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Pos Dana Asal */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-black text-slate-500 uppercase">Pos Dana Asal (Sumber)</label>
+              <label className="text-[11px] font-semibold text-slate-500">Pos Dana Asal (Sumber)</label>
               <select
                 {...register('source_fund_category_id')}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                className="w-full px-3 py-2 bg-slate-50 rounded-none text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               >
                 <option value="">Pilih Pos Dana Asal</option>
                 {transferrableFunds.map((f) => (
@@ -507,15 +507,15 @@ const SaldoPosDanaPage = () => {
                   </option>
                 ))}
               </select>
-              {errors.source_fund_category_id && <p className="text-[10px] text-rose-500 font-bold">{errors.source_fund_category_id.message}</p>}
+              {errors.source_fund_category_id && <p className="text-[10px] text-rose-500 font-medium">{errors.source_fund_category_id.message}</p>}
             </div>
 
             {/* Pos Dana Tujuan */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-black text-slate-500 uppercase">Pos Dana Tujuan</label>
+              <label className="text-[11px] font-semibold text-slate-500">Pos Dana Tujuan</label>
               <select
                 {...register('target_fund_category_id')}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                className="w-full px-3 py-2 bg-slate-50 rounded-none text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               >
                 <option value="">Pilih Pos Dana Tujuan</option>
                 {transferrableFunds
@@ -526,43 +526,43 @@ const SaldoPosDanaPage = () => {
                     </option>
                   ))}
               </select>
-              {errors.target_fund_category_id && <p className="text-[10px] text-rose-500 font-bold">{errors.target_fund_category_id.message}</p>}
+              {errors.target_fund_category_id && <p className="text-[10px] text-rose-500 font-medium">{errors.target_fund_category_id.message}</p>}
             </div>
           </div>
 
           {/* Saldo Asal Information */}
           {selectedSourceFund && (
-            <div className="p-3 bg-blue-50/50 border border-blue-100 text-xs font-semibold text-blue-800 flex justify-between items-center">
+            <div className="p-3 bg-blue-50/50 text-xs font-semibold text-blue-800 flex justify-between items-center">
               <span>Saldo Tersedia ({selectedSourceFund.fund}):</span>
-              <span className="font-bold text-sm text-blue-900">{formatIDR(selectedSourceFund.balance)}</span>
+              <span className="font-medium text-sm text-blue-900">{formatIDR(selectedSourceFund.balance)}</span>
             </div>
           )}
 
           {/* Nominal */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-black text-slate-500 uppercase">Nominal Transfer (Rp)</label>
+            <label className="text-[11px] font-semibold text-slate-500">Nominal Transfer (Rp)</label>
             <input
               type="number"
               placeholder="0"
               {...register('amount', { valueAsNumber: true })}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              className="w-full px-3 py-2 bg-slate-50 rounded-none text-sm font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
-            {errors.amount && <p className="text-[10px] text-rose-500 font-bold">{errors.amount.message}</p>}
+            {errors.amount && <p className="text-[10px] text-rose-500 font-medium">{errors.amount.message}</p>}
           </div>
 
           {/* Keterangan */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-black text-slate-500 uppercase">Keterangan</label>
+            <label className="text-[11px] font-semibold text-slate-500">Keterangan</label>
             <input
               type="text"
               placeholder="Misal: Pemindahan kas operasional bulanan"
               {...register('description')}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              className="w-full px-3 py-2 bg-slate-50 rounded-none text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
-            {errors.description && <p className="text-[10px] text-rose-500 font-bold">{errors.description.message}</p>}
+            {errors.description && <p className="text-[10px] text-rose-500 font-medium">{errors.description.message}</p>}
           </div>
 
-          <div className="pt-4 flex gap-3 border-t border-slate-100">
+          <div className="pt-4 flex gap-3 border-t">
             <Button
               type="button"
               variant="outline"
@@ -571,14 +571,14 @@ const SaldoPosDanaPage = () => {
                 reset();
                 transferMutation.reset();
               }}
-              className="flex-1 rounded-none font-bold text-slate-500"
+              className="flex-1 rounded-none font-medium text-slate-500"
             >
               Batal
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || transferMutation.isPending}
-              className="flex-1 bg-slate-800 hover:bg-slate-700 text-white rounded-none font-bold flex justify-center items-center gap-2"
+              className="flex-1 bg-slate-800 hover:bg-slate-700 text-white rounded-none font-medium flex justify-center items-center gap-2"
             >
               {isSubmitting || transferMutation.isPending ? 'Memindahkan...' : 'Konfirmasi Transfer'}
             </Button>

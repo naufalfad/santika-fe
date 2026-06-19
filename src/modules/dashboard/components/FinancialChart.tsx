@@ -12,7 +12,7 @@ export const FinancialChart = () => {
             {/* Chart Visualizer */}
             <div className="lg:col-span-3 h-[280px]">
                 <div className="mb-4">
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">
+                    <h3 className="text-xs font-semibold text-slate-400">
                         Grafik Penerimaan & Pengeluaran
                     </h3>
                     <p className="text-[10px] text-slate-400 font-medium mt-0.5">
@@ -48,22 +48,22 @@ export const FinancialChart = () => {
             </div>
 
             {/* Flat Seamless Summary Side Panel */}
-            <div className="flex flex-col justify-center gap-4 lg:border-l lg:border-slate-100 lg:pl-6">
-                <div className="pb-2 border-b border-slate-100/60 lg:border-0 lg:pb-0">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Total Penerimaan</p>
-                    <p className="text-base font-black text-emerald-600 tracking-tight leading-snug">
+            <div className="flex flex-col justify-center gap-4 lg:border-l lg: lg:pl-6">
+                <div className="pb-2 border-b /60 lg:border-0 lg:pb-0">
+                    <p className="text-[9px] font-semibold text-slate-400">Total Penerimaan</p>
+                    <p className="text-base font-semibold text-emerald-600 tracking-tight leading-snug">
                         {formatIDR(SUMMARY_TOTALS.penerimaan)}
                     </p>
                 </div>
-                <div className="pb-2 border-b border-slate-100/60 lg:border-0 lg:pb-0">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Total Pengeluaran</p>
-                    <p className="text-base font-black text-rose-600 tracking-tight leading-snug">
+                <div className="pb-2 border-b /60 lg:border-0 lg:pb-0">
+                    <p className="text-[9px] font-semibold text-slate-400">Total Pengeluaran</p>
+                    <p className="text-base font-semibold text-rose-600 tracking-tight leading-snug">
                         {formatIDR(SUMMARY_TOTALS.pengeluaran)}
                     </p>
                 </div>
-                <div className="pt-2 lg:pt-3 lg:border-t lg:border-slate-100">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Selisih</p>
-                    <p className="text-base font-black text-blue-600 tracking-tight leading-snug">
+                <div className="pt-2 lg:pt-3 lg:border-t lg:">
+                    <p className="text-[9px] font-semibold text-slate-400">Selisih</p>
+                    <p className="text-base font-semibold text-blue-600 tracking-tight leading-snug">
                         {formatIDR(SUMMARY_TOTALS.surplus)}
                     </p>
                 </div>

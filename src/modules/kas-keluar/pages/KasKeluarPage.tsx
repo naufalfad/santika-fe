@@ -181,7 +181,7 @@ const KasKeluarPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Manajemen Kas Keluar</h2>
+          <h2 className="text-2xl font-medium text-slate-800 tracking-tight">Manajemen Kas Keluar</h2>
           <p className="text-sm text-gray-500">Pantau pengeluaran operasional dan kegiatan paroki secara real-time.</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
@@ -195,7 +195,7 @@ const KasKeluarPage = () => {
       </div>
 
       {/* Tab Selector */}
-      <div className="flex gap-6 border-b border-slate-200 overflow-x-auto no-scrollbar pb-0 text-sm font-bold text-slate-400">
+      <div className="flex gap-6 border-b border-slate-200 overflow-x-auto no-scrollbar pb-0 text-sm font-medium text-slate-400">
         <button
           onClick={() => setActiveTab('PERMANENT')}
           className={`pb-3 whitespace-nowrap transition-colors duration-200 rounded-none border-b-2 ${activeTab === 'PERMANENT'
@@ -219,29 +219,29 @@ const KasKeluarPage = () => {
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200 shadow-sm">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+          <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Total Keluar (Bulan Ini)' : 'Keluar Dana Khusus (Bulan Ini)'}
           </p>
-          <h4 className="text-lg font-black mt-1 text-rose-600 tracking-tight">{formatIDR(totalKeluarBulanIni)}</h4>
-          <p className="text-[9px] text-emerald-600 mt-2 font-bold">✓ Terkalkulasi dari pengeluaran riil</p>
+          <h4 className="text-lg font-semibold mt-1 text-rose-600 tracking-tight">{formatIDR(totalKeluarBulanIni)}</h4>
+          <p className="text-[9px] text-emerald-600 mt-2 font-medium">✓ Terkalkulasi dari pengeluaran riil</p>
         </Card>
 
         {activeTab === 'PERMANENT' ? (
           <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200 shadow-sm">
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Burn Rate Anggaran</p>
+            <p className="text-[10px] text-slate-400 font-semibold">Burn Rate Anggaran</p>
             <div className="flex items-end gap-1.5 mt-1">
-              <h4 className="text-lg font-black text-slate-800 tracking-tight">{burnRate}%</h4>
-              <p className="text-[9px] text-slate-400 font-bold mb-0.5">terpakai</p>
+              <h4 className="text-lg font-semibold text-slate-800 tracking-tight">{burnRate}%</h4>
+              <p className="text-[9px] text-slate-400 font-medium mb-0.5">terpakai</p>
             </div>
-            <div className="w-full bg-slate-100 h-1 rounded-full mt-3 overflow-hidden">
+            <div className="w-full bg-slate-100 h-1 rounded-none mt-3 overflow-hidden">
               <div className="bg-amber-500 h-full transition-all duration-500" style={{ width: `${burnRate}%` }}></div>
             </div>
           </Card>
         ) : (
           <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200 shadow-sm">
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Rata-rata Pengeluaran</p>
-            <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(avgSpecialExpense)}</h4>
-            <div className="flex items-center gap-1 mt-2 text-amber-600 font-bold text-[10px]">
+            <p className="text-[10px] text-slate-400 font-semibold">Rata-rata Pengeluaran</p>
+            <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(avgSpecialExpense)}</h4>
+            <div className="flex items-center gap-1 mt-2 text-amber-600 font-medium text-[10px]">
               <TrendingUp size={12} />
               <span>Rata-rata Bulan Ini</span>
             </div>
@@ -249,19 +249,19 @@ const KasKeluarPage = () => {
         )}
 
         <Card className="p-4 border-l-4 border-l-blue-500 border-y-slate-200 border-r-slate-200 shadow-sm">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Transaksi (Bulan Ini)</p>
-          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{transBulanIniCount}</h4>
-          <p className="text-[9px] text-blue-600 mt-2 font-bold italic flex items-center gap-1">
+          <p className="text-[10px] text-slate-400 font-semibold">Transaksi (Bulan Ini)</p>
+          <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{transBulanIniCount}</h4>
+          <p className="text-[9px] text-blue-600 mt-2 font-medium flex items-center gap-1">
             <Info size={10} /> Tercatat di sistem bulan berjalan
           </p>
         </Card>
 
         <Card className="p-4 border-l-4 border-l-slate-800 border-y-slate-200 border-r-slate-200 shadow-sm">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+          <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Saldo Kas Saat Ini' : 'Sisa Saldo Dana Khusus'}
           </p>
-          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(totalSaldoKas)}</h4>
-          <p className="text-[9px] text-emerald-600 mt-2 font-bold">✓ Sinkron dengan neraca Pos Dana</p>
+          <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(totalSaldoKas)}</h4>
+          <p className="text-[9px] text-emerald-600 mt-2 font-medium">✓ Sinkron dengan neraca Pos Dana</p>
         </Card>
       </div>
 
@@ -270,7 +270,7 @@ const KasKeluarPage = () => {
         {/* Trend Area Chart */}
         <Card className="lg:col-span-8 p-5 border-slate-200 shadow-sm">
           <div className="mb-4">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <h3 className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
               <ArrowUpRight size={14} className="text-rose-500" /> Tren {activeTab === 'PERMANENT' ? 'Pengeluaran' : 'Pengeluaran Dana Khusus'} Bulanan
             </h3>
           </div>
@@ -295,7 +295,7 @@ const KasKeluarPage = () => {
         {/* Donut & Prosedur */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="p-5 border-slate-200 shadow-sm">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <h3 className="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-1.5">
               <PieIcon size={14} className="text-purple-500" /> {activeTab === 'PERMANENT' ? 'Alokasi Jenis Belanja' : 'Penyebaran Program'}
             </h3>
             <div className="h-[180px]">
@@ -321,11 +321,11 @@ const KasKeluarPage = () => {
 
           {/* Side Info Card */}
           <Card className="p-4 bg-amber-50 border-amber-200 text-amber-950 shadow-sm">
-            <h4 className="font-black text-amber-800 flex items-center gap-1.5 mb-1.5 text-xs uppercase tracking-wide">
+            <h4 className="font-semibold text-amber-800 flex items-center gap-1.5 mb-1.5 text-xs">
               <Info size={14} /> Prosedur Pengeluaran
             </h4>
             <ul className="text-[11px] text-amber-800 font-semibold space-y-2 list-disc pl-4 leading-relaxed">
-              <li>Setiap pengeluaran di atas <strong className="font-black text-amber-950">Rp 500.000</strong> wajib mendapatkan approval Pastor.</li>
+              <li>Setiap pengeluaran di atas <strong className="font-semibold text-amber-950">Rp 500.000</strong> wajib mendapatkan approval Pastor.</li>
               <li>Nota fisik harus diupload ke sistem berupa file gambar/PDF.</li>
               <li>Sistem akan otomatis meregistrasikan SPJ jika file bukti nota diupload.</li>
             </ul>
@@ -336,7 +336,7 @@ const KasKeluarPage = () => {
       {/* Main Table */}
       <div className="space-y-4">
         <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col md:flex-row gap-4 justify-between">
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-none w-full md:w-80">
+          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-none w-full md:w-80">
             <Search size={16} className="text-slate-400" />
             <input
               type="text"
@@ -352,7 +352,7 @@ const KasKeluarPage = () => {
         </div>
 
         {isLoading ? (
-          <div className="p-8 text-center text-slate-500 bg-white border border-slate-200 rounded-none shadow-sm flex items-center justify-center gap-2.5 font-semibold text-xs">
+          <div className="p-8 text-center text-slate-500 bg-white rounded-none shadow-sm flex items-center justify-center gap-2.5 font-semibold text-xs">
             <div className="w-4 h-4 border-2 border-rose-600 border-t-transparent rounded-none animate-spin"></div>
             Loading data transaksi kas keluar...
           </div>
@@ -370,25 +370,25 @@ const KasKeluarPage = () => {
             ]}
             renderDesktopRow={(item) => (
               <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="px-5 py-3.5 text-xs font-black text-rose-600 border-r border-slate-100">{item.transactionNo}</td>
-                <td className="px-5 py-3.5 text-xs text-slate-500 font-semibold border-r border-slate-100">
+                <td className="px-5 py-3.5 text-xs font-semibold text-rose-600 border-r">{item.transactionNo}</td>
+                <td className="px-5 py-3.5 text-xs text-slate-500 font-semibold border-r">
                   {new Date(item.transactionDate).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' })}
                 </td>
-                <td className="px-5 py-3.5 text-xs font-bold text-slate-700 border-r border-slate-100 max-w-[280px] truncate" title={item.description}>
+                <td className="px-5 py-3.5 text-xs font-medium text-slate-700 border-r max-w-[280px] truncate" title={item.description}>
                   {item.description}
                 </td>
-                <td className="px-5 py-3.5 border-r border-slate-100">
+                <td className="px-5 py-3.5 border-r">
                   <div className="flex flex-col gap-0.5 items-start">
-                    <span className="text-[9px] font-black px-1.5 py-0.5 bg-rose-50 text-rose-600 rounded border border-rose-100/50 uppercase tracking-tight">
+                    <span className="text-[9px] font-semibold px-1.5 py-0.5 text-rose-600 rounded-none tracking-tight">
                       {item.fundCategory?.name}
                     </span>
-                    <span className="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 border border-slate-200 uppercase tracking-tight mt-0.5">
+                    <span className="text-[10px] font-semibold text-slate-600 tracking-tight mt-0.5">
                       {item.expenseType?.name}
                     </span>
                   </div>
                 </td>
-                <td className="px-5 py-3.5 text-xs font-black text-right text-rose-600 border-r border-slate-100">{formatIDR(Number(item.amount))}</td>
-                <td className="px-5 py-3.5 border-r border-slate-100">
+                <td className="px-5 py-3.5 text-xs font-semibold text-right text-rose-600 border-r">{formatIDR(Number(item.amount))}</td>
+                <td className="px-5 py-3.5 border-r">
                   {item.status === 'MENUNGGU_SPJ' ? (
                     <div className="flex flex-col gap-1.5 items-start">
                       <Badge variant="warning">Menunggu SPJ</Badge>
@@ -397,7 +397,7 @@ const KasKeluarPage = () => {
                           setSelectedTransactionId(item.id);
                           setIsSpjUploadOpen(true);
                         }}
-                        className="text-[10px] text-blue-600 hover:text-blue-700 font-bold hover:underline"
+                        className="text-[10px] text-blue-600 hover:text-blue-700 font-medium hover:underline"
                       >
                         Upload SPJ
                       </button>
@@ -412,13 +412,13 @@ const KasKeluarPage = () => {
                       href={`${apiAssetUrl}${item.attachment.fileUrl}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1.5 inline-block hover:bg-slate-100 border border-slate-200 rounded text-rose-600 hover:text-rose-700 transition-all"
+                      className="p-1.5 inline-block hover:bg-slate-100 border border-slate-200 rounded-none text-rose-600 hover:text-rose-700 transition-all"
                       title={item.attachment.fileName}
                     >
                       <FileImage size={14} />
                     </a>
                   ) : (
-                    <span className="text-slate-300 font-bold text-[10px]">-</span>
+                    <span className="text-slate-300 font-medium text-[10px]">-</span>
                   )}
                 </td>
               </tr>
@@ -426,7 +426,7 @@ const KasKeluarPage = () => {
             renderMobileCard={(item) => (
               <div className="flex flex-col gap-2.5">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-black text-rose-600">{item.transactionNo}</span>
+                  <span className="text-xs font-semibold text-rose-600">{item.transactionNo}</span>
                   {item.status === 'MENUNGGU_SPJ' ? (
                     <div className="flex flex-col items-end gap-1">
                       <Badge variant="warning">Menunggu SPJ</Badge>
@@ -435,7 +435,7 @@ const KasKeluarPage = () => {
                           setSelectedTransactionId(item.id);
                           setIsSpjUploadOpen(true);
                         }}
-                        className="text-[9px] text-blue-600 hover:text-blue-700 font-bold hover:underline"
+                        className="text-[9px] text-blue-600 hover:text-blue-700 font-medium hover:underline"
                       >
                         Upload SPJ
                       </button>
@@ -445,16 +445,16 @@ const KasKeluarPage = () => {
                   )}
                 </div>
                 <div className="flex justify-between items-baseline">
-                  <span className="text-xs font-bold text-slate-700 max-w-[200px] truncate">{item.description}</span>
-                  <span className="text-sm font-black text-rose-600">{formatIDR(Number(item.amount))}</span>
+                  <span className="text-xs font-medium text-slate-700 max-w-[200px] truncate">{item.description}</span>
+                  <span className="text-sm font-semibold text-rose-600">{formatIDR(Number(item.amount))}</span>
                 </div>
                 <div className="flex justify-between items-center text-[10px] text-slate-400 font-semibold">
                   <span>{new Date(item.transactionDate).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' })}</span>
                   <div className="flex gap-1">
-                    <span className="px-1.5 py-0.5 bg-rose-50 text-rose-600 rounded border border-rose-100/50 uppercase tracking-tight text-[8px] font-black">
+                    <span className="px-1.5 py-0.5 text-rose-600 rounded-none tracking-tight text-[8px] font-semibold">
                       {item.fundCategory?.name}
                     </span>
-                    <span className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-black uppercase tracking-tight text-[8px]">
+                    <span className="px-1.5 py-0.5 bg-slate-100 rounded-none text-slate-600 font-semibold tracking-tight text-[8px]">
                       {item.expenseType?.name}
                     </span>
                   </div>
@@ -464,7 +464,7 @@ const KasKeluarPage = () => {
                     const url = item.attachment?.fileUrl ? `${apiAssetUrl}${item.attachment.fileUrl}` : 'https://via.placeholder.com/600x800?text=Nota+Pembayaran+Fisik';
                     setSelectedBuktiUrl(url);
                   }}
-                  className="mt-2 text-[10px] text-rose-600 hover:text-rose-700 font-black text-left uppercase tracking-wider cursor-pointer"
+                  className="mt-2 text-[10px] text-rose-600 hover:text-rose-700 font-semibold text-left cursor-pointer"
                 >
                   Lihat Bukti
                 </button>
@@ -478,10 +478,10 @@ const KasKeluarPage = () => {
       <Modal isOpen={!!selectedBuktiUrl} onClose={() => setSelectedBuktiUrl(null)} title="Bukti Transaksi Kas Keluar">
         {selectedBuktiUrl && (
           <div className="space-y-4">
-            <div className="border border-slate-200 rounded-none overflow-hidden h-96 bg-slate-50 flex items-center justify-center">
+            <div className="rounded-none overflow-hidden h-96 bg-slate-50 flex items-center justify-center">
               <img src={selectedBuktiUrl} alt="Bukti Pengeluaran" className="max-w-full max-h-full object-contain" />
             </div>
-            <div className="flex justify-end pt-4 border-t border-slate-100">
+            <div className="flex justify-end pt-4 border-t">
               <Button onClick={() => setSelectedBuktiUrl(null)} variant="outline" size="sm" className="rounded-none">
                 Tutup Preview
               </Button>

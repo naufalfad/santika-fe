@@ -70,10 +70,10 @@ const SPJPage = () => {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">SPJ Digital</h2>
+          <h2 className="text-2xl font-medium text-slate-800 tracking-tight">SPJ Digital</h2>
           <p className="text-sm text-gray-500">Arsip surat pertanggungjawaban dan bukti transaksi.</p>
         </div>
-        <Button onClick={() => setIsUploadOpen(true)} className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 shadow-none rounded-none">
+        <Button onClick={() => setIsUploadOpen(true)} className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 shadow-none rounded-none">
           <UploadCloud size={16} /> Upload Dokumen
         </Button>
       </div>
@@ -81,30 +81,30 @@ const SPJPage = () => {
       {/* Stats Mini Cards - Seamless border flat layouts */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 flex items-center gap-3.5 border-b-4 border-b-blue-600 border-x-slate-200 border-t-slate-200 shadow-none rounded-none">
-          <div className="p-2.5 bg-blue-50 text-blue-600 rounded-none border border-blue-100/50"><FolderOpen size={20} /></div>
+          <div className="text-blue-600"><FolderOpen size={20} /></div>
           <div>
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Total Arsip</p>
-            <h4 className="text-lg font-black text-slate-800 tracking-tight mt-0.5">{totalArsip} <span className="text-[11px] font-bold text-slate-400">File</span></h4>
+            <p className="text-[10px] text-slate-400 font-semibold">Total Arsip</p>
+            <h4 className="text-lg font-semibold text-slate-800 tracking-tight mt-0.5">{totalArsip} <span className="text-[11px] font-medium text-slate-400">File</span></h4>
           </div>
         </Card>
         <Card className="p-4 flex items-center gap-3.5 border-b-4 border-b-emerald-600 border-x-slate-200 border-t-slate-200 shadow-none rounded-none">
-          <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-none border border-emerald-100/50"><ShieldCheck size={20} /></div>
+          <div className="text-emerald-600"><ShieldCheck size={20} /></div>
           <div>
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Terverifikasi</p>
-            <h4 className="text-lg font-black text-slate-800 tracking-tight mt-0.5">{totalVerified} <span className="text-[11px] font-bold text-slate-400">File</span></h4>
+            <p className="text-[10px] text-slate-400 font-semibold">Terverifikasi</p>
+            <h4 className="text-lg font-semibold text-slate-800 tracking-tight mt-0.5">{totalVerified} <span className="text-[11px] font-medium text-slate-400">File</span></h4>
           </div>
         </Card>
         <Card className="p-4 flex items-center gap-3.5 border-b-4 border-b-amber-500 border-x-slate-200 border-t-slate-200 shadow-none rounded-none">
-          <div className="p-2.5 bg-amber-50 text-amber-600 rounded-none border border-amber-100/50"><Clock size={20} /></div>
+          <div className="text-amber-600"><Clock size={20} /></div>
           <div>
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Menunggu</p>
-            <h4 className="text-lg font-black text-slate-800 tracking-tight mt-0.5">{totalPending} <span className="text-[11px] font-bold text-slate-400">File</span></h4>
+            <p className="text-[10px] text-slate-400 font-semibold">Menunggu</p>
+            <h4 className="text-lg font-semibold text-slate-800 tracking-tight mt-0.5">{totalPending} <span className="text-[11px] font-medium text-slate-400">File</span></h4>
           </div>
         </Card>
       </div>
 
       {/* Toolbar */}
-      <Card className="p-3.5 bg-slate-50 border border-slate-200 flex flex-col md:flex-row gap-4 items-center rounded-none shadow-none">
+      <Card className="p-3.5 bg-slate-50 flex flex-col md:flex-row gap-4 items-center rounded-none shadow-none">
         <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-200 rounded-none w-full md:w-96">
           <Search size={16} className="text-slate-400" />
           <input
@@ -119,7 +119,7 @@ const SPJPage = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold outline-none text-slate-600 cursor-pointer"
+            className="bg-white border border-slate-200 rounded-none px-3 py-1.5 text-xs font-medium outline-none text-slate-600 cursor-pointer"
           >
             <option value="ALL">Semua Kategori Status</option>
             <option value="PENDING">Menunggu Verifikasi</option>
@@ -134,12 +134,12 @@ const SPJPage = () => {
 
       {/* Loading & Grid View */}
       {isLoading ? (
-        <div className="p-8 text-center text-slate-500 bg-white border border-slate-200 rounded-xl shadow-sm flex items-center justify-center gap-2.5 font-semibold text-xs">
-          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="p-8 text-center text-slate-500 bg-white rounded-none shadow-sm flex items-center justify-center gap-2.5 font-semibold text-xs">
+          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-none animate-spin"></div>
           Loading dokumen SPJ...
         </div>
       ) : filteredDocs.length === 0 ? (
-        <div className="p-12 text-center text-slate-400 bg-white border border-slate-200 rounded-xl shadow-sm font-semibold text-xs">
+        <div className="p-12 text-center text-slate-400 bg-white border border-slate-200 rounded-none shadow-sm font-semibold text-xs">
           Tidak ada dokumen SPJ ditemukan
         </div>
       ) : (
@@ -177,17 +177,17 @@ const SPJPage = () => {
               onClose={() => setSelectedDoc(null)}
             />
             {/* Flat details section - no boxes inside a box */}
-            <div className="pt-4 border-t border-slate-100">
-              <h5 className="font-black text-xs text-slate-400 uppercase tracking-wider mb-3">Detail Dokumen</h5>
+            <div className="pt-4 border-t">
+              <h5 className="font-semibold text-xs text-slate-400 mb-3">Detail Dokumen</h5>
               <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs font-semibold">
                 <span className="text-slate-400">ID Dokumen</span>
-                <span className="font-bold text-slate-700 text-right">{selectedDoc.id}</span>
+                <span className="font-medium text-slate-700 text-right">{selectedDoc.id}</span>
                 <span className="text-slate-400">Kategori</span>
-                <span className="font-bold text-slate-700 text-right">{previewInfo.category}</span>
+                <span className="font-medium text-slate-700 text-right">{previewInfo.category}</span>
                 <span className="text-slate-400">Nilai Transaksi</span>
-                <span className="font-black text-emerald-600 text-right">{formatIDR(selectedDoc.amount)}</span>
+                <span className="font-semibold text-emerald-600 text-right">{formatIDR(selectedDoc.amount)}</span>
                 <span className="text-slate-400">Status</span>
-                <span className={`font-black text-right uppercase tracking-tight text-[11px] ${selectedDoc.status === 'VERIFIED' ? 'text-emerald-600' : selectedDoc.status === 'PENDING' ? 'text-amber-500' : 'text-rose-500'}`}>
+                <span className={`font-semibold text-right  tracking-tight text-[11px] ${selectedDoc.status === 'VERIFIED' ? 'text-emerald-600' : selectedDoc.status === 'PENDING' ? 'text-amber-500' : 'text-rose-500'}`}>
                   {selectedDoc.status}
                 </span>
               </div>
@@ -195,7 +195,7 @@ const SPJPage = () => {
 
             {/* Action buttons (only show verify if status is PENDING and user is BENDAHARA/SUPER_ADMIN) */}
             {selectedDoc.status === 'PENDING' && (user?.role === 'BENDAHARA' || user?.role === 'SUPER_ADMIN') && (
-              <div className="flex gap-2 pt-4 border-t border-slate-100">
+              <div className="flex gap-2 pt-4 border-t">
                 <Button
                   onClick={() => {
                     verifyMutation.mutate({
@@ -208,7 +208,7 @@ const SPJPage = () => {
                     });
                   }}
                   disabled={verifyMutation.isPending}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md flex justify-center items-center gap-1.5"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-none shadow-md flex justify-center items-center gap-1.5"
                 >
                   {verifyMutation.isPending ? 'Memproses...' : 'Verifikasi Sekarang'}
                 </Button>
@@ -225,7 +225,7 @@ const SPJPage = () => {
                   }}
                   disabled={verifyMutation.isPending}
                   variant="outline"
-                  className="flex-1 border-rose-200 text-rose-600 hover:bg-rose-50 font-bold py-3 rounded-xl shadow-md flex justify-center items-center gap-1.5"
+                  className="flex-1 border-rose-200 text-rose-600 hover:bg-rose-50 font-medium py-3 rounded-none shadow-md flex justify-center items-center gap-1.5"
                 >
                   {verifyMutation.isPending ? 'Memproses...' : 'Tolak SPJ'}
                 </Button>

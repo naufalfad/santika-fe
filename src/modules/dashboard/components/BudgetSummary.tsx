@@ -54,13 +54,13 @@ export const BudgetSummary = () => {
 
     return (
         <div className="overflow-x-auto">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-4">
+            <h3 className="text-xs font-semibold text-slate-400 mb-4">
                 Ringkasan Anggaran Tahun 2025
             </h3>
             <table className="w-full text-left">
                 <thead>
-                    <tr className="text-[10px] font-black text-slate-400 uppercase border-b border-slate-100">
-                        <th className="pb-2 font-bold">Program / Kegiatan</th>
+                    <tr className="text-[10px] font-semibold text-slate-400 border-b border-slate-100">
+                        <th className="pb-2 font-medium">Program / Kegiatan</th>
                         <th className="pb-2 text-right">Anggaran</th>
                         <th className="pb-2 text-right">Realisasi</th>
                         <th className="pb-2 text-right">Sisa Anggaran</th>
@@ -70,33 +70,33 @@ export const BudgetSummary = () => {
                 <tbody className="divide-y divide-slate-100/60">
                     {budgetSummary.map((item) => (
                         <tr key={item.id} className="text-[11px] hover:bg-slate-50/50 transition-colors">
-                            <td className="py-2.5 font-bold text-slate-700">{item.id}. {item.nama}</td>
+                            <td className="py-2.5 font-medium text-slate-700">{item.id}. {item.nama}</td>
                             <td className="py-2.5 text-right text-slate-500 font-medium">{formatIDR(item.anggaran)}</td>
                             <td className="py-2.5 text-right text-slate-500 font-medium">{formatIDR(item.realisasi)}</td>
-                            <td className="py-2.5 text-right font-bold text-slate-700">{formatIDR(item.sisa)}</td>
+                            <td className="py-2.5 text-right font-medium text-slate-700">{formatIDR(item.sisa)}</td>
                             <td className="py-2.5 px-3">
                                 <div className="flex items-center gap-1.5">
                                     <div className="flex-1 bg-slate-100 h-1 rounded-none overflow-hidden">
                                         <div className="bg-emerald-500 h-full rounded-none" style={{ width: `${Math.min(item.persen, 100)}%` }}></div>
                                     </div>
-                                    <span className="font-bold text-slate-500 w-5 text-right text-[10px]">{item.persen}%</span>
+                                    <span className="font-medium text-slate-500 w-5 text-right text-[10px]">{item.persen}%</span>
                                 </div>
                             </td>
                         </tr>
                     ))}
                 </tbody>
                 <tfoot>
-                    <tr className="text-[11px] font-black bg-blue-50/40 text-blue-800">
-                        <td className="py-2.5 pl-2 font-black uppercase tracking-wider text-[10px]">Total</td>
-                        <td className="py-2.5 text-right font-black">{formatIDR(totalAnggaran)}</td>
-                        <td className="py-2.5 text-right font-black">{formatIDR(totalRealisasi)}</td>
-                        <td className="py-2.5 text-right font-black">{formatIDR(totalSisa)}</td>
+                    <tr className="text-[11px] font-semibold bg-blue-50/40 text-blue-800">
+                        <td className="py-2.5 pl-2 font-semibold text-[10px]">Total</td>
+                        <td className="py-2.5 text-right font-semibold">{formatIDR(totalAnggaran)}</td>
+                        <td className="py-2.5 text-right font-semibold">{formatIDR(totalRealisasi)}</td>
+                        <td className="py-2.5 text-right font-semibold">{formatIDR(totalSisa)}</td>
                         <td className="py-2.5 px-3">
                             <div className="flex items-center gap-1.5">
                                 <div className="flex-1 bg-blue-100 h-1 rounded-none overflow-hidden">
                                     <div className="bg-blue-600 h-full rounded-none" style={{ width: `${Math.min(totalPersen, 100)}%` }}></div>
                                 </div>
-                                <span className="text-blue-600 font-black w-5 text-right text-[10px]">{totalPersen}%</span>
+                                <span className="text-blue-600 font-semibold w-5 text-right text-[10px]">{totalPersen}%</span>
                             </div>
                         </td>
                     </tr>

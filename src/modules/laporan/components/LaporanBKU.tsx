@@ -23,7 +23,7 @@ export const LaporanBKU: React.FC<LaporanBKUProps> = ({
         <div className="overflow-x-auto border border-slate-200 rounded-none shadow-none">
             <table className="w-full text-left border-collapse">
                 <thead>
-                    <tr className="bg-slate-100 text-slate-800 text-[11px] font-black uppercase border-b border-slate-200">
+                    <tr className="text-slate-800 text-[11px] font-semibold border-b border-slate-200">
                         <th className="p-3 text-center w-12 border-r border-slate-200">No</th>
                         <th className="p-3 w-32 border-r border-slate-200">Tanggal</th>
                         <th className="p-3 border-r border-slate-200">Keterangan</th>
@@ -37,25 +37,25 @@ export const LaporanBKU: React.FC<LaporanBKUProps> = ({
                     {records.length > 0 ? (
                         records.map((item, idx) => (
                             <tr key={item.id} className="text-sm hover:bg-slate-50/50 transition-colors">
-                                <td className="p-3 text-center text-gray-500 font-medium border-r border-slate-100">
+                                <td className="p-3 text-center text-gray-500 font-medium border-r">
                                     {idx + 1}
                                 </td>
-                                <td className="p-3 text-slate-600 font-medium whitespace-nowrap border-r border-slate-100">
+                                <td className="p-3 text-slate-600 font-medium whitespace-nowrap border-r">
                                     {formatDate(item.tanggal)}
                                 </td>
-                                <td className="p-3 font-semibold text-slate-700 leading-relaxed border-r border-slate-100">
+                                <td className="p-3 font-semibold text-slate-700 leading-relaxed border-r">
                                     {item.keterangan}
                                 </td>
-                                <td className="p-3 text-center font-mono text-xs text-slate-800 font-semibold border-r border-slate-100">
+                                <td className="p-3 text-center font-mono text-xs text-slate-800 font-semibold border-r">
                                     {item.ref}
                                 </td>
-                                <td className="p-3 text-right text-emerald-600 font-black border-r border-slate-100">
+                                <td className="p-3 text-right text-emerald-600 font-semibold border-r">
                                     {item.masuk > 0 ? formatIDR(item.masuk) : '-'}
                                 </td>
-                                <td className="p-3 text-right text-rose-600 font-black border-r border-slate-100">
+                                <td className="p-3 text-right text-rose-600 font-semibold border-r">
                                     {item.keluar > 0 ? formatIDR(item.keluar) : '-'}
                                 </td>
-                                <td className="p-3 text-right font-black bg-slate-50/30 text-slate-800">
+                                <td className="p-3 text-right font-semibold bg-slate-50/30 text-slate-800">
                                     {formatIDR(item.saldo)}
                                 </td>
                             </tr>
@@ -69,17 +69,17 @@ export const LaporanBKU: React.FC<LaporanBKUProps> = ({
                     )}
                 </tbody>
                 <tfoot>
-                    <tr className="bg-slate-50 text-slate-800 font-bold text-sm border-t border-slate-200">
-                        <td colSpan={4} className="p-4 text-right uppercase tracking-wider text-xs border-r border-slate-200">
+                    <tr className="text-slate-800 font-medium text-sm border-t border-slate-200">
+                        <td colSpan={4} className="p-4 text-right text-xs border-r border-slate-200">
                             Total Mutasi Periode Ini
                         </td>
-                        <td className="p-4 text-right text-emerald-600 font-black border-r border-slate-200">
+                        <td className="p-4 text-right text-emerald-600 font-semibold border-r border-slate-200">
                             {formatIDR(totalMasuk)}
                         </td>
-                        <td className="p-4 text-right text-rose-600 font-black border-r border-slate-200">
+                        <td className="p-4 text-right text-rose-600 font-semibold border-r border-slate-200">
                             {formatIDR(totalKeluar)}
                         </td>
-                        <td className="p-4 text-right bg-slate-100/80 text-slate-900 font-black underline decoration-double underline-offset-4">
+                        <td className="p-4 text-right bg-slate-100/80 text-slate-900 font-semibold underline decoration-double underline-offset-4">
                             {formatIDR(endingSaldo)}
                         </td>
                     </tr>

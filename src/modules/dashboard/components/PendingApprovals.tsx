@@ -87,10 +87,10 @@ export const PendingApprovals = () => {
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">
+                <h3 className="text-xs font-semibold text-slate-400">
                     Menunggu Persetujuan
                 </h3>
-                <span className="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 text-[9px] font-black rounded-full">
+                <span className="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 text-[9px] font-semibold rounded-none">
                     {isLoading ? '...' : `${pendingItems.length} Antrean`}
                 </span>
             </div>
@@ -111,22 +111,22 @@ export const PendingApprovals = () => {
                             className="flex items-center gap-3 py-2.5 transition-colors group cursor-pointer hover:bg-slate-50/40"
                             onClick={() => navigate('/approval')}
                         >
-                            <div className={cn("p-1.5 rounded-lg shrink-0", getColorClass(item.komisi))}>
+                            <div className={cn("p-1.5 rounded-none shrink-0", getColorClass(item.komisi))}>
                                 {getIcon(item.komisi)}
                             </div>
 
                             <div className="flex-1 min-w-0">
-                                <h4 className="text-xs font-bold text-slate-800 truncate group-hover:text-blue-600 transition-colors">
+                                <h4 className="text-xs font-medium text-slate-800 truncate group-hover:text-blue-600 transition-colors">
                                     {item.title}
                                 </h4>
                                 <p className="text-[10px] text-slate-400 font-semibold">{item.sub}</p>
                             </div>
 
                             <div className="text-right shrink-0">
-                                <p className="text-xs font-black text-slate-800 tracking-tight">
+                                <p className="text-xs font-semibold text-slate-800 tracking-tight">
                                     {item.amountStr}
                                 </p>
-                                <p className="text-[9px] text-slate-400 font-bold tracking-tight">{item.dateStr}</p>
+                                <p className="text-[9px] text-slate-400 font-medium tracking-tight">{item.dateStr}</p>
                             </div>
                         </div>
                     ))
@@ -135,7 +135,7 @@ export const PendingApprovals = () => {
 
             <button
                 onClick={() => navigate('/approval')}
-                className="w-full pt-3.5 pb-1 text-[10px] font-black text-blue-600 flex items-center justify-between border-t border-slate-100 hover:text-blue-700 transition-colors"
+                className="w-full pt-3.5 pb-1 text-[10px] font-semibold text-blue-600 flex items-center justify-between border-t border-slate-100 hover:text-blue-700 transition-colors"
             >
                 LIHAT ANTRIAN PERSETUJUAN <ChevronRight size={12} />
             </button>

@@ -54,7 +54,7 @@ const AuditTrailPage = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+          <h2 className="text-2xl font-medium text-slate-800 tracking-tight flex items-center gap-2">
             <History className="text-slate-500" size={24} /> Audit Trail
           </h2>
           <p className="text-sm text-gray-500">Penelusuran historis tindakan pengguna paroki demi transparansi.</p>
@@ -62,7 +62,7 @@ const AuditTrailPage = () => {
       </div>
 
       {/* Filter Toolbar - Clean flat container with compact density */}
-      <Card className="p-4 bg-slate-50 border border-slate-200/60 flex flex-col md:flex-row gap-4 items-center rounded-none shadow-sm">
+      <Card className="p-4 bg-slate-50 flex flex-col md:flex-row gap-4 items-center rounded-none shadow-sm">
         <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-200 rounded-none w-full md:w-80 transition-colors focus-within:border-slate-700">
           <Search size={16} className="text-slate-400" />
           <input
@@ -78,7 +78,7 @@ const AuditTrailPage = () => {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="bg-transparent text-xs font-bold outline-none text-slate-600 cursor-pointer"
+            className="bg-transparent text-xs font-medium outline-none text-slate-600 cursor-pointer"
           >
             <option value="ALL">Semua Aktivitas</option>
             <option value="IN">Penerimaan</option>
@@ -89,7 +89,7 @@ const AuditTrailPage = () => {
             <option value="REVISE">Revisi</option>
           </select>
         </div>
-        <div className="ml-auto flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+        <div className="ml-auto flex items-center gap-1.5 text-[10px] font-semibold text-slate-400">
           <Shield size={14} className="text-slate-400" /> Kepatuhan Internal
         </div>
       </Card>
@@ -105,23 +105,23 @@ const AuditTrailPage = () => {
         ]}
         renderDesktopRow={(log) => (
           <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
-            <td className="px-5 py-2.5 text-xs text-slate-500 font-bold border-r border-slate-100 whitespace-nowrap">
+            <td className="px-5 py-2.5 text-xs text-slate-500 font-medium border-r whitespace-nowrap">
               <span className="flex items-center gap-1.5">
                 <Calendar size={12} className="text-slate-400" /> {log.time}
               </span>
             </td>
-            <td className="px-5 py-2.5 border-r border-slate-100">
+            <td className="px-5 py-2.5 border-r">
               <Badge
                 variant={getBadgeVariant(log.type)}
-                className={log.type === 'out' || log.type === 'reject' ? 'bg-rose-100 text-rose-700 border border-rose-200/50' : ''}
+                className={log.type === 'out' || log.type === 'reject' ? 'text-rose-600' : ''}
               >
                 {getLogTypeLabel(log.type)}
               </Badge>
             </td>
-            <td className="px-5 py-2.5 text-xs font-semibold text-slate-800 leading-relaxed border-r border-slate-100">
+            <td className="px-5 py-2.5 text-xs font-semibold text-slate-800 leading-relaxed border-r">
               {log.action}
             </td>
-            <td className="px-5 py-2.5 text-xs text-right font-black">
+            <td className="px-5 py-2.5 text-xs text-right font-semibold">
               {log.amount > 0 ? (
                 <span className={log.type === 'in' ? 'text-emerald-600' : log.type === 'out' ? 'text-rose-600' : 'text-slate-700'}>
                   {log.type === 'in' ? '+' : log.type === 'out' ? '-' : ''} {formatIDR(log.amount)}
@@ -135,19 +135,19 @@ const AuditTrailPage = () => {
         renderMobileCard={(log) => (
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center">
-              <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+              <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
                 <Calendar size={12} className="text-slate-400" /> {log.time}
               </span>
               <Badge
                 variant={getBadgeVariant(log.type)}
-                className={log.type === 'out' || log.type === 'reject' ? 'bg-rose-100 text-rose-700 border border-rose-200/50' : ''}
+                className={log.type === 'out' || log.type === 'reject' ? 'text-rose-600' : ''}
               >
                 {getLogTypeLabel(log.type)}
               </Badge>
             </div>
             <div className="text-xs font-semibold text-slate-800 leading-relaxed">{log.action}</div>
             {log.amount > 0 && (
-              <div className="text-right pt-1 text-xs font-black">
+              <div className="text-right pt-1 text-xs font-semibold">
                 <span className={log.type === 'in' ? 'text-emerald-600' : log.type === 'out' ? 'text-rose-600' : 'text-slate-700'}>
                   {log.type === 'in' ? '+' : '-'} {formatIDR(log.amount)}
                 </span>

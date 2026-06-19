@@ -21,7 +21,7 @@ export const Card = ({ children, className, ...props }: CardProps) => {
   return (
     <div
       className={cn(
-        // DESIGN SYSTEM GUARD: rounded-none — zero rounded corners, no exception
+        // DESIGN SYSTEM GUARD: rounded-none — zero rounded-none corners, no exception
         'bg-white rounded-none border border-slate-200 shadow-sm',
         // Micro-interaction: hover tactile response
         'hover:border-slate-300 hover:bg-slate-50/40 hover:shadow-none',

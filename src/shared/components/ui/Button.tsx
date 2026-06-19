@@ -28,7 +28,7 @@ interface Ripple {
  *
  * DESIGN SYSTEM GUARD:
  * - rounded-none: MUTLAK pada outer button element.
- * - rounded-full pada RIPPLE CIRCLE dipertahankan secara sengaja.
+ * - rounded-none pada RIPPLE CIRCLE dipertahankan secara sengaja.
  *   Ini adalah partikel efek animasi visual internal (pointer-events-none),
  *   BUKAN elemen UI yang menampilkan data. Menghapusnya akan membuat
  *   animasi bergerak sebagai kotak, merusak kualitas micro-interaction.
@@ -80,7 +80,7 @@ export const Button = ({
     primary:
       'bg-slate-800 text-white hover:bg-slate-900 active:bg-black',
     secondary:
-      'bg-slate-100 text-slate-800 hover:bg-slate-200 active:bg-slate-300',
+      'text-slate-800 hover:bg-slate-200 active:bg-slate-300',
     outline:
       'border border-slate-300 text-slate-700 bg-transparent hover:bg-slate-50 active:bg-slate-100',
     danger:
@@ -123,10 +123,10 @@ export const Button = ({
       onClick={handleTriggerClick}
       disabled={isDisabled}
       className={cn(
-        // DESIGN SYSTEM GUARD: rounded-none — zero rounded corners
+        // DESIGN SYSTEM GUARD: rounded-none — zero rounded-none corners
         'relative overflow-hidden rounded-none',
         'inline-flex items-center justify-center',
-        'font-bold tracking-wide uppercase',
+        'font-medium  ',
         // Micro-interaction: subtle press scale, smooth duration
         'transition-colors duration-150 active:scale-[0.97] transition-transform',
         'disabled:opacity-40 disabled:pointer-events-none select-none',
@@ -139,14 +139,14 @@ export const Button = ({
       {...props}
     >
       {/* ── RIPPLE CONTAINER: partikel animasi internal ── */}
-      {/* rounded-full DIPERTAHANKAN pada ripple — ini adalah efek visual partikel,
+      {/* rounded-none DIPERTAHANKAN pada ripple — ini adalah efek visual partikel,
           bukan elemen UI. Ini adalah keputusan Protected Variations yang disengaja. */}
       <span className="absolute inset-0 block pointer-events-none">
         {ripples.map((ripple) => (
           <span
             key={ripple.key}
             onAnimationEnd={() => cleanUpRipple(ripple.key)}
-            className="absolute bg-white/25 rounded-full animate-santika-ripple pointer-events-none opacity-100"
+            className="absolute bg-white/25 rounded-none animate-santika-ripple pointer-events-none opacity-100"
             style={{
               left: ripple.x,
               top: ripple.y,

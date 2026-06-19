@@ -69,7 +69,7 @@ export const AdaptiveList = <T,>({
         <div className="hidden md:block">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
+              <tr className="bg-slate-50 border-b">
                 {desktopHeaders.map((_, idx) => (
                   <th key={idx} className="px-5 py-3">
                     <div className="h-2.5 bg-slate-100 animate-pulse w-20" />
@@ -81,7 +81,7 @@ export const AdaptiveList = <T,>({
               {Array.from({ length: skeletonRows }).map((_, i) => (
                 <tr key={i} className="animate-pulse">
                   {desktopHeaders.map((_, j) => (
-                    <td key={j} className="px-5 py-3.5 border-r border-slate-100 last:border-r-0">
+                    <td key={j} className="px-5 py-3.5 border-r last:border-r-0">
                       <div className="h-3 bg-slate-200/60 w-full max-w-[120px] rounded-none" />
                     </td>
                   ))}
@@ -115,12 +115,12 @@ export const AdaptiveList = <T,>({
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 text-slate-500 text-[10px] uppercase font-black tracking-wider border-b border-slate-100">
+                <tr className="text-slate-500 text-[10px] font-semibold border-b">
                   {desktopHeaders.map((header, idx) => (
                     <th
                       key={idx}
                       className={cn(
-                        'px-5 py-3 border-r border-slate-100 last:border-r-0 whitespace-nowrap',
+                        'px-5 py-3 border-r  last:border-r-0 whitespace-nowrap',
                         // Alignment otomatis untuk kolom numerik
                         typeof header === 'string' &&
                           (header.toLowerCase().includes('jumlah') ||
@@ -147,7 +147,7 @@ export const AdaptiveList = <T,>({
           <div className="mb-3 bg-slate-100 border border-slate-200/50 p-3 rounded-none text-slate-400">
             <Inbox size={24} />
           </div>
-          <p className="text-xs text-slate-500 font-bold">{emptyStateMessage}</p>
+          <p className="text-xs text-slate-500 font-medium">{emptyStateMessage}</p>
         </div>
       )}
     </div>

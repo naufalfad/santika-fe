@@ -11,15 +11,15 @@ interface FilePreviewProps {
 export const FilePreview = ({ fileUrl, fileName, fileType, onClose }: FilePreviewProps) => {
   return (
     <div className="space-y-4">
-      <div className="aspect-[3/4] bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-200 overflow-hidden relative">
+      <div className="aspect-[3/4] bg-slate-100 rounded-none flex items-center justify-center border-2 border-dashed border-slate-200 overflow-hidden relative">
         {fileType === 'image' && fileUrl ? (
           <img src={fileUrl} alt={fileName} className="w-full h-full object-contain" />
         ) : (
           <div className="text-center p-8">
-            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 text-blue-600 rounded-none flex items-center justify-center mx-auto mb-4">
               <Eye size={32} />
             </div>
-            <p className="text-sm text-slate-700 font-bold mb-1">{fileName}</p>
+            <p className="text-sm text-slate-700 font-medium mb-1">{fileName}</p>
             <p className="text-xs text-slate-400 max-w-xs mx-auto">
               Dokumen PDF tidak dapat ditampilkan langsung di browser mockup. Silakan unduh dokumen untuk melihat isi lengkapnya.
             </p>

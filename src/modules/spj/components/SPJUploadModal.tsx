@@ -113,7 +113,7 @@ export const SPJUploadModal = ({ onSuccess, onCancel, defaultCashTransactionId }
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {uploadMutation.isError && (
-        <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-600 font-semibold flex items-center gap-2">
+        <div className="p-3 bg-rose-50 rounded-none text-xs text-rose-600 font-semibold flex items-center gap-2">
           <AlertCircle size={16} className="shrink-0" />
           <span>{(uploadMutation.error as any)?.response?.data?.message || 'Gagal mengunggah dokumen SPJ'}</span>
         </div>
@@ -160,7 +160,7 @@ export const SPJUploadModal = ({ onSuccess, onCancel, defaultCashTransactionId }
       />
 
       <div>
-        <label className="block text-[11px] font-black text-slate-500 uppercase mb-2">
+        <label className="block text-[11px] font-semibold text-slate-500 mb-2">
           UNGGAH DOKUMEN FISIK
         </label>
 
@@ -178,13 +178,13 @@ export const SPJUploadModal = ({ onSuccess, onCancel, defaultCashTransactionId }
             </p>
           </div>
         ) : (
-          <div className="p-4 border border-slate-200 rounded-none bg-slate-50 flex items-center justify-between">
+          <div className="p-4 rounded-none bg-slate-50 flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-none">
+              <div className="text-blue-600">
                 {selectedFileType === 'pdf' ? <FileText size={20} /> : <Image size={20} />}
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-700 truncate">{file.name}</p>
+                <p className="text-xs font-medium text-slate-700 truncate">{file.name}</p>
                 <p className="text-[10px] text-slate-400 font-medium mt-0.5">
                   {(file.size / 1024 / 1024).toFixed(2)} MB
                 </p>
@@ -193,7 +193,7 @@ export const SPJUploadModal = ({ onSuccess, onCancel, defaultCashTransactionId }
             <button
               type="button"
               onClick={() => { setFile(null); setPreview(null); }}
-              className="p-1 bg-rose-50 text-rose-500 rounded-none hover:bg-rose-100 transition-colors cursor-pointer"
+              className="text-rose-500 hover:bg-rose-100 transition-colors cursor-pointer"
             >
               <X size={16} />
             </button>
@@ -206,17 +206,17 @@ export const SPJUploadModal = ({ onSuccess, onCancel, defaultCashTransactionId }
           </div>
         )}
 
-        {fileError && <p className="text-[10px] text-rose-500 font-bold mt-1.5">{fileError}</p>}
+        {fileError && <p className="text-[10px] text-rose-500 font-medium mt-1.5">{fileError}</p>}
       </div>
 
-      <div className="pt-4 flex gap-3 border-t border-slate-100">
+      <div className="pt-4 flex gap-3 border-t">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1 py-3 rounded-none">
           Batal
         </Button>
         <Button
           type="submit"
           disabled={uploadMutation.isPending}
-          className="flex-1 py-3 font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 flex justify-center items-center gap-2"
+          className="flex-1 py-3 font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 flex justify-center items-center gap-2"
         >
           {uploadMutation.isPending ? 'Mengunggah...' : <><CheckCircle2 size={18} /> Simpan & Upload</>}
         </Button>

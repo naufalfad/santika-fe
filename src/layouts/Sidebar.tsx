@@ -119,10 +119,10 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           {/* border-b satu sisi: no box-inside-box rule */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
             <div>
-              <h1 className="text-xl font-black tracking-widest text-white uppercase leading-tight">
+              <h1 className="text-xl font-semibold text-white leading-tight">
                 SANTIKA
               </h1>
-              <p className="text-[9px] font-medium text-slate-500 tracking-widest uppercase mt-0.5">
+              <p className="text-[9px] font-medium text-slate-500 mt-0.5">
                 Sistem Akuntansi Gereja
               </p>
             </div>
@@ -151,7 +151,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 end={item.path === '/'}
                 className={({ isActive }) =>
                   cn(
-                    // DESIGN SYSTEM GUARD: rounded-none — zero rounded corners
+                    // DESIGN SYSTEM GUARD: rounded-none — zero rounded-none corners
                     'flex items-center gap-3 px-4 py-2.5 rounded-none',
                     'transition-colors duration-150 group relative',
                     isActive
@@ -177,7 +177,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                     />
                     <span
                       className={cn(
-                        'text-sm tracking-wide truncate',
+                        'text-sm  truncate',
                         isActive ? 'font-semibold text-white' : 'font-medium'
                       )}
                     >
@@ -197,13 +197,13 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               alt="Paroki St. Stefanus Sempan"
               className="w-28 mx-auto mb-3 opacity-75"
             />
-            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest text-center">
+            <p className="text-[9px] font-medium text-slate-500 text-center">
               Paroki
             </p>
-            <p className="text-[11px] font-bold text-white text-center tracking-wide mt-0.5">
+            <p className="text-[11px] font-medium text-white text-center mt-0.5">
               ST. STEFANUS – SEMPAN
             </p>
-            <p className="text-[9px] text-slate-500 italic text-center mt-2 leading-relaxed">
+            <p className="text-[9px] text-slate-500 text-center mt-2 leading-relaxed">
               "Melayani dengan Kasih,
               <br />
               Mengelola dengan Integritas"

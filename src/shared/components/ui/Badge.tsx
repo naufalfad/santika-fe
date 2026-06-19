@@ -24,7 +24,7 @@ interface BadgeProps {
  * DESIGN SYSTEM GUARD:
  * - rounded-none: MUTLAK. Badge bukan pill, badge adalah tag status yang tegas.
  * - Flat solid colors sesuai palet DS: Slate, Emerald, Amber, Rose.
- * - Tipografi minimal: text-[10px] font-bold uppercase tracking-widest.
+ * - Tipografi minimal: text-[10px] font-medium  .
  *   Hanya digunakan di contextual indicator yang butuh penegasan kognitif.
  */
 export const Badge = ({
@@ -33,21 +33,19 @@ export const Badge = ({
   className = '',
 }: BadgeProps) => {
   const variantMap: Record<BadgeVariant, string> = {
-    default:  'bg-slate-100 text-slate-600',
-    success:  'bg-emerald-100 text-emerald-700',
-    warning:  'bg-amber-100 text-amber-700',
-    danger:   'bg-rose-100 text-rose-700',
-    info:     'bg-blue-100 text-blue-700',
-    neutral:  'bg-slate-200 text-slate-500',
+    default:  'text-slate-600',
+    success:  'text-emerald-600',
+    warning:  'text-amber-600',
+    danger:   'text-rose-600',
+    info:     'text-blue-600',
+    neutral:  'text-slate-500',
   };
 
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2 py-0.5',
-        // DESIGN SYSTEM GUARD: rounded-none — badge adalah tag tegas, bukan pill
-        'rounded-none',
-        'text-[10px] font-bold uppercase tracking-widest',
+        'inline-flex items-center',
+        'text-xs font-semibold',
         'whitespace-nowrap',
         variantMap[variant],
         className

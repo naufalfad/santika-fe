@@ -39,7 +39,7 @@ interface HeaderProps {
  *   menyertakannya dalam output CSS. Tidak ada string interpolation dinamis.
  *
  * DESIGN SYSTEM GUARD (MUTLAK):
- *   - rounded-none pada SEMUA elemen.
+ *   - rounded-none-none pada SEMUA elemen.
  *   - Flat solid colors, zero glassmorphism, zero shadow berwarna.
  */
 export const Header = ({ isOpen, onToggle }: HeaderProps) => {
@@ -75,11 +75,11 @@ export const Header = ({ isOpen, onToggle }: HeaderProps) => {
 
         {/* TOMBOL HAMBURGER TOGGLE
             Mendelegasikan aksi ke onToggle dari MainLayout Controller.
-            DESIGN SYSTEM GUARD: rounded-none */}
+            DESIGN SYSTEM GUARD: rounded-none-none */}
         <button
           id="btn-hamburger-toggle"
           onClick={onToggle}
-          className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-none text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors duration-150"
+          className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-none-none text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors duration-150"
           aria-label={isOpen ? 'Tutup navigasi sidebar' : 'Buka navigasi sidebar'}
           aria-expanded={isOpen}
           aria-controls="sidebar-nav"
@@ -88,7 +88,7 @@ export const Header = ({ isOpen, onToggle }: HeaderProps) => {
         </button>
 
         {/* BRAND — visible sm ke atas */}
-        <span className="text-sm font-black tracking-widest text-slate-800 uppercase hidden sm:block flex-shrink-0">
+        <span className="text-sm font-semibold text-slate-800 hidden sm:block flex-shrink-0">
           SANTIKA
         </span>
 
@@ -96,8 +96,8 @@ export const Header = ({ isOpen, onToggle }: HeaderProps) => {
         <span className="hidden sm:block w-px h-5 bg-slate-200 flex-shrink-0" />
 
         {/* SEARCH BAR — visible md ke atas
-            DESIGN SYSTEM GUARD: rounded-none pada container */}
-        <div className="hidden md:flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-none px-3 py-1.5 w-64 lg:w-80">
+            DESIGN SYSTEM GUARD: rounded-none-none pada container */}
+        <div className="hidden md:flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-none-none px-3 py-1.5 w-64 lg:w-80">
           <Search size={14} className="text-slate-400 shrink-0" />
           <input
             id="input-global-search"
@@ -116,22 +116,22 @@ export const Header = ({ isOpen, onToggle }: HeaderProps) => {
 
 
         {/* TOMBOL NOTIFIKASI
-            DESIGN SYSTEM GUARD: rounded-none pada tombol dan badge status */}
+            DESIGN SYSTEM GUARD: rounded-none-none pada tombol dan badge status */}
         <button
           id="btn-notification"
-          className="relative flex items-center justify-center w-9 h-9 rounded-none text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors duration-150"
+          className="relative flex items-center justify-center w-9 h-9 rounded-none-none text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors duration-150"
           aria-label="Notifikasi (3 belum dibaca)"
         >
           <Bell size={18} />
-          {/* Badge: rounded-none — tag status yang tegas, bukan pill */}
-          <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-none bg-rose-500 text-white text-[8px] font-bold flex items-center justify-center leading-none">
+          {/* Badge: rounded-none-none — tag status yang tegas, bukan pill */}
+          <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-none-none bg-rose-500 text-white text-[8px] font-medium flex items-center justify-center leading-none">
             3
           </span>
         </button>
 
         {/* PROFIL PENGGUNA
             border-l satu sisi: no-box-inside-box rule
-            DESIGN SYSTEM GUARD: rounded-none pada avatar */}
+            DESIGN SYSTEM GUARD: rounded-none-none pada avatar */}
         <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">
           {/* Info teks — hanya visible lg ke atas untuk zero clipping */}
           <div className="text-right hidden lg:block">
@@ -143,10 +143,10 @@ export const Header = ({ isOpen, onToggle }: HeaderProps) => {
             </p>
           </div>
 
-          {/* Avatar — flat bg-slate-800, rounded-none */}
+          {/* Avatar — flat bg-slate-800, rounded-none-none */}
           <button
             id="btn-user-profile"
-            className="w-8 h-8 bg-slate-800 rounded-none flex items-center justify-center text-white hover:bg-slate-700 transition-colors duration-150 cursor-pointer"
+            className="w-8 h-8 bg-slate-800 rounded-none-none flex items-center justify-center text-white hover:bg-slate-700 transition-colors duration-150 cursor-pointer"
             aria-label={`Profil pengguna: ${user?.name ?? 'Pengguna'}`}
             title={user?.name ?? 'Pengguna'}
           >
@@ -154,7 +154,7 @@ export const Header = ({ isOpen, onToggle }: HeaderProps) => {
               <img
                 src={getAvatarUrl(user.avatarUrl) || undefined}
                 alt={`Avatar ${user.name}`}
-                className="w-full h-full object-cover rounded-none"
+                className="w-full h-full object-cover rounded-none-none"
               />
             ) : (
               <User size={15} />

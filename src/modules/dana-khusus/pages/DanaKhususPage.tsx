@@ -256,11 +256,11 @@ const DanaKhususPage = () => {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Dana Khusus</h2>
+          <h2 className="text-2xl font-medium text-slate-800 tracking-tight">Dana Khusus</h2>
           <p className="text-sm text-gray-500">Pengelolaan program donasi terikat dan dana pembangunan temporer.</p>
         </div>
         {isBendahara && (
-          <Button onClick={() => setIsAddOpen(true)} className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 shadow-none rounded-none w-full sm:w-auto justify-center">
+          <Button onClick={() => setIsAddOpen(true)} className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 shadow-none rounded-none w-full sm:w-auto justify-center">
             <Plus size={16} /> Buka Program Dana Baru
           </Button>
         )}
@@ -269,33 +269,33 @@ const DanaKhususPage = () => {
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 border-l-4 border-l-blue-600 border-y-slate-200 border-r-slate-200">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Total Donasi Masuk</p>
-          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">
+          <p className="text-[10px] text-slate-400 font-semibold">Total Donasi Masuk</p>
+          <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(stats.totalCollected)}
           </h4>
-          <span className="text-[10px] text-slate-400 font-bold">Akumulasi donasi terkumpul</span>
+          <span className="text-[10px] text-slate-400 font-medium">Akumulasi donasi terkumpul</span>
         </Card>
 
         <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Total Pengeluaran Dana</p>
-          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">
+          <p className="text-[10px] text-slate-400 font-semibold">Total Pengeluaran Dana</p>
+          <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(stats.totalSpent)}
           </h4>
-          <span className="text-[10px] text-slate-400 font-bold">Total belanja tersalurkan</span>
+          <span className="text-[10px] text-slate-400 font-medium">Total belanja tersalurkan</span>
         </Card>
 
         <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Sisa Saldo Kas Aktif</p>
-          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">
+          <p className="text-[10px] text-slate-400 font-semibold">Sisa Saldo Kas Aktif</p>
+          <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(stats.totalBalance)}
           </h4>
-          <span className="text-[10px] text-slate-400 font-bold">Saldo tersisa di rekening</span>
+          <span className="text-[10px] text-slate-400 font-medium">Saldo tersisa di rekening</span>
         </Card>
       </div>
 
       {/* Filter and list controls */}
       <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col md:flex-row gap-4 justify-between">
-        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-none w-full md:w-80">
+        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-none w-full md:w-80">
           <Search size={16} className="text-slate-400" />
           <input
             type="text"
@@ -307,13 +307,13 @@ const DanaKhususPage = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Filter Status:</span>
+          <span className="text-[10px] text-slate-400 font-semibold">Filter Status:</span>
           <div className="flex border border-slate-200 rounded-none overflow-hidden">
             {(['ALL', 'DRAFT', 'AKTIF', 'DITUTUP'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-3 py-1.5 text-xs font-black transition-colors ${
+                className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
                   statusFilter === status ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
                 }`}
               >
@@ -347,32 +347,32 @@ const DanaKhususPage = () => {
           
           return (
             <tr key={fund.id} className="hover:bg-slate-50/50 transition-colors">
-              <td className="px-5 py-3.5 text-xs font-black text-blue-600 border-r border-slate-100 uppercase font-mono">{fund.code}</td>
-              <td className="px-5 py-3.5 text-xs font-bold text-slate-700 border-r border-slate-100 max-w-[250px] truncate" title={fund.name}>{fund.name}</td>
-              <td className="px-5 py-3.5 border-r border-slate-100 text-center">
+              <td className="px-5 py-3.5 text-xs font-semibold text-blue-600 border-r font-mono">{fund.code}</td>
+              <td className="px-5 py-3.5 text-xs font-medium text-slate-700 border-r max-w-[250px] truncate" title={fund.name}>{fund.name}</td>
+              <td className="px-5 py-3.5 border-r text-center">
                 <Badge variant={fund.status === 'AKTIF' ? 'success' : fund.status === 'DITUTUP' ? 'danger' : 'warning'}>
                   {fund.status}
                 </Badge>
               </td>
-              <td className="px-5 py-3.5 text-xs font-black text-right text-slate-800 border-r border-slate-100">{formatIDR(Number(fund.balance))}</td>
-              <td className="px-5 py-3.5 text-xs font-bold text-right text-emerald-600 border-r border-slate-100">{formatIDR(collectedNum)}</td>
-              <td className="px-5 py-3.5 text-xs font-medium text-right text-slate-500 border-r border-slate-100">{targetNum > 0 ? formatIDR(targetNum) : '-'}</td>
-              <td className="px-5 py-3.5 border-r border-slate-100">
+              <td className="px-5 py-3.5 text-xs font-semibold text-right text-slate-800 border-r">{formatIDR(Number(fund.balance))}</td>
+              <td className="px-5 py-3.5 text-xs font-medium text-right text-emerald-600 border-r">{formatIDR(collectedNum)}</td>
+              <td className="px-5 py-3.5 text-xs font-medium text-right text-slate-500 border-r">{targetNum > 0 ? formatIDR(targetNum) : '-'}</td>
+              <td className="px-5 py-3.5 border-r">
                 {targetNum > 0 ? (
                   <div className="flex items-center gap-1.5 min-w-[100px]">
                     <div className="w-16 bg-slate-100 h-1.5 rounded-none overflow-hidden">
                       <div className="bg-blue-600 h-full rounded-none" style={{ width: `${percent}%` }} />
                     </div>
-                    <span className="text-[9px] font-bold text-slate-500">{percent}%</span>
+                    <span className="text-[9px] font-medium text-slate-500">{percent}%</span>
                   </div>
                 ) : (
                   <span className="text-[10px] text-slate-400 font-semibold">Tanpa Target</span>
                 )}
               </td>
-              <td className="px-5 py-3.5 text-[10px] text-slate-500 font-semibold border-r border-slate-100">
+              <td className="px-5 py-3.5 text-[10px] text-slate-500 font-semibold border-r">
                 {new Date(fund.tanggalMulai).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' })}
               </td>
-              <td className="px-5 py-3.5 text-[10px] text-slate-500 font-semibold border-r border-slate-100">
+              <td className="px-5 py-3.5 text-[10px] text-slate-500 font-semibold border-r">
                 {new Date(fund.tanggalSelesai).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' })}
               </td>
               <td className="px-5 py-3.5 text-center">
@@ -424,7 +424,7 @@ const DanaKhususPage = () => {
             <div className="flex flex-col gap-2.5">
               <div className="flex justify-between items-center">
                 <div className="flex gap-2 items-center">
-                  <span className="text-xs font-black text-blue-600 font-mono uppercase">{fund.code}</span>
+                  <span className="text-xs font-semibold text-blue-600 font-mono">{fund.code}</span>
                   <Badge variant={fund.status === 'AKTIF' ? 'success' : fund.status === 'DITUTUP' ? 'danger' : 'warning'}>
                     {fund.status}
                   </Badge>
@@ -432,22 +432,22 @@ const DanaKhususPage = () => {
                 <div className="flex gap-1">
                   <button
                     onClick={() => setSelectedFundId(fund.id)}
-                    className="p-1 hover:bg-slate-100 rounded text-slate-500 border border-slate-200 flex items-center justify-center"
+                    className="p-1 hover:bg-slate-100 rounded-none text-slate-500 flex items-center justify-center"
                   >
                     <Eye size={14} />
                   </button>
                   {isBendahara && fund.status === 'DRAFT' && (
                     <>
-                      <button onClick={() => handleActivate(fund.id)} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded border border-slate-200">
+                      <button onClick={() => handleActivate(fund.id)} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-none">
                         <Play size={14} />
                       </button>
-                      <button onClick={() => handleDelete(fund.id)} className="p-1 text-rose-600 hover:bg-rose-50 rounded border border-slate-200">
+                      <button onClick={() => handleDelete(fund.id)} className="p-1 text-rose-600 hover:bg-rose-50 rounded-none">
                         <Trash2 size={14} />
                       </button>
                     </>
                   )}
                   {isBendahara && fund.status === 'AKTIF' && (
-                    <button onClick={() => handleClose(fund.id)} className="p-1 text-rose-600 hover:bg-rose-50 rounded border border-slate-200">
+                    <button onClick={() => handleClose(fund.id)} className="p-1 text-rose-600 hover:bg-rose-50 rounded-none">
                       <XCircle size={14} />
                     </button>
                   )}
@@ -455,24 +455,24 @@ const DanaKhususPage = () => {
               </div>
 
               <div>
-                <p className="text-xs font-bold text-slate-800">{fund.name}</p>
+                <p className="text-xs font-medium text-slate-800">{fund.name}</p>
                 <p className="text-[10px] text-slate-400 mt-0.5">{fund.description || 'Tanpa deskripsi'}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-2 text-[10px] font-bold text-slate-500">
+              <div className="grid grid-cols-2 gap-2 border-t pt-2 text-[10px] font-medium text-slate-500">
                 <div>
-                  <p className="text-[8px] text-slate-400 uppercase">Saldo Aktif</p>
-                  <p className="text-xs font-black text-slate-800 mt-0.5">{formatIDR(Number(fund.balance))}</p>
+                  <p className="text-[8px] text-slate-400">Saldo Aktif</p>
+                  <p className="text-xs font-semibold text-slate-800 mt-0.5">{formatIDR(Number(fund.balance))}</p>
                 </div>
                 <div>
-                  <p className="text-[8px] text-slate-400 uppercase">Terkumpul</p>
-                  <p className="text-xs font-black text-emerald-600 mt-0.5">{formatIDR(collectedNum)}</p>
+                  <p className="text-[8px] text-slate-400">Terkumpul</p>
+                  <p className="text-xs font-semibold text-emerald-600 mt-0.5">{formatIDR(collectedNum)}</p>
                 </div>
               </div>
 
               {targetNum > 0 && (
                 <div className="pt-1.5">
-                  <div className="flex justify-between text-[8px] font-bold text-slate-400 mb-1">
+                  <div className="flex justify-between text-[8px] font-medium text-slate-400 mb-1">
                     <span>PROGRESS TARGET ({formatIDR(targetNum)})</span>
                     <span>{percent}%</span>
                   </div>
@@ -491,82 +491,82 @@ const DanaKhususPage = () => {
         <form onSubmit={handleAddSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="md:col-span-1">
-              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">KODE DANA</label>
+              <label className="block text-[10px] font-semibold text-slate-500 mb-1">KODE DANA</label>
               <input
                 type="text"
                 name="code"
                 required
                 placeholder="Misal: DK-05"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 uppercase font-mono font-bold"
+                className="w-full px-3 py-2 bg-slate-50 rounded-none text-xs outline-none focus:border-blue-500 font-mono font-medium"
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">NAMA PROGRAM DANA</label>
+              <label className="block text-[10px] font-semibold text-slate-500 mb-1">NAMA PROGRAM DANA</label>
               <input
                 type="text"
                 name="name"
                 required
                 placeholder="Contoh: Renovasi Atap Gereja Utama"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 font-bold"
+                className="w-full px-3 py-2 bg-slate-50 rounded-none text-xs outline-none focus:border-blue-500 font-medium"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">DESKRIPSI PROGRAM</label>
+            <label className="block text-[10px] font-semibold text-slate-500 mb-1">DESKRIPSI PROGRAM</label>
             <textarea
               name="description"
               placeholder="Penjelasan singkat mengenai asal-usul program..."
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 h-16 resize-none"
+              className="w-full px-3 py-2 bg-slate-50 rounded-none text-xs outline-none focus:border-blue-500 h-16 resize-none"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">TUJUAN PENGGUNAAN DANA</label>
+            <label className="block text-[10px] font-semibold text-slate-500 mb-1">TUJUAN PENGGUNAAN DANA</label>
             <input
               type="text"
               name="tujuanPenggalangan"
               placeholder="Contoh: Mengganti kayu penyangga yang lapuk..."
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-slate-50 rounded-none text-xs outline-none focus:border-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">TARGET PENGGALAINGAN (IDR, OPSIONAL)</label>
+            <label className="block text-[10px] font-semibold text-slate-500 mb-1">TARGET PENGGALAINGAN (IDR, OPSIONAL)</label>
             <input
               type="number"
               name="targetNominal"
               placeholder="Misal: 150000000 (boleh kosong)"
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 font-mono"
+              className="w-full px-3 py-2 bg-slate-50 rounded-none text-xs outline-none focus:border-blue-500 font-mono"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">TANGGAL MULAI</label>
+              <label className="block text-[10px] font-semibold text-slate-500 mb-1">TANGGAL MULAI</label>
               <input
                 type="date"
                 name="tanggalMulai"
                 required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500"
+                className="w-full px-3 py-2 bg-slate-50 rounded-none text-xs outline-none focus:border-blue-500"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">TANGGAL SELESAI</label>
+              <label className="block text-[10px] font-semibold text-slate-500 mb-1">TANGGAL SELESAI</label>
               <input
                 type="date"
                 name="tanggalSelesai"
                 required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500"
+                className="w-full px-3 py-2 bg-slate-50 rounded-none text-xs outline-none focus:border-blue-500"
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+          <div className="flex justify-end gap-2 pt-4 border-t">
             <Button type="button" variant="outline" size="sm" onClick={() => setIsAddOpen(false)} className="rounded-none">
               Batal
             </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-none shadow-none text-xs py-2 px-4 font-bold">
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-none shadow-none text-xs py-2 px-4 font-medium">
               Buat Program Dana
             </Button>
           </div>
@@ -583,9 +583,9 @@ const DanaKhususPage = () => {
         {activeDetail && (
           <div className="space-y-6" id="print-section">
             {/* Action Header on Detail Modal */}
-            <div className="flex flex-wrap gap-2 justify-between items-center border-b border-slate-100 pb-3 no-print">
+            <div className="flex flex-wrap gap-2 justify-between items-center border-b pb-3 no-print">
               <div className="flex gap-2">
-                <span className="text-[10px] font-black text-slate-400 uppercase self-center">Status saat ini:</span>
+                <span className="text-[10px] font-semibold text-slate-400 self-center">Status saat ini:</span>
                 <Badge variant={activeDetail.status === 'AKTIF' ? 'success' : activeDetail.status === 'DITUTUP' ? 'danger' : 'warning'}>
                   {activeDetail.status}
                 </Badge>
@@ -616,7 +616,7 @@ const DanaKhususPage = () => {
                 {isBendahara && activeDetail.status === 'DITUTUP' && Number(activeDetail.balance) > 0 && (
                   <Button
                     onClick={() => setIsAllocateOpen(true)}
-                    className="bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1.5 rounded-none text-[10px] font-bold py-1.5 shadow-none"
+                    className="bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1.5 rounded-none text-[10px] font-medium py-1.5 shadow-none"
                   >
                     <ArrowRightLeft size={14} /> Alokasikan Sisa Dana ({formatIDR(Number(activeDetail.balance))})
                   </Button>
@@ -626,61 +626,61 @@ const DanaKhususPage = () => {
 
             {/* Print Header */}
             <div className="hidden print:block text-center border-b-2 border-slate-800 pb-3 mb-4">
-              <h1 className="text-xl font-bold uppercase text-slate-800">Laporan Akuntabilitas Dana Khusus</h1>
-              <p className="text-xs text-slate-500 font-semibold uppercase">{activeDetail.name} ({activeDetail.code})</p>
+              <h1 className="text-xl font-medium text-slate-800">Laporan Akuntabilitas Dana Khusus</h1>
+              <p className="text-xs text-slate-500 font-semibold">{activeDetail.name} ({activeDetail.code})</p>
               <p className="text-[10px] text-slate-400 mt-1">Dicetak pada: {new Date().toLocaleString('id-ID')}</p>
             </div>
 
             {/* Core Info Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50/50 p-4 border border-slate-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50/50 p-4">
               <div className="space-y-2 text-xs font-semibold">
                 <div>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Tujuan Penggalangan</span>
+                  <span className="text-[9px] font-semibold text-slate-400 block">Tujuan Penggalangan</span>
                   <span className="text-slate-800">{activeDetail.tujuanPenggalangan || '-'}</span>
                 </div>
                 <div>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Keterangan / Deskripsi</span>
+                  <span className="text-[9px] font-semibold text-slate-400 block">Keterangan / Deskripsi</span>
                   <span className="text-slate-600 leading-normal block">{activeDetail.description || '-'}</span>
                 </div>
               </div>
               <div className="space-y-2 text-xs font-semibold">
                 <div>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Periode Aktif Program</span>
+                  <span className="text-[9px] font-semibold text-slate-400 block">Periode Aktif Program</span>
                   <span className="text-slate-800 font-mono">
                     {new Date(activeDetail.tanggalMulai).toLocaleDateString('id-ID')} s/d {new Date(activeDetail.tanggalSelesai).toLocaleDateString('id-ID')}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Target Penggalangan</span>
+                  <span className="text-[9px] font-semibold text-slate-400 block">Target Penggalangan</span>
                   <span className="text-slate-800">{Number(activeDetail.targetNominal) > 0 ? formatIDR(Number(activeDetail.targetNominal)) : 'Tidak memiliki batasan target nominal'}</span>
                 </div>
               </div>
             </div>
 
             {/* Detail Stats */}
-            <div className="grid grid-cols-3 gap-4 border-y border-slate-100 py-4 text-center">
+            <div className="grid grid-cols-3 gap-4 border-y py-4 text-center">
               <div>
-                <p className="text-[9px] text-slate-400 font-black uppercase tracking-wider">Total Donasi Masuk</p>
-                <p className="text-sm font-black text-emerald-600 mt-1">{formatIDR(Number(activeDetail.income))}</p>
+                <p className="text-[9px] text-slate-400 font-semibold">Total Donasi Masuk</p>
+                <p className="text-sm font-semibold text-emerald-600 mt-1">{formatIDR(Number(activeDetail.income))}</p>
               </div>
               <div>
-                <p className="text-[9px] text-slate-400 font-black uppercase tracking-wider">Total Pengeluaran / Belanja</p>
-                <p className="text-sm font-black text-rose-500 mt-1">{formatIDR(Number(activeDetail.expense))}</p>
+                <p className="text-[9px] text-slate-400 font-semibold">Total Pengeluaran / Belanja</p>
+                <p className="text-sm font-semibold text-rose-500 mt-1">{formatIDR(Number(activeDetail.expense))}</p>
               </div>
               <div>
-                <p className="text-[9px] text-slate-400 font-black uppercase tracking-wider">Sisa Saldo Tersedia</p>
-                <p className="text-sm font-black text-slate-800 mt-1">{formatIDR(Number(activeDetail.balance))}</p>
+                <p className="text-[9px] text-slate-400 font-semibold">Sisa Saldo Tersedia</p>
+                <p className="text-sm font-semibold text-slate-800 mt-1">{formatIDR(Number(activeDetail.balance))}</p>
               </div>
             </div>
 
             {/* Progress Bar Detail */}
             {Number(activeDetail.targetNominal) > 0 && (
-              <div className="p-4 bg-blue-50/30 border border-blue-100/30">
-                <div className="flex justify-between text-[10px] font-bold text-blue-700 mb-1.5">
+              <div className="p-4 bg-blue-50/30">
+                <div className="flex justify-between text-[10px] font-medium text-blue-700 mb-1.5">
                   <span>Pencapaian Target Penggalangan</span>
                   <span>{Math.round((Number(activeDetail.income) / Number(activeDetail.targetNominal)) * 100)}%</span>
                 </div>
-                <div className="w-full bg-slate-100 h-2.5 rounded-none overflow-hidden border border-slate-200/50">
+                <div className="w-full bg-slate-100 h-2.5 rounded-none overflow-hidden">
                   <div
                     className="bg-blue-600 h-full rounded-none"
                     style={{ width: `${Math.min(Math.round((Number(activeDetail.income) / Number(activeDetail.targetNominal)) * 100), 100)}%` }}
@@ -692,21 +692,21 @@ const DanaKhususPage = () => {
             {/* Tabs for Transactions & Allocations History */}
             <div className="space-y-4">
               <div>
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-200 pb-2">
+                <h3 className="text-xs font-semibold text-slate-400 flex items-center gap-1.5 border-b border-slate-200 pb-2">
                   <History size={14} /> Histori Transaksi Mutasi Kas
                 </h3>
               </div>
 
               {isLoadingTx ? (
-                <div className="text-center py-4 text-xs font-bold text-slate-500">Memuat riwayat transaksi...</div>
+                <div className="text-center py-4 text-xs font-medium text-slate-500">Memuat riwayat transaksi...</div>
               ) : transactions.length === 0 ? (
-                <div className="text-center py-8 text-xs font-bold text-slate-400 bg-slate-50 border border-dashed border-slate-200">
+                <div className="text-center py-8 text-xs font-medium text-slate-400 border border-dashed">
                   Belum ada transaksi mutasi kas (pemasukan donasi atau pengeluaran belanja) untuk program ini.
                 </div>
               ) : (
                 <table className="w-full text-left border-collapse border border-slate-200 text-xs">
                   <thead>
-                    <tr className="bg-slate-50 font-black uppercase text-[10px] text-slate-500 divide-x divide-slate-100 border-b border-slate-200">
+                    <tr className="bg-slate-50 font-semibold text-[10px] text-slate-500 divide-x divide-slate-100 border-b border-slate-200">
                       <th className="px-4 py-2">No Transaksi</th>
                       <th className="px-4 py-2">Tanggal</th>
                       <th className="px-4 py-2">Keterangan</th>
@@ -717,21 +717,17 @@ const DanaKhususPage = () => {
                   <tbody className="divide-y divide-slate-100">
                     {transactions.map((tx: any) => (
                       <tr key={tx.id} className="hover:bg-slate-50/40">
-                        <td className="px-4 py-2.5 font-bold font-mono text-blue-600">{tx.transactionNo}</td>
+                        <td className="px-4 py-2.5 font-medium font-mono text-blue-600">{tx.transactionNo}</td>
                         <td className="px-4 py-2.5 font-medium text-slate-500">
                           {new Date(tx.transactionDate).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' })}
                         </td>
-                        <td className="px-4 py-2.5 font-bold text-slate-700 max-w-[300px] truncate" title={tx.description}>{tx.description}</td>
-                        <td className="px-4 py-2.5 text-right font-black">
-                          <span className={`px-1.5 py-0.5 rounded text-[8px] border font-black ${
-                            tx.transactionType === 'INCOME' 
-                              ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                              : 'bg-rose-50 text-rose-500 border-rose-100'
-                          }`}>
+                        <td className="px-4 py-2.5 font-medium text-slate-700 max-w-[300px] truncate" title={tx.description}>{tx.description}</td>
+                        <td className="px-4 py-2.5 text-right font-semibold">
+                          <span className={`px-1.5 py-0.5 rounded-none text-[8px] border font-semibold ${ tx.transactionType === 'INCOME' ? 'text-emerald-600 ' : 'text-rose-500 ' }`}>
                             {tx.transactionType === 'INCOME' ? 'MASUK' : 'KELUAR'}
                           </span>
                         </td>
-                        <td className={`px-4 py-2.5 text-right font-black ${
+                        <td className={`px-4 py-2.5 text-right font-semibold ${
                           tx.transactionType === 'INCOME' ? 'text-emerald-600' : 'text-rose-500'
                         }`}>
                           {tx.transactionType === 'INCOME' ? '+' : '-'}{formatIDR(Number(tx.amount))}
@@ -744,13 +740,13 @@ const DanaKhususPage = () => {
 
               {/* Allocations Table inside report data */}
               {reportData && reportData.allocations.length > 0 && (
-                <div className="space-y-2 mt-4 pt-4 border-t border-slate-100">
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <div className="space-y-2 mt-4 pt-4 border-t">
+                  <h3 className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                     <ArrowRightLeft size={14} className="text-amber-500" /> Riwayat Alokasi Sisa Saldo
                   </h3>
                   <table className="w-full text-left border-collapse border border-slate-200 text-xs">
                     <thead>
-                      <tr className="bg-slate-50 font-black uppercase text-[10px] text-slate-500 divide-x divide-slate-100 border-b border-slate-200">
+                      <tr className="bg-slate-50 font-semibold text-[10px] text-slate-500 divide-x divide-slate-100 border-b border-slate-200">
                         <th className="px-4 py-2">Tanggal Alokasi</th>
                         <th className="px-4 py-2">Pos Dana Tujuan</th>
                         <th className="px-4 py-2">Keterangan</th>
@@ -763,9 +759,9 @@ const DanaKhususPage = () => {
                           <td className="px-4 py-2.5 font-medium text-slate-500">
                             {new Date(alloc.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' })}
                           </td>
-                          <td className="px-4 py-2.5 font-bold text-blue-600 uppercase">{alloc.targetPos}</td>
+                          <td className="px-4 py-2.5 font-medium text-blue-600">{alloc.targetPos}</td>
                           <td className="px-4 py-2.5 font-medium text-slate-600">{alloc.keterangan || '-'}</td>
-                          <td className="px-4 py-2.5 text-right font-black text-amber-600">
+                          <td className="px-4 py-2.5 text-right font-semibold text-amber-600">
                             {formatIDR(Number(alloc.nominal))}
                           </td>
                         </tr>
@@ -776,7 +772,7 @@ const DanaKhususPage = () => {
               )}
             </div>
 
-            <div className="flex justify-end pt-4 border-t border-slate-100 no-print">
+            <div className="flex justify-end pt-4 border-t no-print">
               <Button onClick={() => setSelectedFundId(null)} variant="outline" size="sm" className="rounded-none">
                 Tutup Detail
               </Button>
@@ -793,18 +789,18 @@ const DanaKhususPage = () => {
       >
         {activeDetail && (
           <form onSubmit={handleAllocateSubmit} className="space-y-4">
-            <div className="p-3 bg-amber-50 border border-amber-100 text-amber-800 text-xs rounded-none font-semibold space-y-1">
-              <p className="font-bold">⚠️ PROSES ALOKASI SALDO AKHIR</p>
-              <p>Dana Khusus <strong className="font-black">{activeDetail.name}</strong> telah DITUTUP. Sisa saldo akhir sebesar <strong className="font-black text-amber-700">{formatIDR(Number(activeDetail.balance))}</strong> wajib dipindahkan ke Pos Dana permanen.</p>
+            <div className="p-3 text-amber-800 text-xs rounded-none font-semibold space-y-1">
+              <p className="font-medium">⚠️ PROSES ALOKASI SALDO AKHIR</p>
+              <p>Dana Khusus <strong className="font-semibold">{activeDetail.name}</strong> telah DITUTUP. Sisa saldo akhir sebesar <strong className="font-semibold text-amber-700">{formatIDR(Number(activeDetail.balance))}</strong> wajib dipindahkan ke Pos Dana permanen.</p>
             </div>
 
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">POS DANA TUJUAN (PERMANEN)</label>
+              <label className="block text-[10px] font-semibold text-slate-500 mb-1">POS DANA TUJUAN (PERMANEN)</label>
               <select
                 value={targetPosDanaId}
                 onChange={(e) => setTargetPosDanaId(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 font-bold"
+                className="w-full px-3 py-2 bg-slate-50 rounded-none text-xs outline-none focus:border-blue-500 font-medium"
               >
                 <option value="">-- Pilih Pos Dana Penerima --</option>
                 {fundCategories.filter(f => f.isActive).map((f) => (
@@ -814,37 +810,37 @@ const DanaKhususPage = () => {
             </div>
 
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">NOMINAL ALOKASI (IDR)</label>
+              <label className="block text-[10px] font-semibold text-slate-500 mb-1">NOMINAL ALOKASI (IDR)</label>
               <input
                 type="number"
                 value={allocationAmount}
                 onChange={(e) => setAllocationAmount(e.target.value !== '' ? Number(e.target.value) : '')}
                 required
                 placeholder={String(activeDetail.balance)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 font-mono font-bold text-slate-800"
+                className="w-full px-3 py-2 bg-slate-50 rounded-none text-xs outline-none focus:border-blue-500 font-mono font-medium text-slate-800"
               />
-              <span className="text-[9px] text-slate-400 font-bold block mt-1">Maksimal: {formatIDR(Number(activeDetail.balance))}</span>
+              <span className="text-[9px] text-slate-400 font-medium block mt-1">Maksimal: {formatIDR(Number(activeDetail.balance))}</span>
             </div>
 
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">KETERANGAN / DESKRIPSI</label>
+              <label className="block text-[10px] font-semibold text-slate-500 mb-1">KETERANGAN / DESKRIPSI</label>
               <textarea
                 value={allocationNotes}
                 onChange={(e) => setAllocationNotes(e.target.value)}
                 placeholder="Contoh: Pemindahan sisa dana bencana alam ke Pos Dana Sosial Paroki"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 h-16 resize-none"
+                className="w-full px-3 py-2 bg-slate-50 rounded-none text-xs outline-none focus:border-blue-500 h-16 resize-none"
               />
             </div>
 
             {allocationError && (
-              <p className="text-[10px] text-rose-500 font-bold">{allocationError}</p>
+              <p className="text-[10px] text-rose-500 font-medium">{allocationError}</p>
             )}
 
-            <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+            <div className="flex justify-end gap-2 pt-4 border-t">
               <Button type="button" variant="outline" size="sm" onClick={() => setIsAllocateOpen(false)} className="rounded-none">
                 Batal
               </Button>
-              <Button type="submit" disabled={allocateMutation.isPending} className="bg-amber-600 hover:bg-amber-700 text-white rounded-none shadow-none text-xs py-2 px-4 font-bold flex items-center gap-1.5">
+              <Button type="submit" disabled={allocateMutation.isPending} className="bg-amber-600 hover:bg-amber-700 text-white rounded-none shadow-none text-xs py-2 px-4 font-medium flex items-center gap-1.5">
                 {allocateMutation.isPending ? 'Memproses...' : <><CheckCircle size={14} /> Proses Alokasi</>}
               </Button>
             </div>

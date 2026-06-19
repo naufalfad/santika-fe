@@ -72,10 +72,10 @@ const DashboardPage = () => {
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 items-center gap-4">
           <div>
-            <h1 className="text-xl font-black text-slate-800 tracking-tight uppercase">
+            <h1 className="text-xl font-semibold text-slate-800 tracking-tight">
               Dashboard {user?.role.toLowerCase().replace('_', ' ')}
             </h1>
-            <p className="text-rose-600 font-bold text-base leading-tight mt-0.5">
+            <p className="text-rose-600 font-medium text-base leading-tight mt-0.5">
               {DASHBOARD_HERO.paroki}
             </p>
             <div className="mt-3">
@@ -94,9 +94,9 @@ const DashboardPage = () => {
                 <Calendar size={18} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-blue-600 uppercase tracking-tighter">Selasa</p>
-                <p className="text-xs font-black text-slate-800">20 Mei 2025</p>
-                <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">10:30 WIB</p>
+                <p className="text-[10px] font-semibold text-blue-600 tracking-tighter">Selasa</p>
+                <p className="text-xs font-semibold text-slate-800">20 Mei 2025</p>
+                <p className="text-[9px] text-slate-400 font-medium">10:30 WIB</p>
               </div>
             </div>
           </div>
@@ -126,13 +126,13 @@ const DashboardPage = () => {
                   {getIcon(item.icon)}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter truncate">{item.label}</p>
+                  <p className="text-[9px] font-semibold text-slate-400 tracking-tighter truncate">{item.label}</p>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-black text-slate-800 tracking-tight leading-none">{formatIDR(item.val)}</h3>
-                <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-wide">{item.sub}</p>
+                <h3 className="text-lg font-semibold text-slate-800 tracking-tight leading-none">{formatIDR(item.val)}</h3>
+                <p className="text-[9px] text-slate-400 font-medium mt-1">{item.sub}</p>
               </div>
             </div>
 
@@ -144,7 +144,7 @@ const DashboardPage = () => {
                 else if (item.label === 'DANA PEMBANGUNAN') navigate('/dana-khusus');
                 else if (item.label === 'DANA SOSIAL (PSE)') navigate('/dana-khusus');
               }}
-              className="px-4 py-2 text-[10px] font-bold text-blue-600 border-t border-slate-100 flex items-center justify-between hover:bg-slate-50 hover:text-blue-700 transition-colors cursor-pointer rounded-none text-left"
+              className="px-4 py-2 text-[10px] font-medium text-blue-600 border-t border-slate-100 flex items-center justify-between hover:bg-slate-50 hover:text-blue-700 transition-colors cursor-pointer rounded-none text-left"
             >
               Lihat Detail <ChevronRight size={10} />
             </button>
@@ -181,7 +181,7 @@ const DashboardPage = () => {
         </Card>
       </div>
 
-      <footer className="mt-12 text-center text-[10px] text-slate-400 font-medium tracking-wide">
+      <footer className="mt-12 text-center text-[10px] text-slate-400 font-medium">
         <p>SANTIKA - Sistem Akuntansi dan Tata Kelola Keuangan Gereja</p>
         <p>© 2025 Paroki St. Stefanus - Sempan. Semua hak dilindungi.</p>
       </footer>

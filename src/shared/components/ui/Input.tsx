@@ -17,7 +17,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
  *
  * DESIGN SYSTEM GUARD:
  * - rounded-none: MUTLAK. Form input tidak boleh berbentuk kapsul.
- * - focus:ring DIHAPUS (ring adalah artefak rounded UI). Diganti dengan
+ * - focus:ring DIHAPUS (ring adalah artefak rounded-none UI). Diganti dengan
  *   focus:border-blue-500 + border tebal (border-2) saat fokus — ini lebih
  *   tajam secara visual dan selaras dengan filosofi sharp corner.
  * - Padding input presisi: px-4 py-2.5 untuk kepadatan yang nyaman di mobile.
@@ -37,7 +37,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             className={cn(
-              'text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5',
+              'text-[10px] font-semibold   flex items-center gap-1.5',
               hasError ? 'text-rose-500' : 'text-slate-500'
             )}
           >
@@ -63,16 +63,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             type={type}
             className={cn(
-              'w-full bg-white text-sm text-slate-800 font-medium',
-              'border border-slate-200 outline-none',
+              'w-full bg-slate-50 text-sm text-slate-800 font-medium',
+              'border border-transparent outline-none',
               // DESIGN SYSTEM GUARD: rounded-none — zero kapsul form
               'rounded-none',
               // Padding presisi — sesuai mobile PWA standard
               'px-4 py-2.5',
-              // Micro-interaction: border berubah warna saat fokus (bukan ring)
-              // border-2 saat fokus menciptakan efek "active border" yang tajam dan tegas
-              'transition-colors duration-150',
-              'focus:border-slate-700 focus:bg-white',
+              // Micro-interaction: background berubah dan border muncul halus saat fokus
+              'transition-all duration-150',
+              'focus:border-slate-300 focus:bg-white',
               // Placeholder typography
               'placeholder:text-slate-300 placeholder:font-normal',
               // Icon offset kiri
@@ -110,7 +109,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {hasError && (
           <p
             id={`${props.id ?? props.name}-error`}
-            className="text-[10px] text-rose-500 font-bold tracking-wide"
+            className="text-[10px] text-rose-500 font-medium"
             role="alert"
           >
             {error}

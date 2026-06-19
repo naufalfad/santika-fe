@@ -111,12 +111,12 @@ export const Modal: React.FC<ModalProps> = ({
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
               {/* ── DIALOG PANEL ── */}
-              {/* DESIGN SYSTEM GUARD: rounded-none — zero rounded corners */}
+              {/* DESIGN SYSTEM GUARD: rounded-none — zero rounded-none corners */}
               <DialogPanel
                 className={cn(
                   'w-full bg-white text-left align-middle shadow-2xl',
                   'border border-slate-200',
-                  // DESIGN SYSTEM GUARD: rounded-none — zero rounded corners di panel
+                  // DESIGN SYSTEM GUARD: rounded-none — zero rounded-none corners di panel
                   'rounded-none',
                   'flex flex-col',
                   // Mobile: full width dari bawah. Desktop: terbatas max-width
@@ -126,11 +126,11 @@ export const Modal: React.FC<ModalProps> = ({
               >
                 {/* ── HEADER BAR ── */}
                 {/* border-b satu sisi — sesuai no-box-inside-box rule */}
-                <div className="flex-shrink-0 flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
+                <div className="flex-shrink-0 flex items-center justify-between px-5 py-3.5 border-b">
                   <DialogTitle
                     as="h3"
                     id="modal-title"
-                    className="text-xs font-black text-slate-800 uppercase tracking-widest"
+                    className="text-xs font-semibold text-slate-800"
                   >
                     {title}
                   </DialogTitle>
@@ -161,7 +161,7 @@ export const Modal: React.FC<ModalProps> = ({
                 {/* ── FOOTER SLOT (opsional) ── */}
                 {/* border-t satu sisi — konsisten dengan no-box-inside-box rule */}
                 {footer && (
-                  <div className="flex-shrink-0 px-5 py-3.5 border-t border-slate-100 bg-slate-50/50">
+                  <div className="flex-shrink-0 px-5 py-3.5 border-t bg-slate-50/50">
                     {footer}
                   </div>
                 )}

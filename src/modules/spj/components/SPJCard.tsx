@@ -34,7 +34,7 @@ export const SPJCard: React.FC<SPJCardProps> = ({ doc, onPreview }) => {
   return (
     <Card className="group hover:shadow-none hover:border-slate-300 hover:bg-slate-50/40 transition-colors duration-200 border-slate-200 overflow-hidden bg-white flex flex-col justify-between">
       {/* Thumbnail/Icon Area - Flat Separator */}
-      <div className="relative h-28 bg-slate-50 flex items-center justify-center border-b border-slate-100 overflow-hidden">
+      <div className="relative h-28 bg-slate-50 flex items-center justify-center border-b overflow-hidden">
         {thumbnail ? (
           <img
             src={thumbnail}
@@ -44,7 +44,7 @@ export const SPJCard: React.FC<SPJCardProps> = ({ doc, onPreview }) => {
         ) : (
           <div className="flex flex-col items-center gap-1.5 text-slate-400">
             {fileType === 'pdf' ? <FileText size={32} /> : <ImageIcon size={32} />}
-            <span className="text-[9px] font-black uppercase tracking-wider">{fileType}</span>
+            <span className="text-[9px] font-semibold">{fileType}</span>
           </div>
         )}
         {/* Soft overlay on hover */}
@@ -71,20 +71,20 @@ export const SPJCard: React.FC<SPJCardProps> = ({ doc, onPreview }) => {
                 <span>{doc.status === 'VERIFIED' ? 'Verified' : doc.status === 'PENDING' ? 'Pending' : 'Rejected'}</span>
               </div>
             </Badge>
-            <span className="text-[9px] text-slate-400 font-black uppercase tracking-tight">{category}</span>
+            <span className="text-[9px] text-slate-400 font-semibold tracking-tight">{category}</span>
           </div>
 
-          <h4 className="font-bold text-slate-800 text-xs truncate leading-snug" title={doc.title}>
+          <h4 className="font-medium text-slate-800 text-xs truncate leading-snug" title={doc.title}>
             {doc.title}
           </h4>
         </div>
 
-        <div className="flex justify-between items-end mt-4 pt-3 border-t border-slate-100/80">
+        <div className="flex justify-between items-end mt-4 pt-3 border-t /80">
           <div className="text-[9px] text-slate-400 font-semibold leading-tight">
-            <p className="text-slate-500 font-bold truncate max-w-[100px]">{doc.uploadedBy}</p>
+            <p className="text-slate-500 font-medium truncate max-w-[100px]">{doc.uploadedBy}</p>
             <p className="mt-0.5">{formattedDate}</p>
           </div>
-          <p className="text-xs font-black text-slate-800 tracking-tight leading-none">
+          <p className="text-xs font-semibold text-slate-800 tracking-tight leading-none">
             {formatIDR(doc.amount)}
           </p>
         </div>

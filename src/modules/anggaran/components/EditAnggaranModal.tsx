@@ -76,7 +76,7 @@ export const EditAnggaranModal = ({ budget, onSuccess, onCancel }: Props) => {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       {/* Global Error Banner */}
       {updateMutation.isError && (
-        <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-900 rounded-none flex items-start gap-2.5 shadow-sm">
+        <div className="text-rose-900 flex items-start gap-2.5 shadow-sm">
           <ShieldAlert size={16} className="text-rose-700 shrink-0 mt-0.5" />
           <p className="text-[11px] font-semibold leading-normal">
             {(updateMutation.error as any)?.response?.data?.message || updateMutation.error?.message || 'Gagal menyimpan perubahan Anggaran.'}
@@ -111,9 +111,9 @@ export const EditAnggaranModal = ({ budget, onSuccess, onCancel }: Props) => {
       </div>
 
       {/* Items Section */}
-      <div className="space-y-3 pt-3 border-t border-slate-100">
+      <div className="space-y-3 pt-3 border-t">
         <div className="flex justify-between items-center">
-          <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+          <h4 className="text-[10px] font-semibold text-slate-500">
             Rincian Item Anggaran ({fields.length})
           </h4>
           <Button
@@ -121,14 +121,14 @@ export const EditAnggaranModal = ({ budget, onSuccess, onCancel }: Props) => {
             variant="outline"
             size="sm"
             onClick={() => append({ name: '', plafon: undefined as any, komisiId: '' })}
-            className="text-[10px] px-2.5 py-1 border-slate-300 font-black rounded-none flex items-center gap-1"
+            className="text-[10px] px-2.5 py-1 border-slate-300 font-semibold rounded-none flex items-center gap-1"
           >
             <Plus size={12} /> Tambah Baris
           </Button>
         </div>
 
         {errors.items?.message && (
-          <p className="text-[10px] text-rose-500 font-bold">{errors.items.message}</p>
+          <p className="text-[10px] text-rose-500 font-medium">{errors.items.message}</p>
         )}
 
         <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
@@ -139,7 +139,7 @@ export const EditAnggaranModal = ({ budget, onSuccess, onCancel }: Props) => {
             return (
               <div
                 key={field.id}
-                className="p-3 bg-slate-50/50 border border-slate-200/60 relative space-y-3 rounded-none flex flex-col md:flex-row md:items-start gap-3 md:pr-12"
+                className="p-3 bg-slate-50/50 relative space-y-3 rounded-none flex flex-col md:flex-row md:items-start gap-3 md:pr-12"
               >
                 <div className="flex-1">
                   <Input
@@ -190,19 +190,19 @@ export const EditAnggaranModal = ({ budget, onSuccess, onCancel }: Props) => {
       </div>
 
       {/* Action Buttons */}
-      <div className="pt-4 flex gap-3 border-t border-slate-100">
+      <div className="pt-4 flex gap-3 border-t">
         <Button
           type="button"
           variant="outline"
           onClick={onCancel}
-          className="flex-1 py-3 text-xs font-bold rounded-none border-slate-200 text-slate-500"
+          className="flex-1 py-3 text-xs font-medium rounded-none border-slate-200 text-slate-500"
         >
           Batal
         </Button>
         <Button
           type="submit"
           disabled={updateMutation.isPending}
-          className="flex-1 py-3 font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-none flex justify-center items-center gap-2"
+          className="flex-1 py-3 font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-none flex justify-center items-center gap-2"
         >
           {updateMutation.isPending ? 'Menyimpan...' : <><CheckCircle2 size={16} /> Simpan Perubahan</>}
         </Button>

@@ -71,10 +71,10 @@ const LoginPage = () => {
             <Church size={24} />
           </div>
           <div className="mt-2">
-            <h1 className="text-2xl font-black tracking-widest text-white uppercase leading-tight">
+            <h1 className="text-2xl font-semibold text-white leading-tight">
               SANTIKA
             </h1>
-            <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1">
+            <p className="text-[10px] font-medium text-slate-400 mt-1">
               Sistem Akuntansi Keuangan Paroki
             </p>
           </div>
@@ -82,7 +82,7 @@ const LoginPage = () => {
 
         {/* Title */}
         <div className="border-b border-slate-800 pb-3">
-          <h2 className="text-sm font-black text-slate-300 uppercase tracking-wider">
+          <h2 className="text-sm font-semibold text-slate-300">
             Masuk ke Akun
           </h2>
         </div>
@@ -99,7 +99,7 @@ const LoginPage = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Email Input */}
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2 tracking-wider">
+            <label className="text-[10px] font-semibold text-slate-400 flex items-center gap-2">
               <Mail size={12} className="text-slate-400" /> Alamat Email
             </label>
             <div className="relative">
@@ -112,13 +112,13 @@ const LoginPage = () => {
               />
             </div>
             {errors.email && (
-              <p className="text-[10px] text-rose-400 font-bold">{errors.email.message}</p>
+              <p className="text-[10px] text-rose-400 font-medium">{errors.email.message}</p>
             )}
           </div>
 
           {/* Password Input */}
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2 tracking-wider">
+            <label className="text-[10px] font-semibold text-slate-400 flex items-center gap-2">
               <Lock size={12} className="text-slate-400" /> Kata Sandi
             </label>
             <div className="relative">
@@ -139,7 +139,7 @@ const LoginPage = () => {
               </button>
             </div>
             {errors.password && (
-              <p className="text-[10px] text-rose-400 font-bold">{errors.password.message}</p>
+              <p className="text-[10px] text-rose-400 font-medium">{errors.password.message}</p>
             )}
           </div>
 
@@ -147,7 +147,7 @@ const LoginPage = () => {
           <Button
             type="submit"
             disabled={isSubmitting || isLoading}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-none font-bold text-xs uppercase tracking-widest mt-6 flex justify-center items-center gap-2 shadow-lg shadow-blue-500/10 cursor-pointer"
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-none font-medium text-xs mt-6 flex justify-center items-center gap-2 shadow-lg shadow-blue-500/10 cursor-pointer"
           >
             {isSubmitting || isLoading ? (
               <>
@@ -161,7 +161,7 @@ const LoginPage = () => {
 
         {/* Footer Credit */}
         <div className="text-center pt-2">
-          <p className="text-[9px] text-slate-500 font-semibold tracking-wider uppercase leading-relaxed">
+          <p className="text-[9px] text-slate-500 font-semibold leading-relaxed">
             Paroki St. Stefanus Sempan <br />
             © 2026 Santika Team. All Rights Reserved.
           </p>

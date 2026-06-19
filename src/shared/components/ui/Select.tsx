@@ -37,7 +37,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             className={cn(
-              'text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5',
+              'text-[10px] font-semibold   flex items-center gap-1.5',
               hasError ? 'text-rose-500' : 'text-slate-500'
             )}
           >
@@ -62,19 +62,17 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           <select
             ref={ref}
             className={cn(
-              'w-full bg-white text-sm text-slate-800 font-medium',
-              'border border-slate-200 outline-none',
+              'w-full bg-slate-50 text-sm text-slate-800 font-medium',
+              'border border-transparent outline-none',
               // DESIGN SYSTEM GUARD: rounded-none — zero kapsul dropdown
               'rounded-none',
               // Padding presisi — pr-9 mencegah zero data clipping di atas chevron
-              'px-4 py-2.5 pr-9',
+              'px-4 py-2.5 pr-10',
               // Hapus appearance browser default, gunakan chevron custom
               'appearance-none',
-              // Micro-interaction: border berubah warna saat fokus (bukan ring)
-              'transition-colors duration-150',
-              'focus:border-slate-700 focus:bg-white',
-              // Cursor
-              'cursor-pointer',
+              // Micro-interaction: background berubah dan border muncul halus saat fokus
+              'transition-all duration-150 cursor-pointer',
+              'focus:border-slate-300 focus:bg-white',
               // Icon offset kiri
               icon && 'pl-9',
               // State error
@@ -114,7 +112,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {hasError && (
           <p
             id={`${props.id ?? props.name}-error`}
-            className="text-[10px] text-rose-500 font-bold tracking-wide"
+            className="text-[10px] text-rose-500 font-medium"
             role="alert"
           >
             {error}
