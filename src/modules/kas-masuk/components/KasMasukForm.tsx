@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { KasMasukSchema } from '../types/kas-masuk';
 import type { KasMasukInput } from '../types/kas-masuk';
@@ -10,6 +10,7 @@ import { useKasKeluarQuery } from '../../kas-keluar/hooks/useKasKeluarQuery';
 import { useSpecialFundsQuery } from '../../dana-khusus/hooks/useSpecialFundQuery';
 import { useAuthStore } from '../../../app/store/useAuthStore';
 import { formatIDR } from '../../../shared/utils/formatter';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 
 interface Props {
     onSubmit: (data: KasMasukInput) => void;
@@ -41,6 +42,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
     const {
         register,
         handleSubmit,
+        control,
         setValue,
         watch,
         formState: { errors, isSubmitting },
@@ -439,15 +441,18 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                 <label className="text-[11px] font-semibold text-slate-500 flex items-center gap-2">
                     <Wallet size={14} className="text-amber-500" /> Nominal (IDR)
                 </label>
-                <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 font-medium text-slate-400 text-sm">Rp</div>
-                    <input
-                        type="number"
-                        placeholder="0"
-                        {...register('amount', { valueAsNumber: true })}
-                        className="w-full pl-12 pr-4 py-3 bg-slate-50 rounded-none text-lg font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                    />
-                </div>
+                <Controller
+                    name="amount"
+                    control={control}
+                    render={({ field }) => (
+                        <CurrencyInput
+                            value={field.value ?? undefined}
+                            onChange={field.onChange}
+                            placeholder="0"
+                            className="text-lg font-semibold text-slate-800 bg-slate-50"
+                        />
+                    )}
+                />
                 {errors.amount && <p className="text-[10px] text-rose-500 font-medium">{errors.amount.message}</p>}
             </div>
 

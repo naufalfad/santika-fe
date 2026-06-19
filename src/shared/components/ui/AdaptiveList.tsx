@@ -1,6 +1,8 @@
+// --- FILE: src\shared\components\ui\AdaptiveList.tsx-- -
 import React from 'react';
 import { cn } from '../../utils/cn';
 import { Inbox } from 'lucide-react';
+import { Pagination } from './Pagination';
 
 interface AdaptiveListProps<T> {
   data: T[];
@@ -20,25 +22,18 @@ interface AdaptiveListProps<T> {
    * @default 5
    */
   skeletonRows?: number;
+  /**
+   * Konfigurasi pagination (opsional).
+   */
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    onPageChange: (page: number) => void;
+  };
 }
 
-/**
- * GRASP: Pure Fabrication + Polymorphism
- * AdaptiveList adalah Pure Fabrication: tidak ada entitas bisnis "AdaptiveList"
- * dalam domain paroki. Ia ada untuk memenuhi kebutuhan teknis polimorfisme layout:
- * satu data source, dua representasi berbeda berdasarkan breakpoint.
- *
- * GRASP: Polymorphism
- * Alih-alih `if (isMobile) renderMobile() else renderDesktop()`,
- * kita menggunakan CSS class switching (block md:hidden / hidden md:block) —
- * ini adalah Polymorphism berbasis CSS yang lebih performant karena
- * zero JS re-render untuk perubahan viewport.
- *
- * DESIGN SYSTEM GUARD:
- * - rounded-none: MUTLAK pada container outer dan semua elemen internal.
- * - border satu sisi (divide-y divide-slate-100) untuk pemisah baris — no box-inside-box.
- * - Skeleton loading state ditambahkan untuk UX yang tidak melompat (layout stability).
- */
 export const AdaptiveList = <T,>({
   data,
   desktopHeaders,
@@ -48,13 +43,13 @@ export const AdaptiveList = <T,>({
   className,
   isLoading = false,
   skeletonRows = 5,
+  pagination,
 }: AdaptiveListProps<T>) => {
   const hasData = data && data.length > 0;
 
   // ── SKELETON LOADING STATE ──
   if (isLoading) {
     return (
-      // DESIGN SYSTEM GUARD: rounded-none pada container
       <div className={cn('overflow-hidden border border-slate-200 rounded-none bg-white shadow-sm', className)}>
         {/* Mobile skeleton */}
         <div className="block md:hidden divide-y divide-slate-100">
@@ -95,11 +90,10 @@ export const AdaptiveList = <T,>({
   }
 
   return (
-    // DESIGN SYSTEM GUARD: rounded-none pada container outer
     <div className={cn('overflow-hidden border border-slate-200 rounded-none bg-white shadow-sm', className)}>
       {hasData ? (
         <>
-          {/* MOBILE VIEW: high-density flat card rows, no nested border cards */}
+          {/* MOBILE VIEW */}
           <div className="block md:hidden divide-y divide-slate-100 bg-white">
             {data.map((item, index) => (
               <div
@@ -111,23 +105,29 @@ export const AdaptiveList = <T,>({
             ))}
           </div>
 
-          {/* DESKTOP VIEW: standardized data table */}
+          {/* DESKTOP VIEW: Standardized Data Table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="text-slate-500 text-[10px] font-semibold border-b">
+                <tr className="text-slate-600 text-xs font-semibold border-b border-slate-200 bg-slate-50/80">
                   {desktopHeaders.map((header, idx) => (
                     <th
                       key={idx}
                       className={cn(
-                        'px-5 py-3 border-r  last:border-r-0 whitespace-nowrap',
-                        // Alignment otomatis untuk kolom numerik
+                        'px-5 py-3.5 border-r border-slate-200 last:border-r-0 whitespace-nowrap',
+                        // Alignment otomatis untuk kolom numerik (Rata Kanan)
                         typeof header === 'string' &&
-                          (header.toLowerCase().includes('jumlah') ||
-                            header.toLowerCase().includes('nominal') ||
-                            header.toLowerCase().includes('saldo') ||
-                            header.toLowerCase().includes('total')) &&
-                          'text-right'
+                        (header.toLowerCase().includes('jumlah') ||
+                          header.toLowerCase().includes('nominal') ||
+                          header.toLowerCase().includes('saldo') ||
+                          header.toLowerCase().includes('total')) &&
+                        'text-right',
+                        // Alignment otomatis untuk Status dan Aksi (Rata Tengah)
+                        typeof header === 'string' &&
+                        (header.toLowerCase() === 'aksi' ||
+                          header.toLowerCase() === 'status' || // 👈 TAMBAHKAN INI
+                          header === '') &&
+                        'text-center'
                       )}
                     >
                       {header}
@@ -140,6 +140,17 @@ export const AdaptiveList = <T,>({
               </tbody>
             </table>
           </div>
+
+          {/* PAGINATION CONTROLS */}
+          {pagination && (
+            <Pagination
+              currentPage={pagination.currentPage}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.totalItems}
+              itemsPerPage={pagination.itemsPerPage}
+              onPageChange={pagination.onPageChange}
+            />
+          )}
         </>
       ) : (
         /* EMPTY STATE */

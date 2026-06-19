@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Search, Filter, UploadCloud, FolderOpen, ShieldCheck, Clock } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Search, UploadCloud, FolderOpen, ShieldCheck, Clock } from 'lucide-react';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Modal } from '../../../shared/components/ui/Modal';
@@ -10,6 +10,7 @@ import { useAuthStore } from '../../../app/store/useAuthStore';
 import { useSpjsQuery, useVerifySpjMutation } from '../hooks/useSpjQuery';
 import type { SpjDocument } from '../hooks/useSpjQuery';
 import { formatIDR } from '../../../shared/utils/formatter';
+import { Pagination } from '../../../shared/components/ui/Pagination';
 
 /**
  * Optimised SPJ Document management page integrated with backend.
@@ -25,6 +26,10 @@ const SPJPage = () => {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [timeRange, setTimeRange] = useState<'ALL' | 'THIS_MONTH' | 'LAST_MONTH'>('ALL');
+  const [sortBy, setSortBy] = useState<'LATEST' | 'OLDEST' | 'AMOUNT_DESC' | 'AMOUNT_ASC'>('LATEST');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   // Memoize static metrics calculations from SPJ query state
   const { totalArsip, totalVerified, totalPending } = useMemo(() => {
@@ -35,18 +40,80 @@ const SPJPage = () => {
     };
   }, [spjDocuments]);
 
-  // Memoize search and status query filtering
-  const filteredDocs = useMemo(() => {
+  // Cascading data processing engine:
+  // 1. Filter by status and time range
+  const filteredByTimeAndStatus = useMemo(() => {
     return spjDocuments.filter(doc => {
-      const category = doc.cashTransaction?.expenseType?.name || doc.kegiatan?.namaKegiatan || 'Umum';
-      const matchesSearch = doc.title.toLowerCase().includes(search.toLowerCase()) ||
-        category.toLowerCase().includes(search.toLowerCase());
+      // Status Filter
+      if (statusFilter !== 'ALL' && doc.status !== statusFilter) return false;
 
-      const matchesStatus = statusFilter === 'ALL' || doc.status === statusFilter;
+      // Time Range Filter
+      if (timeRange !== 'ALL') {
+        const d = new Date(doc.createdAt);
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
 
-      return matchesSearch && matchesStatus;
+        if (timeRange === 'THIS_MONTH') {
+          if (d.getMonth() !== currentMonth || d.getFullYear() !== currentYear) {
+            return false;
+          }
+        } else if (timeRange === 'LAST_MONTH') {
+          const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+          const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+          if (d.getMonth() !== lastMonth || d.getFullYear() !== lastMonthYear) {
+            return false;
+          }
+        }
+      }
+      return true;
     });
-  }, [spjDocuments, search, statusFilter]);
+  }, [spjDocuments, statusFilter, timeRange]);
+
+  // 2. Filter by search term
+  const searchedData = useMemo(() => {
+    if (!search) return filteredByTimeAndStatus;
+    const term = search.toLowerCase();
+    return filteredByTimeAndStatus.filter(doc => {
+      const category = doc.cashTransaction?.expenseType?.name || doc.kegiatan?.namaKegiatan || 'Umum';
+      return doc.title.toLowerCase().includes(term) || category.toLowerCase().includes(term);
+    });
+  }, [filteredByTimeAndStatus, search]);
+
+  // 3. Sort data
+  const sortedData = useMemo(() => {
+    const dataCopy = [...searchedData];
+    return dataCopy.sort((a, b) => {
+      if (sortBy === 'LATEST') {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+      if (sortBy === 'OLDEST') {
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+      if (sortBy === 'AMOUNT_DESC') {
+        return Number(b.amount) - Number(a.amount);
+      }
+      if (sortBy === 'AMOUNT_ASC') {
+        return Number(a.amount) - Number(b.amount);
+      }
+      return 0;
+    });
+  }, [searchedData, sortBy]);
+
+  // 4. Paginate data
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return sortedData.slice(startIndex, startIndex + itemsPerPage);
+  }, [sortedData, currentPage, itemsPerPage]);
+
+  const totalPages = useMemo(() => {
+    return Math.ceil(sortedData.length / itemsPerPage);
+  }, [sortedData, itemsPerPage]);
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, timeRange, sortBy]);
 
   // Extract preview file info for the selected document
   const previewInfo = useMemo(() => {
@@ -80,21 +147,21 @@ const SPJPage = () => {
 
       {/* Stats Mini Cards - Seamless border flat layouts */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 flex items-center gap-3.5 border-b-4 border-b-blue-600 border-x-slate-200 border-t-slate-200 shadow-none rounded-none">
+        <Card className="p-4 flex items-center gap-3.5 border border-slate-200 shadow-none rounded-none">
           <div className="text-blue-600"><FolderOpen size={20} /></div>
           <div>
             <p className="text-[10px] text-slate-400 font-semibold">Total Arsip</p>
             <h4 className="text-lg font-semibold text-slate-800 tracking-tight mt-0.5">{totalArsip} <span className="text-[11px] font-medium text-slate-400">File</span></h4>
           </div>
         </Card>
-        <Card className="p-4 flex items-center gap-3.5 border-b-4 border-b-emerald-600 border-x-slate-200 border-t-slate-200 shadow-none rounded-none">
+        <Card className="p-4 flex items-center gap-3.5 border border-slate-200 shadow-none rounded-none">
           <div className="text-emerald-600"><ShieldCheck size={20} /></div>
           <div>
             <p className="text-[10px] text-slate-400 font-semibold">Terverifikasi</p>
             <h4 className="text-lg font-semibold text-slate-800 tracking-tight mt-0.5">{totalVerified} <span className="text-[11px] font-medium text-slate-400">File</span></h4>
           </div>
         </Card>
-        <Card className="p-4 flex items-center gap-3.5 border-b-4 border-b-amber-500 border-x-slate-200 border-t-slate-200 shadow-none rounded-none">
+        <Card className="p-4 flex items-center gap-3.5 border border-slate-200 shadow-none rounded-none">
           <div className="text-amber-600"><Clock size={20} /></div>
           <div>
             <p className="text-[10px] text-slate-400 font-semibold">Menunggu</p>
@@ -104,9 +171,9 @@ const SPJPage = () => {
       </div>
 
       {/* Toolbar */}
-      <Card className="p-3.5 bg-slate-50 flex flex-col md:flex-row gap-4 items-center rounded-none shadow-none">
-        <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-200 rounded-none w-full md:w-96">
-          <Search size={16} className="text-slate-400" />
+      <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col lg:flex-row gap-3 justify-between items-stretch lg:items-center">
+        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-none w-full lg:w-96">
+          <Search size={14} className="text-slate-400 shrink-0" />
           <input
             type="text"
             placeholder="Cari nama dokumen atau komisi..."
@@ -115,22 +182,53 @@ const SPJPage = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2 ml-auto w-full md:w-auto">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-white border border-slate-200 rounded-none px-3 py-1.5 text-xs font-medium outline-none text-slate-600 cursor-pointer"
-          >
-            <option value="ALL">Semua Kategori Status</option>
-            <option value="PENDING">Menunggu Verifikasi</option>
-            <option value="VERIFIED">Terverifikasi</option>
-            <option value="REJECTED">Ditolak</option>
-          </select>
-          <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200 bg-white" disabled>
-            <Filter size={14} /> Filter
-          </Button>
+
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Rentang Waktu */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rentang Waktu:</span>
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value as any)}
+              className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+            >
+              <option value="ALL">Semua Waktu</option>
+              <option value="THIS_MONTH">Bulan Ini</option>
+              <option value="LAST_MONTH">Bulan Lalu</option>
+            </select>
+          </div>
+
+          {/* Status */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+            >
+              <option value="ALL">Semua Status</option>
+              <option value="PENDING">Menunggu Verifikasi</option>
+              <option value="VERIFIED">Terverifikasi</option>
+              <option value="REJECTED">Ditolak</option>
+            </select>
+          </div>
+
+          {/* Urutan */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Urutan:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+            >
+              <option value="LATEST">Terbaru</option>
+              <option value="OLDEST">Terlama</option>
+              <option value="AMOUNT_DESC">Nominal Tertinggi</option>
+              <option value="AMOUNT_ASC">Nominal Terendah</option>
+            </select>
+          </div>
         </div>
-      </Card>
+      </div>
 
       {/* Loading & Grid View */}
       {isLoading ? (
@@ -138,15 +236,26 @@ const SPJPage = () => {
           <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-none animate-spin"></div>
           Loading dokumen SPJ...
         </div>
-      ) : filteredDocs.length === 0 ? (
+      ) : paginatedData.length === 0 ? (
         <div className="p-12 text-center text-slate-400 bg-white border border-slate-200 rounded-none shadow-sm font-semibold text-xs">
           Tidak ada dokumen SPJ ditemukan
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredDocs.map(doc => (
-            <SPJCard key={doc.id} doc={doc} onPreview={setSelectedDoc} />
-          ))}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {paginatedData.map(doc => (
+              <SPJCard key={doc.id} doc={doc} onPreview={setSelectedDoc} />
+            ))}
+          </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={sortedData.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            className="border border-slate-200 bg-white shadow-sm"
+          />
         </div>
       )}
 

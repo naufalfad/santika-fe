@@ -1,12 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   CheckCircle2, XCircle, Users, FileText, ShieldCheck,
-  ArrowLeft, Calendar, MapPin, Paperclip, Download
+  ArrowLeft, Calendar, MapPin, Paperclip, Download, Inbox
 } from 'lucide-react';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { Modal } from '../../../shared/components/ui/Modal';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 import { useAuthStore } from '../../../app/store/useAuthStore';
 import {
   useKegiatanQuery,
@@ -232,6 +233,17 @@ const ApprovalPage = () => {
           <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-none animate-spin"></div>
           Memuat daftar pengajuan...
         </div>
+      ) : currentFilteredList.length === 0 ? (
+        // UNIFIED EMPTY STATE: Pencegahan render grid ketika data kosong
+        <Card className="p-16 flex flex-col items-center justify-center text-center border-slate-200 shadow-sm rounded-none">
+          <div className="mb-4 bg-slate-50 p-4 border border-slate-100 rounded-none text-slate-400">
+            <Inbox size={32} />
+          </div>
+          <h3 className="text-sm font-semibold text-slate-700 mb-1">Tidak Ada Antrean</h3>
+          <p className="text-xs text-slate-500 font-medium max-w-sm">
+            Tidak ada dokumen pengajuan atau kegiatan yang menunggu tinjauan pada kategori ini.
+          </p>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* LEFT COLUMN: LIST */}
@@ -245,66 +257,60 @@ const ApprovalPage = () => {
             </div>
 
             <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-              {currentFilteredList.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-none font-medium text-xs">
-                  Tidak ada pengajuan dalam kategori ini.
-                </div>
-              ) : (
-                currentFilteredList.map((item: any) => {
-                  const isSelected = selectedKegiatan?.id === item.id;
-                  const budgetInfo = item.anggaran?.[0];
-                  return (
-                    <Card
-                      key={item.id}
-                      className={cn(
-                        "p-4 cursor-pointer transition-all duration-200 border-l-4",
-                        isSelected
-                          ? "border-l-blue-600 bg-blue-50/20 shadow-md ring-1 ring-blue-100"
-                          : "border-l-transparent hover:bg-white hover:shadow-sm"
-                      )}
-                      onClick={() => {
-                        setSelectedKegiatanId(item.id);
-                        setShowMobileDetail(true);
-                      }}
-                    >
-                      <div className="flex gap-4">
-                        <div className="text-indigo-600 h-fit">
-                          <FileText size={18} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-slate-800 leading-snug truncate">
-                            {item.namaKegiatan}
-                          </h4>
-                          <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                            Komisi: {item.komisi?.nama}
+              {currentFilteredList.map((item: any) => {
+                const isSelected = selectedKegiatan?.id === item.id;
+                const budgetInfo = item.anggaran?.[0];
+                return (
+                  <Card
+                    key={item.id}
+                    className={cn(
+                      "p-4 cursor-pointer transition-all duration-200 border-l-4",
+                      isSelected
+                        ? "border-l-blue-600 bg-blue-50/20 shadow-md ring-1 ring-blue-100"
+                        : "border-l-transparent hover:bg-white hover:shadow-sm"
+                    )}
+                    onClick={() => {
+                      setSelectedKegiatanId(item.id);
+                      setShowMobileDetail(true);
+                    }}
+                  >
+                    <div className="flex gap-4">
+                      <div className="text-indigo-600 h-fit">
+                        <FileText size={18} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-medium text-slate-800 leading-snug truncate">
+                          {item.namaKegiatan}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                          Komisi: {item.komisi?.nama}
+                        </p>
+                        {budgetInfo && (
+                          <p className="text-[11px] text-emerald-650 font-medium mt-0.5">
+                            Anggaran: {formatIDR(budgetInfo.estimasiBiaya)} ({budgetInfo.posDana?.name || 'Belum ada pos dana'})
                           </p>
-                          {budgetInfo && (
-                            <p className="text-[11px] text-emerald-650 font-medium mt-0.5">
-                              Anggaran: {formatIDR(budgetInfo.estimasiBiaya)} ({budgetInfo.posDana?.name || 'Belum ada pos dana'})
-                            </p>
-                          )}
+                        )}
 
-                          <div className="flex justify-between items-end mt-4">
-                            <div>
-                              <p className="text-sm font-semibold text-slate-900">
-                                {item.nomorKegiatan}
-                              </p>
-                              <p className="text-[10px] text-slate-400 mt-1">
-                                {new Date(item.createdAt).toLocaleDateString('id-ID', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  year: 'numeric'
-                                })}
-                              </p>
-                            </div>
-                            {getStatusBadge(item.status)}
+                        <div className="flex justify-between items-end mt-4">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">
+                              {item.nomorKegiatan}
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-1">
+                              {new Date(item.createdAt).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                              })}
+                            </p>
                           </div>
+                          {getStatusBadge(item.status)}
                         </div>
                       </div>
-                    </Card>
-                  );
-                })
-              )}
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           </div>
 
@@ -474,8 +480,6 @@ const ApprovalPage = () => {
                 </Card>
               )
             )}
-
-            {/* B. ANGGARAN DETAIL PANEL is no longer needed since it's unified with kegiatan */}
           </div>
         </div>
       )}
@@ -558,14 +562,11 @@ const ApprovalPage = () => {
                 <label className="block text-[10px] font-semibold text-slate-700">
                   Jumlah Anggaran Disetujui (Rp) *
                 </label>
-                <input
-                  type="number"
-                  required
-                  min={1000}
-                  value={approvedAmount || ''}
-                  onChange={(e) => setApprovedAmount(Number(e.target.value))}
+                <CurrencyInput
+                  value={approvedAmount || undefined}
+                  onChange={(val) => setApprovedAmount(val ?? 0)}
                   placeholder="0"
-                  className="w-full px-3 py-2 text-xs rounded-none outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white transition-all font-semibold text-slate-800"
+                  className="text-xs bg-white font-semibold text-slate-800"
                 />
               </div>
             </div>

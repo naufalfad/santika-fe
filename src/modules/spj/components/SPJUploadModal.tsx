@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Upload, X, CheckCircle2, FileText, Image, AlertCircle } from 'lucide-react';
 import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 import { Select } from '../../../shared/components/ui/Select';
 import { useKasKeluarQuery } from '../../kas-keluar/hooks/useKasKeluarQuery';
 import { useUploadSpjMutation } from '../hooks/useSpjQuery';
@@ -44,7 +45,7 @@ export const SPJUploadModal = ({ onSuccess, onCancel, defaultCashTransactionId }
     return filtered;
   }, [kasKeluar, defaultCashTransactionId]);
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, watch, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       cash_transaction_id: defaultCashTransactionId || '',
@@ -151,13 +152,21 @@ export const SPJUploadModal = ({ onSuccess, onCancel, defaultCashTransactionId }
         </Select>
       </div>
 
-      <Input
-        label="NILAI TRANSAKSI (RP)"
-        type="number"
-        placeholder="0"
-        error={errors.amount?.message}
-        {...register('amount', { valueAsNumber: true })}
-      />
+      <div className="space-y-1.5">
+        <label className="text-[11px] font-semibold text-slate-500">NILAI TRANSAKSI (RP)</label>
+        <Controller
+          name="amount"
+          control={control}
+          render={({ field }) => (
+            <CurrencyInput
+              value={field.value ?? undefined}
+              onChange={field.onChange}
+              placeholder="0"
+            />
+          )}
+        />
+        {errors.amount && <p className="text-[10px] text-rose-500 font-medium mt-1">{errors.amount.message}</p>}
+      </div>
 
       <div>
         <label className="block text-[11px] font-semibold text-slate-500 mb-2">

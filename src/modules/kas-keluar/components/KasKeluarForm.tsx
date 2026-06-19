@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Upload, X, CheckCircle2, AlertCircle, HelpCircle } from 'lucide-react';
 import { Button } from '../../../shared/components/ui/Button';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 import { useActivityStore } from '../../../app/store/useActivityStore';
 import { useFundCategoriesQuery } from '../../kas-masuk/hooks/useKasMasukQuery';
 import { useExpenseTypesQuery, useApprovalsQuery, useAddKasKeluarMutation } from '../hooks/useKasKeluarQuery';
@@ -38,7 +39,7 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
 
-  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, watch, setValue, control, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       transaction_date: new Date().toISOString().substring(0, 10),
@@ -271,7 +272,19 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">NOMINAL (RP)</label>
-          <input type="number" {...register('amount', { valueAsNumber: true })} disabled={!!selectedPermohonanId} placeholder="0" className="w-full p-2 border rounded-none text-sm outline-blue-500 font-semibold text-slate-800" />
+          <Controller
+            name="amount"
+            control={control}
+            render={({ field }) => (
+              <CurrencyInput
+                value={field.value ?? undefined}
+                onChange={field.onChange}
+                disabled={!!selectedPermohonanId}
+                placeholder="0"
+                className="text-sm font-semibold text-slate-800"
+              />
+            )}
+          />
           {errors.amount && <p className="text-red-500 text-[10px] mt-1">{errors.amount.message}</p>}
         </div>
       </div>

@@ -1,16 +1,19 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Plus, Search, Download,
-  Info, FileImage, PieChart as PieIcon, ArrowUpRight, TrendingUp
+  FileImage, ArrowUpRight, TrendingUp,
+  Info, UploadCloud
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart as RechartsPieChart, Pie, Cell, Legend
+  PieChart as RechartsPieChart, Pie, Cell
 } from 'recharts';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { Modal } from '../../../shared/components/ui/Modal';
+import { ChartCard } from '../../../shared/components/ui/ChartCard';
+import { MiniLedger, type LedgerItem } from '../../../shared/components/ui/MiniLedger';
 import { KasKeluarForm } from '../components/KasKeluarForm';
 import { SPJUploadModal } from '../../spj/components/SPJUploadModal';
 import { formatIDR } from '../../../shared/utils/formatter';
@@ -36,6 +39,10 @@ const KasKeluarPage = () => {
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | undefined>(undefined);
   const [selectedBuktiUrl, setSelectedBuktiUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'PERMANENT' | 'SPECIAL_FUND'>('PERMANENT');
+  const [timeRange, setTimeRange] = useState<'ALL' | 'THIS_MONTH' | 'LAST_MONTH'>('ALL');
+  const [sortBy, setSortBy] = useState<'LATEST' | 'OLDEST' | 'AMOUNT_DESC' | 'AMOUNT_ASC'>('LATEST');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // 1. Calculate base API asset paths dynamically
   const apiAssetUrl = useMemo(() => {
@@ -113,15 +120,74 @@ const KasKeluarPage = () => {
     return Math.round(sum / specialTxsThisMonth.length);
   }, [kasKeluarSpecial]);
 
-  // 6. Memoize search query filter logic
-  const filteredData = useMemo(() => {
-    return currentTransactions.filter(item =>
-      item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.transactionNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.fundCategory?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.expenseType?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+  // Cascading data processing engine:
+  // 1. Filter by time
+  const filteredByTime = useMemo(() => {
+    if (timeRange === 'ALL') return currentTransactions;
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    return currentTransactions.filter(item => {
+      const d = new Date(item.transactionDate);
+      if (timeRange === 'THIS_MONTH') {
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      }
+      if (timeRange === 'LAST_MONTH') {
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
+      }
+      return true;
+    });
+  }, [currentTransactions, timeRange]);
+
+  // 2. Filter by search term
+  const searchedData = useMemo(() => {
+    if (!searchTerm) return filteredByTime;
+    const term = searchTerm.toLowerCase();
+    return filteredByTime.filter(item =>
+      item.description.toLowerCase().includes(term) ||
+      item.transactionNo.toLowerCase().includes(term) ||
+      (item.fundCategory?.name || '').toLowerCase().includes(term) ||
+      (item.expenseType?.name || '').toLowerCase().includes(term)
     );
-  }, [currentTransactions, searchTerm]);
+  }, [filteredByTime, searchTerm]);
+
+  // 3. Sort data
+  const sortedData = useMemo(() => {
+    const dataCopy = [...searchedData];
+    return dataCopy.sort((a, b) => {
+      if (sortBy === 'LATEST') {
+        return new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime();
+      }
+      if (sortBy === 'OLDEST') {
+        return new Date(a.transactionDate).getTime() - new Date(b.transactionDate).getTime();
+      }
+      if (sortBy === 'AMOUNT_DESC') {
+        return Number(b.amount) - Number(a.amount);
+      }
+      if (sortBy === 'AMOUNT_ASC') {
+        return Number(a.amount) - Number(b.amount);
+      }
+      return 0;
+    });
+  }, [searchedData, sortBy]);
+
+  // 4. Paginate data
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return sortedData.slice(startIndex, startIndex + itemsPerPage);
+  }, [sortedData, currentPage, itemsPerPage]);
+
+  const totalPages = useMemo(() => {
+    return Math.ceil(sortedData.length / itemsPerPage);
+  }, [sortedData, itemsPerPage]);
+
+  // Reset page to 1 when filters or active tab change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchTerm, timeRange, sortBy]);
 
   // 7. Memoize daily trend chart dataset
   const trendDataset = useMemo(() => {
@@ -151,8 +217,8 @@ const KasKeluarPage = () => {
     return chartData.length > 0 ? chartData : [];
   }, [currentTransactions]);
 
-  // 8. Memoize category distribution donut dataset
-  const categoryDataset = useMemo(() => {
+  // Dataset Alokasi Jenis Belanja untuk MiniLedger
+  const categoryDataset = useMemo<LedgerItem[]>(() => {
     const sums: Record<string, number> = {};
     let total = 0;
 
@@ -171,8 +237,9 @@ const KasKeluarPage = () => {
     const colors = ['#e11d48', '#f59e0b', '#7c3aed', '#0284c7', '#10b981', '#94a3b8'];
     return Object.entries(sums).map(([name, sum], index) => ({
       name,
-      value: Math.round((sum / total) * 100),
-      color: colors[index % colors.length]
+      value: sum,
+      percentage: total > 0 ? (sum / total) * 100 : 0,
+      color: colors[index % colors.length],
     }));
   }, [currentTransactions, activeTab]);
 
@@ -199,8 +266,8 @@ const KasKeluarPage = () => {
         <button
           onClick={() => setActiveTab('PERMANENT')}
           className={`pb-3 whitespace-nowrap transition-colors duration-200 rounded-none border-b-2 ${activeTab === 'PERMANENT'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent hover:text-slate-700 hover:border-slate-300'
+            ? 'border-blue-600 text-blue-600'
+            : 'border-transparent hover:text-slate-700 hover:border-slate-300'
             }`}
         >
           Pos Dana Permanen
@@ -208,8 +275,8 @@ const KasKeluarPage = () => {
         <button
           onClick={() => setActiveTab('SPECIAL_FUND')}
           className={`pb-3 whitespace-nowrap transition-colors duration-200 rounded-none border-b-2 ${activeTab === 'SPECIAL_FUND'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent hover:text-slate-700 hover:border-slate-300'
+            ? 'border-blue-600 text-blue-600'
+            : 'border-transparent hover:text-slate-700 hover:border-slate-300'
             }`}
         >
           Dana Khusus
@@ -218,7 +285,7 @@ const KasKeluarPage = () => {
 
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+        <Card className="p-4 border border-slate-200 shadow-sm">
           <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Total Keluar (Bulan Ini)' : 'Keluar Dana Khusus (Bulan Ini)'}
           </p>
@@ -227,7 +294,7 @@ const KasKeluarPage = () => {
         </Card>
 
         {activeTab === 'PERMANENT' ? (
-          <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+          <Card className="p-4 border border-slate-200 shadow-sm">
             <p className="text-[10px] text-slate-400 font-semibold">Burn Rate Anggaran</p>
             <div className="flex items-end gap-1.5 mt-1">
               <h4 className="text-lg font-semibold text-slate-800 tracking-tight">{burnRate}%</h4>
@@ -238,7 +305,7 @@ const KasKeluarPage = () => {
             </div>
           </Card>
         ) : (
-          <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+          <Card className="p-4 border border-slate-200 shadow-sm">
             <p className="text-[10px] text-slate-400 font-semibold">Rata-rata Pengeluaran</p>
             <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(avgSpecialExpense)}</h4>
             <div className="flex items-center gap-1 mt-2 text-amber-600 font-medium text-[10px]">
@@ -248,7 +315,7 @@ const KasKeluarPage = () => {
           </Card>
         )}
 
-        <Card className="p-4 border-l-4 border-l-blue-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+        <Card className="p-4 border border-slate-200 shadow-sm">
           <p className="text-[10px] text-slate-400 font-semibold">Transaksi (Bulan Ini)</p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{transBulanIniCount}</h4>
           <p className="text-[9px] text-blue-600 mt-2 font-medium flex items-center gap-1">
@@ -256,7 +323,7 @@ const KasKeluarPage = () => {
           </p>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-slate-800 border-y-slate-200 border-r-slate-200 shadow-sm">
+        <Card className="p-4 border border-slate-200 shadow-sm">
           <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Saldo Kas Saat Ini' : 'Sisa Saldo Dana Khusus'}
           </p>
@@ -292,52 +359,41 @@ const KasKeluarPage = () => {
           </div>
         </Card>
 
-        {/* Donut & Prosedur */}
-        <div className="lg:col-span-4 space-y-6">
-          <Card className="p-5 border-slate-200 shadow-sm">
-            <h3 className="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-1.5">
-              <PieIcon size={14} className="text-purple-500" /> {activeTab === 'PERMANENT' ? 'Alokasi Jenis Belanja' : 'Penyebaran Program'}
-            </h3>
-            <div className="h-[180px]">
+        {/* Donut & Ledger (Menerapkan Standardisasi Asymmetric Split & Progressive Help) */}
+        <div className="lg:col-span-4">
+          <ChartCard
+            title={activeTab === 'PERMANENT' ? 'Alokasi Jenis Belanja' : 'Penyebaran Program'}
+            subtitle="Bulan Berjalan"
+            helpText={`Prosedur Pengeluaran:\n\n1. Setiap pengeluaran di atas Rp 500.000 wajib mendapatkan approval dari Pastor Paroki terlebih dahulu.\n2. Nota fisik yang sah harus diupload ke sistem berupa file gambar/PDF.\n3. Sistem akan otomatis meregistrasikan SPJ jika file bukti nota diupload.`}
+            chartElement={
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
                   <Pie
                     data={categoryDataset}
-                    innerRadius={50}
-                    outerRadius={65}
-                    paddingAngle={4}
+                    innerRadius={55}
+                    outerRadius={75}
+                    paddingAngle={3}
                     dataKey="value"
                   >
                     {categoryDataset.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: 700 }} />
+                  <Tooltip formatter={(value) => formatIDR(Number(value))} />
                 </RechartsPieChart>
               </ResponsiveContainer>
-            </div>
-          </Card>
-
-          {/* Side Info Card */}
-          <Card className="p-4 bg-amber-50 border-amber-200 text-amber-950 shadow-sm">
-            <h4 className="font-semibold text-amber-800 flex items-center gap-1.5 mb-1.5 text-xs">
-              <Info size={14} /> Prosedur Pengeluaran
-            </h4>
-            <ul className="text-[11px] text-amber-800 font-semibold space-y-2 list-disc pl-4 leading-relaxed">
-              <li>Setiap pengeluaran di atas <strong className="font-semibold text-amber-950">Rp 500.000</strong> wajib mendapatkan approval Pastor.</li>
-              <li>Nota fisik harus diupload ke sistem berupa file gambar/PDF.</li>
-              <li>Sistem akan otomatis meregistrasikan SPJ jika file bukti nota diupload.</li>
-            </ul>
-          </Card>
+            }
+          >
+            <MiniLedger items={categoryDataset} maxHeightClass="max-h-[220px]" />
+          </ChartCard>
         </div>
       </div>
 
       {/* Main Table */}
       <div className="space-y-4">
-        <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col md:flex-row gap-4 justify-between">
-          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-none w-full md:w-80">
-            <Search size={16} className="text-slate-400" />
+        <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col lg:flex-row gap-3 justify-between items-stretch lg:items-center">
+          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-none w-full lg:w-80">
+            <Search size={14} className="text-slate-400 shrink-0" />
             <input
               type="text"
               placeholder="Cari nomor transaksi, rincian, atau kategori..."
@@ -346,9 +402,37 @@ const KasKeluarPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200 cursor-not-allowed" disabled>
-            Filter Kategori
-          </Button>
+
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Rentang Waktu */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rentang Waktu:</span>
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value as any)}
+                className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+              >
+                <option value="ALL">Semua Waktu</option>
+                <option value="THIS_MONTH">Bulan Ini</option>
+                <option value="LAST_MONTH">Bulan Lalu</option>
+              </select>
+            </div>
+
+            {/* Urutan */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Urutan:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+              >
+                <option value="LATEST">Terbaru</option>
+                <option value="OLDEST">Terlama</option>
+                <option value="AMOUNT_DESC">Nominal Tertinggi</option>
+                <option value="AMOUNT_ASC">Nominal Terendah</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {isLoading ? (
@@ -358,7 +442,15 @@ const KasKeluarPage = () => {
           </div>
         ) : (
           <AdaptiveList
-            data={filteredData}
+            data={paginatedData}
+            isLoading={isLoading}
+            pagination={{
+              currentPage,
+              totalPages,
+              totalItems: sortedData.length,
+              itemsPerPage,
+              onPageChange: setCurrentPage,
+            }}
             desktopHeaders={[
               'No. Transaksi',
               'Tanggal',
@@ -393,13 +485,14 @@ const KasKeluarPage = () => {
                     <div className="flex flex-col gap-1.5 items-start">
                       <Badge variant="warning">Menunggu SPJ</Badge>
                       <button
+                        title="Upload SPJ"
                         onClick={() => {
                           setSelectedTransactionId(item.id);
                           setIsSpjUploadOpen(true);
                         }}
-                        className="text-[10px] text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                        className="p-1 text-slate-400 hover:text-blue-600 border border-transparent hover:border-slate-200 transition-colors rounded-none"
                       >
-                        Upload SPJ
+                        <UploadCloud size={14} />
                       </button>
                     </div>
                   ) : (
@@ -431,13 +524,14 @@ const KasKeluarPage = () => {
                     <div className="flex flex-col items-end gap-1">
                       <Badge variant="warning">Menunggu SPJ</Badge>
                       <button
+                        title="Upload SPJ"
                         onClick={() => {
                           setSelectedTransactionId(item.id);
                           setIsSpjUploadOpen(true);
                         }}
-                        className="text-[9px] text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                        className="p-1 text-slate-400 hover:text-blue-600 border border-transparent hover:border-slate-200 transition-colors rounded-none"
                       >
-                        Upload SPJ
+                        <UploadCloud size={13} />
                       </button>
                     </div>
                   ) : (

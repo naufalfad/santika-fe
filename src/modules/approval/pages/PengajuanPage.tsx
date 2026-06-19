@@ -8,6 +8,7 @@ import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { Modal } from '../../../shared/components/ui/Modal';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 import {
   useKegiatanQuery,
   useKegiatanByIdQuery,
@@ -45,7 +46,7 @@ const PengajuanPage = () => {
   const [formPeserta, setFormPeserta] = useState(0);
   const [formPrioritas, setFormPrioritas] = useState('SEDANG');
   const [formFiles, setFormFiles] = useState<File[]>([]);
-  const [formTotalAnggaran, setFormTotalAnggaran] = useState('');
+  const [formTotalAnggaran, setFormTotalAnggaran] = useState<number | undefined>(undefined);
   const [kegiatanError, setKegiatanError] = useState('');
 
   // Filter and search activities
@@ -112,7 +113,7 @@ const PengajuanPage = () => {
         prioritas: formPrioritas,
         status: 'DIAJUKAN',
         files: formFiles,
-        totalAnggaran: formTotalAnggaran ? Number(formTotalAnggaran) : undefined
+        totalAnggaran: formTotalAnggaran ?? undefined
       });
 
       // Clear Form & Close
@@ -123,7 +124,7 @@ const PengajuanPage = () => {
       setFormTglMulai('');
       setFormTglSelesai('');
       setFormPeserta(0);
-      setFormTotalAnggaran('');
+      setFormTotalAnggaran(undefined);
       setFormFiles([]);
       setIsKegiatanModalOpen(false);
     } catch (err: any) {
@@ -700,13 +701,11 @@ const PengajuanPage = () => {
             {/* Total Anggaran */}
             <div className="space-y-1">
               <label className="block text-[10px] font-semibold text-slate-700">Total Anggaran yang Diajukan (Rp)</label>
-              <input
-                type="number"
-                min={0}
-                value={formTotalAnggaran || ''}
-                onChange={(e) => setFormTotalAnggaran(e.target.value)}
-                placeholder="Contoh: 5000000"
-                className="w-full px-3 py-2 text-xs rounded-none outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 transition-all font-semibold"
+              <CurrencyInput
+                value={formTotalAnggaran}
+                onChange={(val) => setFormTotalAnggaran(val)}
+                placeholder="Contoh: 5.000.000"
+                className="text-xs bg-slate-50 font-semibold"
               />
             </div>
           </div>

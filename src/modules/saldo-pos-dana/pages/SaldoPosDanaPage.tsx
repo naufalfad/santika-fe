@@ -10,13 +10,16 @@ import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { Modal } from '../../../shared/components/ui/Modal';
-import { useForm } from 'react-hook-form';
+import { ChartCard } from '../../../shared/components/ui/ChartCard';
+import { MiniLedger, type LedgerItem } from '../../../shared/components/ui/MiniLedger';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
 import { useFundBalancesQuery, useTransferBalanceMutation } from '../../kas-masuk/hooks/useKasMasukQuery';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { useAuthStore } from '../../../app/store/useAuthStore';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 
 /**
  * SaldoPosDanaPage Component
@@ -50,6 +53,7 @@ const SaldoPosDanaPage = () => {
     handleSubmit,
     watch,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<TransferFormData>({
     resolver: zodResolver(transferSchema),
@@ -136,7 +140,7 @@ const SaldoPosDanaPage = () => {
       const matchesSearch =
         item.fund.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.code.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       const matchesStatus =
         statusFilter === 'ALL' ||
         (statusFilter === 'ACTIVE' && item.isActive) ||
@@ -146,27 +150,36 @@ const SaldoPosDanaPage = () => {
     });
   }, [currentBalances, searchTerm, statusFilter]);
 
-  // Recharts: Data preparation for Income vs Expense BarChart
+  // Recharts: Data Pemasukan dan Pengeluaran standar (keduanya tumbuh ke arah Kanan)
   const barChartData = useMemo(() => {
     return filteredData.map((item) => ({
       name: activeTab === 'PERMANENT' ? item.fund : item.fund.replace('Dana Khusus: ', ''),
       Pemasukan: Number(item.income || 0),
-      Pengeluaran: Number(item.expense || 0),
+      Pengeluaran: Number(item.expense || 0), // Format standar tumbuh ke kanan sesuai kemauan Anda
     }));
   }, [filteredData, activeTab]);
 
-  // Recharts: Data preparation for Balance share PieChart (only funds with positive balance)
-  const pieChartData = useMemo(() => {
+  // Hitung Ketinggian Dinamis berdasarkan jumlah data kategori (Standardisasi Category Overload)
+  const dynamicChartHeight = useMemo(() => {
+    const spacingPerBar = 48; // ketebalan & jarak ideal per batang dalam px
+    const basePadding = 40;   // padding atas-bawah grafik
+    return filteredData.length * spacingPerBar + basePadding;
+  }, [filteredData]);
+
+  // Recharts: Data persiapan untuk Distribusi Saldo Aktif
+  const pieChartData = useMemo<LedgerItem[]>(() => {
     const colors = ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#3b82f6', '#14b8a6', '#f43f5e'];
     const activeBalances = filteredData.filter((item) => Number(item.balance || 0) > 0);
-    
+    const totalActiveBalance = activeBalances.reduce((sum, item) => sum + Number(item.balance), 0);
+
     if (activeBalances.length === 0) {
-      return [{ name: 'Tidak ada saldo positif', value: 1, color: '#e2e8f0' }];
+      return [];
     }
 
     return activeBalances.map((item, index) => ({
       name: activeTab === 'PERMANENT' ? item.fund : item.fund.replace('Dana Khusus: ', ''),
       value: Number(item.balance),
+      percentage: totalActiveBalance > 0 ? (Number(item.balance) / totalActiveBalance) * 100 : 0,
       color: colors[index % colors.length],
     }));
   }, [filteredData, activeTab]);
@@ -205,21 +218,19 @@ const SaldoPosDanaPage = () => {
       <div className="flex gap-6 border-b border-slate-200 overflow-x-auto no-scrollbar pb-0 text-sm font-medium text-slate-400">
         <button
           onClick={() => setActiveTab('PERMANENT')}
-          className={`pb-3 whitespace-nowrap transition-colors duration-200 rounded-none border-b-2 ${
-            activeTab === 'PERMANENT'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent hover:text-slate-700 hover:border-slate-300'
-          }`}
+          className={`pb-3 whitespace-nowrap transition-colors duration-200 rounded-none border-b-2 ${activeTab === 'PERMANENT'
+            ? 'border-blue-600 text-blue-600'
+            : 'border-transparent hover:text-slate-700 hover:border-slate-300'
+            }`}
         >
           Pos Dana Permanen
         </button>
         <button
           onClick={() => setActiveTab('SPECIAL_FUND')}
-          className={`pb-3 whitespace-nowrap transition-colors duration-200 rounded-none border-b-2 ${
-            activeTab === 'SPECIAL_FUND'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent hover:text-slate-700 hover:border-slate-300'
-          }`}
+          className={`pb-3 whitespace-nowrap transition-colors duration-200 rounded-none border-b-2 ${activeTab === 'SPECIAL_FUND'
+            ? 'border-blue-600 text-blue-600'
+            : 'border-transparent hover:text-slate-700 hover:border-slate-300'
+            }`}
         >
           Dana Khusus
         </button>
@@ -227,7 +238,7 @@ const SaldoPosDanaPage = () => {
 
       {/* Metrics Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4 border-l-4 border-l-blue-600 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Total Saldo' : 'Saldo Dana Khusus'}
           </p>
@@ -240,7 +251,7 @@ const SaldoPosDanaPage = () => {
           </div>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">Total Pemasukan</p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(metrics.totalIncome)}
@@ -251,7 +262,7 @@ const SaldoPosDanaPage = () => {
           </div>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">Total Pengeluaran</p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(metrics.totalExpense)}
@@ -262,7 +273,7 @@ const SaldoPosDanaPage = () => {
           </div>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Pos Dana Aktif' : 'Program Dana Khusus Aktif'}
           </p>
@@ -278,79 +289,89 @@ const SaldoPosDanaPage = () => {
 
       {/* Analytical Visualizations */}
       {!isLoading && fundBalances.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Bar Chart: Income vs Expense comparison */}
-          <Card className="lg:col-span-8 p-5 border-slate-200">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+          {/* Bar Chart: Kelonggaran Vertikal Penuh (Tinggi max-h-[430px] Sejajar Sempurna) */}
+          <Card className="lg:col-span-8 p-5 border-slate-200 rounded-none flex flex-col justify-between">
             <div className="mb-4">
               <h3 className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                 <Coins size={14} className="text-blue-500" /> {activeTab === 'PERMANENT' ? 'Pemasukan vs Pengeluaran per Pos Dana' : 'Pemasukan vs Pengeluaran per Dana Khusus'}
               </h3>
             </div>
-            <div className="h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barChartData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
+
+            {/* Scroll Container Vertikal Lega ( max-h-[430px] ) */}
+            <div className="w-full overflow-y-auto pr-1 max-h-[430px] border border-slate-100 p-2">
+              <ResponsiveContainer width="100%" height={dynamicChartHeight}>
+                <BarChart
+                  layout="vertical"
+                  data={barChartData}
+                  margin={{ top: 10, right: 30, left: 10, bottom: 5 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+
+                  {/* Sumbu X */}
                   <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }}
-                  />
-                  <YAxis
+                    type="number"
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }}
                     tickFormatter={(val) => formatIDR(val, { notation: 'compact' })}
                   />
+
+                  {/* Sumbu Y */}
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    width={110}
+                    tick={{ fontSize: 8, fill: '#64748b', fontWeight: 600 }}
+                  />
+
+                  {/* Tooltip */}
                   <Tooltip
                     contentStyle={{ border: '1px solid #f1f5f9', borderRadius: '0px', fontSize: '11px', fontWeight: 600 }}
                     formatter={(val) => formatIDR(Number(val))}
                   />
+
                   <Legend verticalAlign="top" height={36} iconType="rect" wrapperStyle={{ fontSize: '10px', fontWeight: 700 }} />
-                  <Bar dataKey="Pemasukan" fill="#10b981" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="Pengeluaran" fill="#f43f5e" radius={[0, 0, 0, 0]} />
+
+                  {/* DESIGN SYSTEM GUARD: radius={0} murni tajam */}
+                  <Bar dataKey="Pemasukan" name="Penerimaan" fill="#10b981" barSize={10} radius={0} />
+                  <Bar dataKey="Pengeluaran" name="Pengeluaran" fill="#f43f5e" barSize={10} radius={0} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </Card>
 
-          {/* Pie Chart: Balance Distribution */}
-          <Card className="lg:col-span-4 p-5 border-slate-200 flex flex-col">
-            <h3 className="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-1.5">
-              <Wallet size={14} className="text-emerald-500" /> {activeTab === 'PERMANENT' ? 'Distribusi Saldo Aktif' : 'Distribusi Saldo Dana Khusus'}
-            </h3>
-            <div className="h-[180px] flex-1 min-h-[180px] relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieChartData}
-                    innerRadius={50}
-                    outerRadius={70}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {pieChartData.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(val) => formatIDR(Number(val))} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            
-            {/* Custom high-contrast legend list for donut */}
-            <div className="mt-4 max-h-[80px] overflow-y-auto divide-y divide-slate-100 text-[10px] font-medium text-slate-600">
-              {pieChartData.map((entry: any, index: number) => (
-                <div key={index} className="flex justify-between items-center py-1">
-                  <div className="flex items-center gap-1.5 truncate">
-                    <span className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: entry.color }} />
-                    <span className="truncate">{entry.name}</span>
-                  </div>
-                  <span className="text-slate-800">{entry.value > 1 ? formatIDR(entry.value, { notation: 'compact' }) : '-'}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
+          {/* Pie Chart: Distribusi Saldo (Menerapkan Standardisasi Asymmetric Split & Progressive Help) */}
+          <div className="lg:col-span-4">
+            <ChartCard
+              title={activeTab === 'PERMANENT' ? 'Distribusi Saldo Aktif' : 'Distribusi Saldo Dana Khusus'}
+              subtitle="Aset Lancar Paroki"
+              helpText={`Distribusi Saldo:\n\nBagan ini memetakan konsentrasi kepemilikan saldo riil kas aktif di antara pos dana paroki.\n\nSisa saldo yang stabil dan terjaga merupakan kunci utama untuk menjamin kelancaran realisasi program kerja pastoral.`}
+              chartElement={
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieChartData}
+                      innerRadius={55}
+                      outerRadius={75}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {pieChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(val) => formatIDR(Number(val))} />
+                  </PieChart>
+                </ResponsiveContainer>
+              }
+            >
+              <MiniLedger items={pieChartData} maxHeightClass="max-h-[220px]" />
+            </ChartCard>
+          </div>
         </div>
       )}
 
@@ -374,25 +395,22 @@ const SaldoPosDanaPage = () => {
             <div className="flex border border-slate-200 rounded-none overflow-hidden">
               <button
                 onClick={() => setStatusFilter('ALL')}
-                className={`px-3 py-1 text-xs font-semibold transition-colors ${
-                  statusFilter === 'ALL' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
-                }`}
+                className={`px-3 py-1 text-xs font-semibold transition-colors ${statusFilter === 'ALL' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
+                  }`}
               >
                 Semua
               </button>
               <button
                 onClick={() => setStatusFilter('ACTIVE')}
-                className={`px-3 py-1 text-xs font-semibold transition-colors ${
-                  statusFilter === 'ACTIVE' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
-                }`}
+                className={`px-3 py-1 text-xs font-semibold transition-colors ${statusFilter === 'ACTIVE' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
+                  }`}
               >
                 Aktif
               </button>
               <button
                 onClick={() => setStatusFilter('INACTIVE')}
-                className={`px-3 py-1 text-xs font-semibold transition-colors ${
-                  statusFilter === 'INACTIVE' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
-                }`}
+                className={`px-3 py-1 text-xs font-semibold transition-colors ${statusFilter === 'INACTIVE' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
+                  }`}
               >
                 Non-Aktif
               </button>
@@ -426,9 +444,8 @@ const SaldoPosDanaPage = () => {
               <td className="px-5 py-3 text-xs font-semibold text-right text-rose-500 border-r">
                 {formatIDR(Number(item.expense))}
               </td>
-              <td className={`px-5 py-3 text-xs font-semibold text-right border-r  ${
-                Number(item.balance) < 0 ? 'text-rose-600/20' : 'text-slate-800'
-              }`}>
+              <td className={`px-5 py-3 text-xs font-semibold text-right border-r  ${Number(item.balance) < 0 ? 'text-rose-600/20' : 'text-slate-800'
+                }`}>
                 {formatIDR(Number(item.balance))}
               </td>
               <td className="px-5 py-3 text-center">
@@ -462,9 +479,8 @@ const SaldoPosDanaPage = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-[8px] text-slate-400 font-medium">Saldo</p>
-                  <p className={`text-[10px] font-semibold mt-0.5 ${
-                    Number(item.balance) < 0 ? 'text-rose-600' : 'text-slate-800'
-                  }`}>
+                  <p className={`text-[10px] font-semibold mt-0.5 ${Number(item.balance) < 0 ? 'text-rose-600' : 'text-slate-800'
+                    }`}>
                     {formatIDR(Number(item.balance))}
                   </p>
                 </div>
@@ -541,11 +557,17 @@ const SaldoPosDanaPage = () => {
           {/* Nominal */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-slate-500">Nominal Transfer (Rp)</label>
-            <input
-              type="number"
-              placeholder="0"
-              {...register('amount', { valueAsNumber: true })}
-              className="w-full px-3 py-2 bg-slate-50 rounded-none text-sm font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            <Controller
+              name="amount"
+              control={control}
+              render={({ field }) => (
+                <CurrencyInput
+                  value={field.value ?? undefined}
+                  onChange={field.onChange}
+                  placeholder="0"
+                  className="bg-slate-50 text-sm font-medium text-slate-800"
+                />
+              )}
             />
             {errors.amount && <p className="text-[10px] text-rose-500 font-medium">{errors.amount.message}</p>}
           </div>

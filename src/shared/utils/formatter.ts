@@ -3,22 +3,34 @@
  * Aligned with OOAD high cohesion principles.
  */
 
+export interface FormatIDROptions extends Intl.NumberFormatOptions {
+  /** 
+   * Jika true, nilai negatif akan diubah menjadi nilai positif mutlak (Math.abs)
+   * sebelum diformat, sangat berguna untuk bagan dua arah (Bi-directional Chart).
+   */
+  absolute?: boolean;
+}
+
 /**
  * Formats a numeric value into Indonesian Rupiah (IDR) currency format.
  * @param value - The numeric value to format.
- * @param options - Custom options for Intl formatting.
+ * @param options - Custom options for Intl formatting, extending absolute formatting capability.
  * @returns Formatted currency string.
  */
-export const formatIDR = (value: number, options?: Intl.NumberFormatOptions): string => {
-    if (value === undefined || value === null || isNaN(value)) {
-        return 'Rp 0';
-    }
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 0,
-        ...options,
-    }).format(value);
+export const formatIDR = (value: number, options?: FormatIDROptions): string => {
+  if (value === undefined || value === null || isNaN(value)) {
+    return 'Rp 0';
+  }
+
+  const { absolute, ...intlOptions } = options || {};
+  const cleanValue = absolute ? Math.abs(value) : value;
+
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+    ...intlOptions,
+  }).format(cleanValue);
 };
 
 /**
@@ -28,20 +40,20 @@ export const formatIDR = (value: number, options?: Intl.NumberFormatOptions): st
  * @returns Formatted localized date string.
  */
 export const formatDate = (
-    date: string | Date,
-    formatStyle: 'default' | 'short' | 'full' = 'default'
+  date: string | Date,
+  formatStyle: 'default' | 'short' | 'full' = 'default'
 ): string => {
-    if (!date) return '-';
-    const d = typeof date === 'string' ? new Date(date) : date;
-    if (isNaN(d.getTime())) return '-';
+  if (!date) return '-';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '-';
 
-    const optionsMap: Record<string, Intl.DateTimeFormatOptions> = {
-        short: { day: 'numeric', month: 'short', year: '2-digit' },
-        default: { day: 'numeric', month: 'short', year: 'numeric' },
-        full: { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' },
-    };
+  const optionsMap: Record<string, Intl.DateTimeFormatOptions> = {
+    short: { day: 'numeric', month: 'short', year: '2-digit' },
+    default: { day: 'numeric', month: 'short', year: 'numeric' },
+    full: { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' },
+  };
 
-    return new Intl.DateTimeFormat('id-ID', optionsMap[formatStyle] || optionsMap.default).format(d);
+  return new Intl.DateTimeFormat('id-ID', optionsMap[formatStyle] || optionsMap.default).format(d);
 };
 
 /**
@@ -61,4 +73,4 @@ export const getAvatarUrl = (path: string | null | undefined): string | null => 
   } catch {
     return `http://localhost:8000${path}`;
   }
-};
+};

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   Wallet, Building2, Heart, TrendingUp, TrendingDown,
   Calendar, ChevronRight
@@ -13,7 +13,6 @@ import { BudgetSummary } from '../components/BudgetSummary';
 import { BalancePosition } from '../components/BalancePosition';
 import { RecentActivity } from '../components/RecentActivity';
 import { DASHBOARD_HERO } from '../../../shared/mock/dashboardData';
-import { cn } from '../../../shared/utils/cn';
 import { formatIDR } from '../../../shared/utils/formatter';
 
 const DashboardPage = () => {
@@ -21,6 +20,14 @@ const DashboardPage = () => {
   const kasMasuk = useKasStore((state) => state.kasMasuk);
   const kasKeluar = useKasStore((state) => state.kasKeluar);
   const navigate = useNavigate();
+
+  // Live Clock State
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Update tiap 1 menit
+    return () => clearInterval(timer);
+  }, []);
 
   // Memoized aggregation to prevent unnecessary computational renders
   const totalIn = useMemo(() => {
@@ -38,115 +45,119 @@ const DashboardPage = () => {
   // Memoized statistics tailored based on the authenticated user role
   const stats = useMemo(() => {
     const dynamicStats = [
-      { label: 'DANA OPERASIONAL', val: currentSaldo, sub: 'Dana Operasional', color: 'blue', icon: 'wallet', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'SUPER_ADMIN'] },
-      { label: 'DANA PEMBANGUNAN', val: 785000000, sub: 'Dana Pembangunan', color: 'emerald', icon: 'building', visible: ['PASTOR', 'BENDAHARA', 'TIM_PEMBANGUNAN', 'SUPER_ADMIN'] },
-      { label: 'DANA SOSIAL (PSE)', val: 58000000, sub: 'Dana Sosial', color: 'purple', icon: 'heart', visible: ['PASTOR', 'BENDAHARA', 'KETUA_KOMISI', 'SUPER_ADMIN'] },
-      { label: 'PENDAPATAN BULAN INI', val: totalIn, sub: 'Mei 2025', color: 'orange', icon: 'trending-up', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'SEKRETARIAT', 'SUPER_ADMIN'] },
-      { label: 'PENGELUARAN BULAN INI', val: totalOut, sub: 'Mei 2025', color: 'cyan', icon: 'trending-down', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'KETUA_KOMISI', 'SUPER_ADMIN'] },
+      { label: 'DANA OPERASIONAL', val: currentSaldo, sub: 'Dana Operasional', color: 'text-blue-600', icon: 'wallet', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'SUPER_ADMIN'] },
+      { label: 'DANA PEMBANGUNAN', val: 785000000, sub: 'Dana Pembangunan', color: 'text-emerald-600', icon: 'building', visible: ['PASTOR', 'BENDAHARA', 'TIM_PEMBANGUNAN', 'SUPER_ADMIN'] },
+      { label: 'DANA SOSIAL (PSE)', val: 58000000, sub: 'Dana Sosial', color: 'text-purple-600', icon: 'heart', visible: ['PASTOR', 'BENDAHARA', 'KETUA_KOMISI', 'SUPER_ADMIN'] },
+      { label: 'PENDAPATAN BULAN INI', val: totalIn, sub: 'Bulan Berjalan', color: 'text-orange-600', icon: 'trending-up', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'SEKRETARIAT', 'SUPER_ADMIN'] },
+      { label: 'PENGELUARAN BULAN INI', val: totalOut, sub: 'Bulan Berjalan', color: 'text-cyan-600', icon: 'trending-down', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'KETUA_KOMISI', 'SUPER_ADMIN'] },
     ];
     return dynamicStats.filter(s => s.visible.includes(user?.role || ''));
   }, [currentSaldo, totalIn, totalOut, user?.role]);
 
-  const getIcon = (iconName: string) => {
+  const getIcon = (iconName: string, colorClass: string) => {
+    const props = { size: 18, className: colorClass, strokeWidth: 2 };
     switch (iconName) {
-      case 'wallet': return <Wallet size={18} />;
-      case 'building': return <Building2 size={18} />;
-      case 'heart': return <Heart size={18} />;
-      case 'trending-up': return <TrendingUp size={18} />;
-      case 'trending-down': return <TrendingDown size={18} />;
-      default: return <Wallet size={18} />;
+      case 'wallet': return <Wallet {...props} />;
+      case 'building': return <Building2 {...props} />;
+      case 'heart': return <Heart {...props} />;
+      case 'trending-up': return <TrendingUp {...props} />;
+      case 'trending-down': return <TrendingDown {...props} />;
+      default: return <Wallet {...props} />;
     }
   };
 
   return (
     <div className="space-y-6 pb-10 max-w-[1600px] mx-auto animate-fade-slide">
-      {/* 1. HERO SECTION - High Contrast & High Density */}
-      <div className="relative overflow-hidden bg-white p-5 rounded-none border border-slate-200 shadow-sm">
-        <div className="absolute right-0 top-0 h-full w-[28%] hidden lg:block">
+
+      {/* 1. HERO SECTION - Left Aligned Tight Flexbox */}
+      <div className="relative bg-white px-6 py-5 rounded-none border border-slate-200 shadow-sm flex overflow-hidden">
+
+        {/* Background Image (Absolute Right) */}
+        <div className="absolute right-0 top-0 h-full w-[35%] hidden md:block opacity-60 pointer-events-none">
           <img
             src="src/assets/church-bg.png"
             alt="Church BG"
-            className="w-full h-full object-cover opacity-90"
+            className="w-full h-full object-cover"
+            style={{
+              maskImage: 'linear-gradient(to right, transparent, black 15%)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 15%)'
+            }}
           />
         </div>
 
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 items-center gap-4">
+        {/* Content Wrapper - Di-group agar menempel di sisi kiri */}
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-10">
+
+          {/* Greeting Context (Tanpa flex-1, hanya mengambil ruang yang dibutuhkan) */}
           <div>
             <h1 className="text-xl font-semibold text-slate-800 tracking-tight">
-              Dashboard {user?.role.toLowerCase().replace('_', ' ')}
+              Dashboard {user?.role.toLowerCase().replace(/_/g, ' ')}
             </h1>
             <p className="text-rose-600 font-medium text-base leading-tight mt-0.5">
               {DASHBOARD_HERO.paroki}
             </p>
-            <div className="mt-3">
+            <div className="mt-4">
               <p className="text-xs font-semibold text-slate-700">
                 Selamat datang, {user?.name}
               </p>
-              <p className="text-[11px] text-slate-400 font-medium">
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
                 Berikut adalah ringkasan konsolidasi kondisi keuangan paroki saat ini.
               </p>
             </div>
           </div>
 
-          <div className="flex justify-center lg:justify-center">
-            <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-none">
-              <div className="p-2 bg-white text-blue-600 rounded-none shadow-none border border-slate-100">
-                <Calendar size={18} />
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold text-blue-600 tracking-tighter">Selasa</p>
-                <p className="text-xs font-semibold text-slate-800">20 Mei 2025</p>
-                <p className="text-[9px] text-slate-400 font-medium">10:30 WIB</p>
-              </div>
+          {/* Vertical Separator */}
+          <div className="hidden md:block w-px h-16 bg-slate-200" />
+
+          {/* Date & Time Info (Menempel di sebelah separator) */}
+          <div className="flex items-center gap-3">
+            <Calendar size={24} className="text-blue-600" strokeWidth={1.5} />
+            <div>
+              <p className="text-[10px] font-semibold text-blue-600 tracking-tighter uppercase">Hari Ini</p>
+              <p className="text-sm font-semibold text-slate-800 tracking-tight leading-tight">
+                {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+              <p className="text-[10px] font-medium text-slate-400 mt-0.5">
+                Pukul {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+              </p>
             </div>
           </div>
-          <div />
+
         </div>
       </div>
 
-      {/* 2. STAT CARDS SECTION - Standardized Spacing & Hover States */}
+      {/* 2. STAT CARDS SECTION */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {stats.map((item, idx) => (
-          <Card key={idx} className="p-0 border-slate-200 hover:shadow-none hover:border-slate-300 transition-all duration-300 flex flex-col rounded-none shadow-sm">
-            <div className={cn("h-1",
-              item.color === 'blue' ? 'bg-blue-600' :
-                item.color === 'emerald' ? 'bg-emerald-600' :
-                  item.color === 'purple' ? 'bg-purple-600' :
-                    item.color === 'orange' ? 'bg-orange-600' : 'bg-cyan-600'
-            )} />
+          <Card key={idx} className="p-0 border-slate-200 hover:shadow-none hover:border-slate-300 transition-all duration-300 flex flex-col rounded-none shadow-sm group">
 
             <div className="p-4 flex-1 flex flex-col justify-between">
-              <div className="flex items-center gap-2 mb-3">
-                <div className={cn("p-1.5 rounded-none border",
-                  item.color === 'blue' ? 'bg-blue-50 text-blue-600 border-blue-100/50' :
-                    item.color === 'emerald' ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' :
-                      item.color === 'purple' ? 'bg-purple-50 text-purple-600 border-purple-100/50' :
-                        item.color === 'orange' ? 'bg-orange-50 text-orange-600 border-orange-100/50' : 'bg-cyan-50 text-cyan-600 border-cyan-100/50'
-                )}>
-                  {getIcon(item.icon)}
-                </div>
+              <div className="flex items-center gap-2.5 mb-3">
+                {getIcon(item.icon, item.color)}
                 <div className="min-w-0">
-                  <p className="text-[9px] font-semibold text-slate-400 tracking-tighter truncate">{item.label}</p>
+                  <p className="text-[9px] font-semibold text-slate-400 tracking-tight truncate">{item.label}</p>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-slate-800 tracking-tight leading-none">{formatIDR(item.val)}</h3>
-                <p className="text-[9px] text-slate-400 font-medium mt-1">{item.sub}</p>
+                <h3 className="text-lg font-semibold text-slate-800 tracking-tight leading-none group-hover:text-blue-600 transition-colors">
+                  {formatIDR(item.val)}
+                </h3>
+                <p className="text-[9px] text-slate-400 font-medium mt-1.5">{item.sub}</p>
               </div>
             </div>
 
             <button
               onClick={() => {
-                if (item.label === 'SALDO OPERASIONAL') navigate('/kas-keluar');
+                if (item.label === 'DANA OPERASIONAL') navigate('/kas-keluar');
                 else if (item.label === 'PENDAPATAN BULAN INI') navigate('/kas-masuk');
                 else if (item.label === 'PENGELUARAN BULAN INI') navigate('/kas-keluar');
                 else if (item.label === 'DANA PEMBANGUNAN') navigate('/dana-khusus');
                 else if (item.label === 'DANA SOSIAL (PSE)') navigate('/dana-khusus');
               }}
-              className="px-4 py-2 text-[10px] font-medium text-blue-600 border-t border-slate-100 flex items-center justify-between hover:bg-slate-50 hover:text-blue-700 transition-colors cursor-pointer rounded-none text-left"
+              className="px-4 py-2 text-[10px] font-medium text-slate-500 border-t border-slate-100 flex items-center justify-between hover:bg-slate-50 hover:text-blue-600 transition-colors cursor-pointer rounded-none text-left"
             >
-              Lihat Detail <ChevronRight size={10} />
+              Lihat Detail <ChevronRight size={12} />
             </button>
           </Card>
         ))}
@@ -164,26 +175,26 @@ const DashboardPage = () => {
       </div>
 
       {/* 4. BOTTOM SECTION: Budget, Balances, & Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Budget Summary (Left wide) */}
-        <Card className="lg:col-span-6 p-5 border-slate-200 rounded-none shadow-sm">
+        <Card className="lg:col-span-6 p-5 border-slate-200 rounded-none shadow-sm h-[420px]">
           <BudgetSummary />
         </Card>
 
         {/* Balance Position (Middle) */}
-        <Card className="lg:col-span-3 p-5 border-slate-200 rounded-none shadow-sm">
+        <Card className="lg:col-span-3 p-5 border-slate-200 rounded-none shadow-sm h-[420px]">
           <BalancePosition />
         </Card>
 
         {/* Recent Activity (Right) */}
-        <Card className="lg:col-span-3 p-5 border-slate-200 rounded-none shadow-sm">
+        <Card className="lg:col-span-3 p-5 border-slate-200 rounded-none shadow-sm h-[420px]">
           <RecentActivity />
         </Card>
       </div>
 
       <footer className="mt-12 text-center text-[10px] text-slate-400 font-medium">
         <p>SANTIKA - Sistem Akuntansi dan Tata Kelola Keuangan Gereja</p>
-        <p>© 2025 Paroki St. Stefanus - Sempan. Semua hak dilindungi.</p>
+        <p>© {new Date().getFullYear()} Paroki St. Stefanus - Sempan. Semua hak dilindungi.</p>
       </footer>
     </div>
   );

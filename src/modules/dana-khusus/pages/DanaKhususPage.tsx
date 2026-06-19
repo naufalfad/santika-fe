@@ -3,6 +3,7 @@ import {
   History, Plus, Search,
   CheckCircle, Play, XCircle, Trash2, ArrowRightLeft, FileSpreadsheet, FileDown, Eye
 } from 'lucide-react';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Modal } from '../../../shared/components/ui/Modal';
@@ -58,9 +59,12 @@ const DanaKhususPage = () => {
 
   // Allocation Form State
   const [targetPosDanaId, setTargetPosDanaId] = useState('');
-  const [allocationAmount, setAllocationAmount] = useState<number | ''>('');
+  const [allocationAmount, setAllocationAmount] = useState<number | undefined>(undefined);
   const [allocationNotes, setAllocationNotes] = useState('');
   const [allocationError, setAllocationError] = useState<string | null>(null);
+
+  // Controlled state untuk field targetNominal di form Buka Program
+  const [targetNominalState, setTargetNominalState] = useState<number | undefined>(undefined);
 
   // Filtered listing
   const filteredFunds = useMemo(() => {
@@ -99,7 +103,7 @@ const DanaKhususPage = () => {
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
     const tujuanPenggalangan = formData.get('tujuanPenggalangan') as string;
-    const targetNominal = Number(formData.get('targetNominal'));
+    const targetNominal = targetNominalState ?? 0;
     const tanggalMulai = formData.get('tanggalMulai') as string;
     const tanggalSelesai = formData.get('tanggalSelesai') as string;
 
@@ -119,6 +123,7 @@ const DanaKhususPage = () => {
         tanggalSelesai,
       });
       setIsAddOpen(false);
+      setTargetNominalState(undefined);
     } catch (err: any) {
       alert(err?.response?.data?.message || err?.message || 'Gagal membuat program dana.');
     }
@@ -134,7 +139,7 @@ const DanaKhususPage = () => {
       setAllocationError('Pilih Pos Dana tujuan alokasi.');
       return;
     }
-    const amountNum = Number(allocationAmount);
+    const amountNum = Number(allocationAmount ?? 0);
     if (!amountNum || amountNum <= 0) {
       setAllocationError('Nominal alokasi harus lebih dari 0.');
       return;
@@ -155,7 +160,7 @@ const DanaKhususPage = () => {
       });
       // Reset form
       setTargetPosDanaId('');
-      setAllocationAmount('');
+      setAllocationAmount(undefined);
       setAllocationNotes('');
       setIsAllocateOpen(false);
     } catch (err: any) {
@@ -268,7 +273,7 @@ const DanaKhususPage = () => {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 border-l-4 border-l-blue-600 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">Total Donasi Masuk</p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(stats.totalCollected)}
@@ -276,7 +281,7 @@ const DanaKhususPage = () => {
           <span className="text-[10px] text-slate-400 font-medium">Akumulasi donasi terkumpul</span>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">Total Pengeluaran Dana</p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(stats.totalSpent)}
@@ -284,7 +289,7 @@ const DanaKhususPage = () => {
           <span className="text-[10px] text-slate-400 font-medium">Total belanja tersalurkan</span>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">Sisa Saldo Kas Aktif</p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(stats.totalBalance)}
@@ -532,12 +537,12 @@ const DanaKhususPage = () => {
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-slate-500 mb-1">TARGET PENGGALAINGAN (IDR, OPSIONAL)</label>
-            <input
-              type="number"
-              name="targetNominal"
-              placeholder="Misal: 150000000 (boleh kosong)"
-              className="w-full px-3 py-2 bg-slate-50 rounded-none text-xs outline-none focus:border-blue-500 font-mono"
+            <label className="block text-[10px] font-semibold text-slate-500 mb-1">TARGET PENGGALANGAN (IDR, OPSIONAL)</label>
+            <CurrencyInput
+              value={targetNominalState}
+              onChange={(val) => setTargetNominalState(val)}
+              placeholder="Misal: 150.000.000 (boleh kosong)"
+              className="text-xs bg-slate-50 font-mono"
             />
           </div>
 
@@ -811,13 +816,11 @@ const DanaKhususPage = () => {
 
             <div>
               <label className="block text-[10px] font-semibold text-slate-500 mb-1">NOMINAL ALOKASI (IDR)</label>
-              <input
-                type="number"
+              <CurrencyInput
                 value={allocationAmount}
-                onChange={(e) => setAllocationAmount(e.target.value !== '' ? Number(e.target.value) : '')}
-                required
-                placeholder={String(activeDetail.balance)}
-                className="w-full px-3 py-2 bg-slate-50 rounded-none text-xs outline-none focus:border-blue-500 font-mono font-medium text-slate-800"
+                onChange={(val) => setAllocationAmount(val)}
+                placeholder={formatIDR(Number(activeDetail.balance))}
+                className="text-xs bg-slate-50 font-mono font-medium text-slate-800"
               />
               <span className="text-[9px] text-slate-400 font-medium block mt-1">Maksimal: {formatIDR(Number(activeDetail.balance))}</span>
             </div>

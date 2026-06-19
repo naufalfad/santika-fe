@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ShieldAlert, Plus, Calculator, Wallet, ArrowUpRight, TrendingUp, Percent } from 'lucide-react';
+import { ShieldAlert, Plus, Calculator, Wallet, ArrowUpRight, TrendingUp, Edit2 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart as RechartsPieChart, Pie, Cell
@@ -7,6 +7,8 @@ import {
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Modal } from '../../../shared/components/ui/Modal';
+import { ChartCard } from '../../../shared/components/ui/ChartCard';
+import { MiniLedger, type LedgerItem } from '../../../shared/components/ui/MiniLedger';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
 import { useAnggaranQuery } from '../hooks/useAnggaranQuery';
@@ -85,7 +87,7 @@ const AnggaranPage = () => {
     }, [budgets]);
 
     // Aggregate remaining budget by category for Donut Chart
-    const categorySisaDataset = useMemo(() => {
+    const categorySisaDataset = useMemo<LedgerItem[]>(() => {
         const aggregates: Record<string, number> = {};
         let totalSisa = 0;
         budgets.forEach((budget) => {
@@ -103,7 +105,7 @@ const AnggaranPage = () => {
         return Object.entries(aggregates).map(([name, value], index) => ({
             name,
             value,
-            percentage: totalSisa > 0 ? Math.round((value / totalSisa) * 100) : 0,
+            percentage: totalSisa > 0 ? (value / totalSisa) * 100 : 0,
             color: colors[index % colors.length]
         }));
     }, [budgets]);
@@ -114,12 +116,12 @@ const AnggaranPage = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 className="text-2xl font-medium text-slate-800 tracking-tight">Manajemen Anggaran</h2>
-                    <p className="text-sm text-gray-500">Monitoring plafon dan realisasi rencana anggaran tahunan paroki.</p>
+                    <p className="text-sm text-gray-500">Monitoring plafon and realisasi rencana anggaran tahunan paroki.</p>
                 </div>
                 {isBendahara && (
                     <Button
                         onClick={() => setIsModalOpen(true)}
-                        className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 shadow-sm"
+                        className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 shadow-sm rounded-none"
                     >
                         <Plus size={16} /> Buat Pos Anggaran
                     </Button>
@@ -128,7 +130,7 @@ const AnggaranPage = () => {
 
             {/* Quick Metrics Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="p-4 border-l-4 border-l-indigo-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+                <Card className="p-4 border border-slate-200 shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">Total Plafon Anggaran</p>
                     <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(metrics.totalPlafon)}</h4>
                     <p className="text-[9px] text-indigo-600 mt-2 font-medium flex items-center gap-1">
@@ -136,7 +138,7 @@ const AnggaranPage = () => {
                     </p>
                 </Card>
 
-                <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+                <Card className="p-4 border border-slate-200 shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">Realisasi (Terpakai)</p>
                     <h4 className="text-lg font-semibold mt-1 text-rose-600 tracking-tight">{formatIDR(metrics.totalRealisasi)}</h4>
                     <p className="text-[9px] text-rose-600 mt-2 font-medium flex items-center gap-1">
@@ -144,13 +146,13 @@ const AnggaranPage = () => {
                     </p>
                 </Card>
 
-                <Card className="p-4 border-l-4 border-l-emerald-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+                <Card className="p-4 border border-slate-200 shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">Sisa Anggaran Tersedia</p>
                     <h4 className="text-lg font-semibold mt-1 text-emerald-600 tracking-tight">{formatIDR(metrics.totalSisa)}</h4>
                     <p className="text-[9px] text-emerald-600 mt-2 font-medium">✓ Siap dialokasikan</p>
                 </Card>
 
-                <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+                <Card className="p-4 border border-slate-200 shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">Persentase Penyerapan</p>
                     <div className="flex items-end gap-1 mt-1">
                         <h4 className="text-lg font-semibold text-slate-800 tracking-tight">{Math.round(metrics.burnRate)}%</h4>
@@ -162,80 +164,70 @@ const AnggaranPage = () => {
                 </Card>
             </div>
 
-            {/* Analytics Visualizations */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Plafon vs Realisasi Bar Chart */}
-                <Card className="lg:col-span-8 p-5 border-slate-200 shadow-sm">
+            {/* Analytics Visualizations (Menerapkan Tinggi Penuh Sejajar Tanpa Tambahan KPI) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                {/* Plafon vs Realisasi Bar Chart (Grafik Batang Diperpanjang Tinggi Vertikalnya) */}
+                <Card className="lg:col-span-8 p-5 border-slate-200 shadow-sm flex flex-col justify-between">
                     <div className="mb-4 flex items-center gap-2">
                         <TrendingUp size={16} className="text-indigo-600" />
                         <h3 className="text-xs font-semibold text-slate-400">
                             Perbandingan Plafon vs Realisasi Anggaran Per Kategori
                         </h3>
                     </div>
-                    <div className="h-[260px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={categoryAggregates} barGap={4}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="kategori" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }} />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }}
-                                    tickFormatter={(val) => formatIDR(val, { notation: 'compact' })}
-                                />
-                                <Tooltip contentStyle={{ border: '1px solid #f1f5f9', borderRadius: '8px', fontSize: '11px', fontWeight: 600 }} />
-                                <Legend iconSize={8} iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 700 }} />
-                                <Bar dataKey="Plafon" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="Terpakai" fill="#f43f5e" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+
+                    {/* Mengunci Tinggi Canvas Grafik h-[400px] dengan Penanganan Kategori Meluap */}
+                    <div className="w-full overflow-x-auto no-scrollbar">
+                        <div className="h-[400px] min-w-[800px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={categoryAggregates} barGap={4}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="kategori" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }} />
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }}
+                                        tickFormatter={(val) => formatIDR(val, { notation: 'compact' })}
+                                    />
+                                    <Tooltip contentStyle={{ border: '1px solid #f1f5f9', borderRadius: '0px', fontSize: '11px', fontWeight: 600 }} formatter={(val) => formatIDR(Number(val))} />
+                                    <Legend iconSize={8} iconType="rect" wrapperStyle={{ fontSize: '10px', fontWeight: 700 }} />
+
+                                    {/* DESIGN SYSTEM GUARD: radius={0} murni tajam tanpa membulat */}
+                                    <Bar dataKey="Plafon" fill="#6366f1" radius={0} />
+                                    <Bar dataKey="Terpakai" fill="#f43f5e" radius={0} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                 </Card>
 
-                {/* Donut Allocation Chart */}
-                <Card className="lg:col-span-4 p-5 border-slate-200 shadow-sm flex flex-col justify-between">
-                    <div className="mb-2 flex items-center gap-2">
-                        <Percent size={16} className="text-emerald-500" />
-                        <h3 className="text-xs font-semibold text-slate-400">
-                            Proporsi Sisa Anggaran Per Kategori
-                        </h3>
-                    </div>
-                    <div className="h-[180px] relative">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <RechartsPieChart>
-                                <Pie
-                                    data={categorySisaDataset}
-                                    innerRadius={50}
-                                    outerRadius={68}
-                                    paddingAngle={3}
-                                    dataKey="value"
-                                >
-                                    {categorySisaDataset.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip formatter={(value) => formatIDR(Number(value))} />
-                            </RechartsPieChart>
-                        </ResponsiveContainer>
-                        {/* Center text for Donut */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span className="text-[10px] text-slate-400 font-semibold">Sisa Total</span>
-                            <span className="text-sm font-semibold text-emerald-600">{formatIDR(metrics.totalSisa, { notation: 'compact' })}</span>
-                        </div>
-                    </div>
-                    {/* Legend list inside card */}
-                    <div className="space-y-1 pt-2">
-                        {categorySisaDataset.slice(0, 3).map((item) => (
-                            <div key={item.name} className="flex justify-between items-center text-[10px] font-medium">
-                                <span className="flex items-center gap-1.5 text-slate-500">
-                                    <span className="w-2 h-2 rounded-none" style={{ backgroundColor: item.color }}></span>
-                                    {item.name}
-                                </span>
-                                <span className="text-slate-700">{item.percentage}%</span>
-                            </div>
-                        ))}
-                    </div>
-                </Card>
+                {/* Donut Allocation Chart (Menerapkan Standardisasi Asymmetric Split & Progressive Help) */}
+                <div className="lg:col-span-4">
+                    <ChartCard
+                        title="Proporsi Sisa Anggaran"
+                        subtitle="Bulan Berjalan"
+                        helpText={`Proporsi Sisa Anggaran:\n\nBagan ini menggambarkan persebaran sisa dana anggaran yang siap untuk dialokasikan pada setiap program paroki tahun berjalan.\n\nSistem akan memberikan pembatasan otomatis jika pengajuan pengeluaran melampaui sisa pagu pos dana terkait.`}
+                        chartElement={
+                            <ResponsiveContainer width="100%" height="100%">
+                                <RechartsPieChart>
+                                    <Pie
+                                        data={categorySisaDataset}
+                                        innerRadius={55}
+                                        outerRadius={75}
+                                        paddingAngle={3}
+                                        dataKey="value"
+                                    >
+                                        {categorySisaDataset.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip formatter={(value) => formatIDR(Number(value))} />
+                                </RechartsPieChart>
+                            </ResponsiveContainer>
+                        }
+                    >
+                        <MiniLedger items={categorySisaDataset} maxHeightClass="max-h-[220px]" />
+                    </ChartCard>
+                </div>
             </div>
 
             {/* SECTION: Anggaran Tahunan Table */}
@@ -291,7 +283,8 @@ const AnggaranPage = () => {
                                     <td className={cn("px-5 py-2.5 text-xs text-right font-semibold text-emerald-600", isBendahara && "border-r ")}>{formatIDR(item.sisa)}</td>
                                     {isBendahara && (
                                         <td className="px-5 py-2.5 text-center">
-                                            <Button
+                                            <button
+                                                title="Edit Anggaran"
                                                 onClick={() => {
                                                     const parentBudget = budgets.find((b) => b.id === item.budgetId);
                                                     if (parentBudget) {
@@ -299,10 +292,10 @@ const AnggaranPage = () => {
                                                         setIsEditModalOpen(true);
                                                     }
                                                 }}
-                                                variant="ghost" className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-transparent p-0 h-auto"
+                                                className="p-1.5 text-slate-400 hover:text-blue-600 border border-transparent hover:border-slate-200 transition-colors rounded-none"
                                             >
-                                                Edit
-                                            </Button>
+                                                <Edit2 size={14} />
+                                            </button>
                                         </td>
                                     )}
                                 </tr>
@@ -338,7 +331,8 @@ const AnggaranPage = () => {
                                     </div>
                                     {isBendahara && (
                                         <div className="pt-2 border-t flex justify-end">
-                                            <Button
+                                            <button
+                                                title="Edit Anggaran"
                                                 onClick={() => {
                                                     const parentBudget = budgets.find((b) => b.id === item.budgetId);
                                                     if (parentBudget) {
@@ -346,10 +340,10 @@ const AnggaranPage = () => {
                                                         setIsEditModalOpen(true);
                                                     }
                                                 }}
-                                                variant="ghost" className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-transparent p-0 h-auto"
+                                                className="p-1.5 text-slate-400 hover:text-blue-600 border border-transparent hover:border-slate-200 transition-colors rounded-none flex items-center gap-1.5 text-[10px] font-semibold"
                                             >
-                                                Edit Anggaran
-                                            </Button>
+                                                <Edit2 size={13} /> Edit
+                                            </button>
                                         </div>
                                     )}
                                 </div>

@@ -1,4 +1,5 @@
-import { UserPlus, Shield, Mail, MoreHorizontal, CheckCircle, XCircle } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { UserPlus, Shield, Mail, MoreHorizontal, CheckCircle, XCircle, Search } from 'lucide-react';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
@@ -11,6 +12,69 @@ import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
  * Features sharp edges, zero nested boxes, and slide-fade animation.
  */
 const UserManagementPage = () => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [roleFilter, setRoleFilter] = useState('ALL');
+    const [statusFilter, setStatusFilter] = useState('ALL');
+    const [sortBy, setSortBy] = useState<'NAME_ASC' | 'NAME_DESC' | 'ID_ASC' | 'ID_DESC'>('NAME_ASC');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+
+    // Cascading data processing engine:
+    // 1. Filter by role and status
+    const filteredByRoleAndStatus = useMemo(() => {
+        return MOCK_USERS.filter(u => {
+            if (roleFilter !== 'ALL' && u.role !== roleFilter) return false;
+            if (statusFilter !== 'ALL' && u.status !== statusFilter) return false;
+            return true;
+        });
+    }, [roleFilter, statusFilter]);
+
+    // 2. Filter by search term
+    const searchedData = useMemo(() => {
+        if (!searchTerm) return filteredByRoleAndStatus;
+        const term = searchTerm.toLowerCase();
+        return filteredByRoleAndStatus.filter(u =>
+            u.name.toLowerCase().includes(term) ||
+            u.email.toLowerCase().includes(term) ||
+            u.id.toLowerCase().includes(term)
+        );
+    }, [filteredByRoleAndStatus, searchTerm]);
+
+    // 3. Sort data
+    const sortedData = useMemo(() => {
+        const dataCopy = [...searchedData];
+        return dataCopy.sort((a, b) => {
+            if (sortBy === 'NAME_ASC') {
+                return a.name.localeCompare(b.name);
+            }
+            if (sortBy === 'NAME_DESC') {
+                return b.name.localeCompare(a.name);
+            }
+            if (sortBy === 'ID_ASC') {
+                return a.id.localeCompare(b.id);
+            }
+            if (sortBy === 'ID_DESC') {
+                return b.id.localeCompare(a.id);
+            }
+            return 0;
+        });
+    }, [searchedData, sortBy]);
+
+    // 4. Paginate data
+    const paginatedData = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return sortedData.slice(startIndex, startIndex + itemsPerPage);
+    }, [sortedData, currentPage, itemsPerPage]);
+
+    const totalPages = useMemo(() => {
+        return Math.ceil(sortedData.length / itemsPerPage);
+    }, [sortedData, itemsPerPage]);
+
+    // Reset page to 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, roleFilter, statusFilter, sortBy]);
+
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
             {/* Header section */}
@@ -26,28 +90,97 @@ const UserManagementPage = () => {
 
             {/* Quick stats grid - Flat design, Slate Accent, No Neon Colors */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="p-4 border-l-4 border-l-blue-600 border-y-slate-200 border-r-slate-200 rounded-none shadow-sm">
+                <Card className="p-4 border border-slate-200 rounded-none shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">Total User</p>
                     <h3 className="text-xl font-semibold mt-1 text-slate-800 tracking-tight">24</h3>
                 </Card>
-                <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200 rounded-none shadow-sm">
+                <Card className="p-4 border border-slate-200 rounded-none shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">User Aktif</p>
                     <h3 className="text-xl font-semibold mt-1 text-slate-800 tracking-tight">22</h3>
                 </Card>
-                <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200 rounded-none shadow-sm">
+                <Card className="p-4 border border-slate-200 rounded-none shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">Menunggu Verifikasi</p>
                     <h3 className="text-xl font-semibold mt-1 text-slate-800 tracking-tight">2</h3>
                 </Card>
-                <Card className="p-4 border-l-4 border-l-slate-800 border-y-slate-200 border-r-slate-200 rounded-none shadow-sm">
+                <Card className="p-4 border border-slate-200 rounded-none shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">Role Terdaftar</p>
                     <h3 className="text-xl font-semibold mt-1 text-slate-800 tracking-tight">7</h3>
                 </Card>
             </div>
 
+            {/* Toolbar */}
+            <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col lg:flex-row gap-3 justify-between items-stretch lg:items-center">
+                <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-none w-full lg:w-96">
+                    <Search size={14} className="text-slate-400 shrink-0" />
+                    <input
+                        type="text"
+                        placeholder="Cari nama, email, atau ID user..."
+                        className="bg-transparent text-xs outline-none w-full font-semibold text-slate-750"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                    {/* Role */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Role:</span>
+                        <select
+                            value={roleFilter}
+                            onChange={(e) => setRoleFilter(e.target.value)}
+                            className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+                        >
+                            <option value="ALL">Semua Role</option>
+                            <option value="PASTOR">Pastor</option>
+                            <option value="BENDAHARA">Bendahara</option>
+                            <option value="KETUA_KOMISI">Ketua Komisi</option>
+                            <option value="SUPER_ADMIN">Super Admin</option>
+                            <option value="SEKRETARIAT">Sekretariat</option>
+                        </select>
+                    </div>
+
+                    {/* Status */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status:</span>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+                        >
+                            <option value="ALL">Semua Status</option>
+                            <option value="Aktif">Aktif</option>
+                            <option value="Non-Aktif">Non-Aktif</option>
+                        </select>
+                    </div>
+
+                    {/* Urutan */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Urutan:</span>
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as any)}
+                            className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+                        >
+                            <option value="NAME_ASC">Nama (A-Z)</option>
+                            <option value="NAME_DESC">Nama (Z-A)</option>
+                            <option value="ID_ASC">ID (Terkecil)</option>
+                            <option value="ID_DESC">ID (Terbesar)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             {/* User List using AdaptiveList - Flat Borders */}
             <div className="space-y-4">
                 <AdaptiveList
-                    data={MOCK_USERS}
+                    data={paginatedData}
+                    pagination={{
+                        currentPage,
+                        totalPages,
+                        totalItems: sortedData.length,
+                        itemsPerPage,
+                        onPageChange: setCurrentPage,
+                    }}
                     desktopHeaders={[
                         'Pengguna',
                         'Role / Hak Akses',

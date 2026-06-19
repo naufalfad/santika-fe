@@ -1,10 +1,11 @@
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Plus, Trash2, Calendar, Folder, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
 import { Select } from '../../../shared/components/ui/Select';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 import { useKomisiQuery, useUpdateAnggaranMutation } from '../hooks/useAnggaranQuery';
 import type { Budget } from '../hooks/useAnggaranQuery';
 
@@ -150,11 +151,17 @@ export const EditAnggaranModal = ({ budget, onSuccess, onCancel }: Props) => {
                 </div>
 
                 <div className="w-full md:w-48">
-                  <Input
-                    type="number"
-                    placeholder="Plafon (Rp)"
-                    error={plafonError}
-                    {...register(`items.${index}.plafon` as const, { valueAsNumber: true })}
+                  <Controller
+                    name={`items.${index}.plafon` as const}
+                    control={control}
+                    render={({ field }) => (
+                      <CurrencyInput
+                        value={field.value ?? undefined}
+                        onChange={field.onChange}
+                        placeholder="Plafon (Rp)"
+                        error={plafonError}
+                      />
+                    )}
                   />
                 </div>
 
