@@ -51,7 +51,7 @@ const KasKeluarPage = () => {
 
   // Calculate base API asset paths dynamically
   const apiAssetUrl = useMemo(() => {
-    return (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace('/api', '');
+    return (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace('/api', '');
   }, []);
 
   // Split transactions
@@ -747,15 +747,15 @@ const KasKeluarPage = () => {
                 </td>
                 <td className="px-5 py-3.5 text-center">
                   {item.attachment?.fileUrl ? (
-                    <a
-                      href={`${apiAssetUrl}${item.attachment.fileUrl}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center p-1.5 text-slate-500 hover:text-rose-600 hover:bg-slate-50 border border-slate-200 hover:border-rose-200 transition-all rounded-none shadow-sm"
-                      title={item.attachment.fileName}
+                    <button
+                      onClick={() => {
+                        setSelectedBuktiUrl(`${apiAssetUrl}${item.attachment?.fileUrl}`);
+                      }}
+                      className="inline-flex items-center justify-center p-1.5 text-slate-500 hover:text-rose-600 hover:bg-slate-50 border border-slate-200 hover:border-rose-200 transition-all rounded-none shadow-sm cursor-pointer outline-none"
+                      title={item.attachment?.fileName || "Lihat Bukti"}
                     >
                       <FileImage size={14} />
-                    </a>
+                    </button>
                   ) : (
                     <span className="text-slate-300 font-medium text-[10px]">-</span>
                   )}
@@ -821,11 +821,26 @@ const KasKeluarPage = () => {
       <Modal isOpen={!!selectedBuktiUrl} onClose={() => setSelectedBuktiUrl(null)} title="Bukti Transaksi Kas Keluar">
         {selectedBuktiUrl && (
           <div className="space-y-4">
-            <div className="rounded-none overflow-hidden h-96 bg-slate-50 flex items-center justify-center">
-              <img src={selectedBuktiUrl} alt="Bukti Pengeluaran" className="max-w-full max-h-full object-contain" />
+            <div className="rounded-none overflow-hidden h-[500px] bg-slate-50 flex items-center justify-center border border-slate-100">
+              {selectedBuktiUrl.toLowerCase().split('?')[0].endsWith('.pdf') ? (
+                <iframe
+                  src={selectedBuktiUrl}
+                  title="Bukti Pengeluaran PDF"
+                  className="w-full h-full border-none"
+                />
+              ) : (
+                <img src={selectedBuktiUrl} alt="Bukti Pengeluaran" className="max-w-full max-h-full object-contain" />
+              )}
             </div>
-            <div className="flex justify-end pt-4 border-t">
-              <Button onClick={() => setSelectedBuktiUrl(null)} variant="outline" size="sm" className="rounded-none">
+            <div className="flex justify-end pt-4 border-t gap-2">
+              {selectedBuktiUrl.toLowerCase().split('?')[0].endsWith('.pdf') && (
+                <a href={selectedBuktiUrl} download target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" size="sm" className="rounded-none text-xs flex items-center gap-1.5 border-slate-200">
+                    <Download size={14} /> Unduh PDF
+                  </Button>
+                </a>
+              )}
+              <Button onClick={() => setSelectedBuktiUrl(null)} variant="outline" size="sm" className="rounded-none text-xs border-slate-200">
                 Tutup Preview
               </Button>
             </div>
@@ -868,7 +883,7 @@ const KasKeluarPage = () => {
             <p className="text-xs text-slate-500 font-semibold leading-relaxed">
               Silakan pilih format file laporan kas keluar yang ingin Anda unduh. Laporan yang diunduh akan otomatis terfilter sesuai dengan kata kunci, rentang waktu, dan pos dana yang aktif.
             </p>
-            
+
             <div className="grid grid-cols-2 gap-4 pt-2">
               <button
                 onClick={() => {
@@ -898,7 +913,7 @@ const KasKeluarPage = () => {
                 <span className="text-[10px] text-slate-400 mt-1 font-semibold">Teks Terpisah Koma (.csv)</span>
               </button>
             </div>
-            
+
             <div className="flex justify-end pt-2">
               <Button
                 variant="outline"

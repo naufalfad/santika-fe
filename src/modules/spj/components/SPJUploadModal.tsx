@@ -86,11 +86,7 @@ export const SPJUploadModal = ({ onSuccess, onCancel, defaultCashTransactionId }
     }
 
     setFile(selectedFile);
-    if (isImage) {
-      setPreview(URL.createObjectURL(selectedFile));
-    } else {
-      setPreview(null);
-    }
+    setPreview(URL.createObjectURL(selectedFile));
   };
 
   const onSubmit = async (data: FormData) => {
@@ -210,8 +206,12 @@ export const SPJUploadModal = ({ onSuccess, onCancel, defaultCashTransactionId }
         )}
 
         {preview && (
-          <div className="mt-3 relative rounded-none overflow-hidden border border-slate-200 h-40 bg-slate-100">
-            <img src={preview} alt="Preview" className="w-full h-full object-contain" />
+          <div className="mt-3 relative rounded-none overflow-hidden border border-slate-200 h-64 bg-slate-100">
+            {selectedFileType === 'pdf' ? (
+              <iframe src={preview} title="Preview PDF" className="w-full h-full border-none" />
+            ) : (
+              <img src={preview} alt="Preview" className="w-full h-full object-contain" />
+            )}
           </div>
         )}
 

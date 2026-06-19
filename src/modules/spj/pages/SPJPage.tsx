@@ -119,7 +119,7 @@ const SPJPage = () => {
   const previewInfo = useMemo(() => {
     if (!selectedDoc) return null;
     const firstLampiran = selectedDoc.lampiran?.[0]?.attachment;
-    const apiAssetUrl = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace('/api', '');
+    const apiAssetUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace('/api', '');
     const fileUrl = firstLampiran ? `${apiAssetUrl}${firstLampiran.fileUrl}` : undefined;
     const isPdf = firstLampiran?.fileType === 'PDF';
     const fileType: 'pdf' | 'image' = isPdf ? 'pdf' : 'image';

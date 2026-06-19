@@ -143,14 +143,14 @@ export const useAddKasKeluarMutation = () => {
       formData.append('transaction_date', payload.transaction_date);
       formData.append('fund_category_id', payload.fund_category_id);
       formData.append('expense_type_id', payload.expense_type_id);
-      
+
       if (payload.budget_item_id) {
         formData.append('budget_item_id', payload.budget_item_id);
       }
       if (payload.permohonan_anggaran_id) {
         formData.append('permohonan_anggaran_id', payload.permohonan_anggaran_id);
       }
-      
+
       if (payload.is_uang_muka !== undefined) {
         formData.append('is_uang_muka', String(payload.is_uang_muka));
       }
@@ -161,7 +161,7 @@ export const useAddKasKeluarMutation = () => {
       if (payload.file) {
         formData.append('file', payload.file);
       }
-      
+
       if (payload.special_fund_id) {
         formData.append('special_fund_id', payload.special_fund_id);
       }
@@ -170,6 +170,7 @@ export const useAddKasKeluarMutation = () => {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: 60000, // 60 second timeout for file uploads
       });
 
       return response.data.data.expense;

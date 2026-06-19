@@ -53,7 +53,7 @@ const PengajuanPage = () => {
   const filteredKegiatan = useMemo(() => {
     return kegiatanList.filter((k) => {
       const matchesSearch = k.namaKegiatan.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            k.nomorKegiatan.toLowerCase().includes(searchQuery.toLowerCase());
+        k.nomorKegiatan.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === 'ALL' || k.status === statusFilter;
       return matchesSearch && matchesStatus;
     });

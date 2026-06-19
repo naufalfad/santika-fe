@@ -67,5 +67,5 @@ export const useNotificationStore = create<NotificationState>((set) => ({
   clearNotification: (id) => set((state) => ({
     notifications: state.notifications.filter((n) => n.id !== id),
   })),
-  clearAll: () => set((state) => ({ notifications: [] })),
+  clearAll: () => set({ notifications: [] }),
 }));

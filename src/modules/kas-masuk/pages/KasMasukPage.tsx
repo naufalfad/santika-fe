@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import {
-  Plus, Search, Download, MoreVertical,
+  Plus, Search, Download,
   TrendingUp, Calendar,
-  Info
+  Info, Eye
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -22,7 +22,7 @@ import { formatIDR } from '../../../shared/utils/formatter';
 import { downloadCSV, downloadExcel } from '../../../shared/utils/export';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
 import churchLogo from '../../../assets/church.png';
-import { useKasMasukQuery, useAddKasMasukMutation, useFundBalancesQuery } from '../hooks/useKasMasukQuery';
+import { useKasMasukQuery, useAddKasMasukMutation, useFundBalancesQuery, type CashTransactionIncome } from '../hooks/useKasMasukQuery';
 import { cn } from '../../../shared/utils/cn';
 
 /**
@@ -46,6 +46,7 @@ const KasMasukPage = () => {
   const [selectedFundCategoryId, setSelectedFundCategoryId] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<'LATEST' | 'OLDEST' | 'AMOUNT_DESC' | 'AMOUNT_ASC'>('LATEST');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedDetailTransaction, setSelectedDetailTransaction] = useState<CashTransactionIncome | null>(null);
   const itemsPerPage = 10;
 
   const handleOpenModal = () => setIsModalOpen(true);
@@ -788,10 +789,11 @@ const KasMasukPage = () => {
                 {/* 6. Aksi - Ghost Button */}
                 <td className="px-3 py-4 text-center">
                   <button
+                    onClick={() => setSelectedDetailTransaction(item)}
                     className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors rounded-none outline-none cursor-pointer"
-                    title="Opsi Lanjutan"
+                    title="Lihat Detail"
                   >
-                    <MoreVertical size={16} />
+                    <Eye size={16} />
                   </button>
                 </td>
               </tr>
@@ -820,7 +822,15 @@ const KasMasukPage = () => {
                       {getPosDanaDot(item.fundCategory?.name || '')}
                     </div>
                   </div>
-                  <span className="text-sm font-bold text-emerald-600">{formatIDR(Number(item.amount))}</span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-sm font-bold text-emerald-600">{formatIDR(Number(item.amount))}</span>
+                    <button
+                      onClick={() => setSelectedDetailTransaction(item)}
+                      className="text-[10px] text-blue-600 hover:text-blue-700 font-semibold cursor-pointer outline-none"
+                    >
+                      Lihat Detail
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -896,6 +906,72 @@ const KasMasukPage = () => {
                 onClick={() => setIsExportModalOpen(false)}
               >
                 Batal
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Detail Transaction Modal */}
+      {selectedDetailTransaction && (
+        <Modal
+          isOpen={!!selectedDetailTransaction}
+          onClose={() => setSelectedDetailTransaction(null)}
+          title="Detail Transaksi Kas Masuk"
+        >
+          <div className="space-y-4 py-2">
+            <div className="border border-slate-100 p-4 bg-slate-50/50 rounded-none space-y-3">
+              <div className="grid grid-cols-2 gap-y-3 text-xs">
+                <div className="text-slate-400 font-medium">Nomor Transaksi</div>
+                <div className="text-slate-800 font-bold font-mono">{selectedDetailTransaction.transactionNo}</div>
+
+                <div className="text-slate-400 font-medium">Tanggal Transaksi</div>
+                <div className="text-slate-800 font-semibold">
+                  {new Date(selectedDetailTransaction.transactionDate).toLocaleDateString('id-ID', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </div>
+
+                <div className="text-slate-400 font-medium">Jenis Transaksi</div>
+                <div className="text-slate-800 font-semibold">
+                  {selectedDetailTransaction.specialFundId ? 'Dana Khusus' : 'Pos Dana Permanen'}
+                </div>
+
+                <div className="text-slate-400 font-medium">Pos Dana</div>
+                <div className="text-slate-800 font-semibold">{selectedDetailTransaction.fundCategory?.name || '-'}</div>
+
+                <div className="text-slate-400 font-medium">Jenis Penerimaan</div>
+                <div className="text-slate-800 font-semibold">{selectedDetailTransaction.incomeType?.name || '-'}</div>
+
+                {selectedDetailTransaction.specialFund && (
+                  <>
+                    <div className="text-slate-400 font-medium">Program Dana Khusus</div>
+                    <div className="text-slate-800 font-semibold">{selectedDetailTransaction.specialFund.name || '-'}</div>
+                  </>
+                )}
+
+                <div className="text-slate-400 font-medium">Keterangan</div>
+                <div className="text-slate-800 font-medium whitespace-pre-wrap">{selectedDetailTransaction.description}</div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-emerald-50/50 border border-emerald-100 rounded-none flex justify-between items-center">
+              <span className="text-xs font-semibold text-slate-500">Nominal Penerimaan</span>
+              <span className="text-lg font-bold text-emerald-600">
+                {formatIDR(Number(selectedDetailTransaction.amount))}
+              </span>
+            </div>
+
+            <div className="flex justify-end pt-2 border-t">
+              <Button
+                onClick={() => setSelectedDetailTransaction(null)}
+                variant="outline"
+                size="sm"
+                className="rounded-none text-xs border-slate-200"
+              >
+                Tutup
               </Button>
             </div>
           </div>

@@ -41,6 +41,7 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
 
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   const { register, handleSubmit, watch, setValue, control, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -133,7 +134,29 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
+    setFileError(null);
+
     if (selectedFile) {
+      // Validate file size - 10MB max
+      const maxSizeInMB = 10;
+      const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+
+      if (selectedFile.size > maxSizeInBytes) {
+        setFileError(`File terlalu besar. Maksimal ${maxSizeInMB}MB. File Anda: ${(selectedFile.size / (1024 * 1024)).toFixed(2)}MB`);
+        setFile(null);
+        setPreview(null);
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+      if (!allowedTypes.includes(selectedFile.type)) {
+        setFileError('Tipe file tidak didukung. Hanya PDF, JPG, dan PNG yang diizinkan.');
+        setFile(null);
+        setPreview(null);
+        return;
+      }
+
       setFile(selectedFile);
       setPreview(URL.createObjectURL(selectedFile));
     }
@@ -142,6 +165,7 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const handleRemoveFile = () => {
     setFile(null);
     setPreview(null);
+    setFileError(null);
   };
 
   return (
@@ -155,7 +179,7 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
 
       {/* Tautan Permohonan Anggaran (RAB) */}
       <div>
-        <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1.5">
+        <label className="flex text-xs font-medium text-gray-700 mb-1 items-center gap-1.5">
           TAUTKAN KE PERMOHONAN ANGGARAN DISETUJUI (OPSIONAL)
           <span title="Menghubungkan transaksi pengeluaran dengan permohonan anggaran kegiatan yang sudah disetujui">
             <HelpCircle size={13} className="text-slate-400" />
@@ -304,7 +328,13 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-700 mb-1">UPLOAD BUKTI (NOTA/KUITANSI/PDF)</label>
+        <label className="block text-xs font-medium text-gray-700 mb-1">UPLOAD BUKTI (NOTA/KUITANSI/PDF) - Max 10MB</label>
+        {fileError && (
+          <div className="mb-2 p-2 bg-rose-50 border border-rose-200 rounded-none text-xs text-rose-600 font-semibold flex items-center gap-2">
+            <AlertCircle size={14} />
+            {fileError}
+          </div>
+        )}
         {!preview ? (
           <div className="border-2 border-dashed border-gray-200 rounded-none p-6 flex flex-col items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer relative">
             <input type="file" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*,application/pdf" />
@@ -319,7 +349,7 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-medium text-slate-700 truncate max-w-[200px]">{file?.name}</p>
-                <p className="text-[10px] text-slate-400 font-medium">{(Number(file?.size || 0) / 1024).toFixed(1)} KB</p>
+                <p className="text-[10px] text-slate-400 font-medium">{(Number(file?.size || 0) / (1024 * 1024)).toFixed(2)} MB</p>
               </div>
             </div>
             <button type="button" onClick={handleRemoveFile} className="p-1 bg-rose-500 text-white rounded-none hover:bg-rose-600 transition-colors">
