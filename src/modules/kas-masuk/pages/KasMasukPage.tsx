@@ -23,6 +23,7 @@ import { downloadCSV, downloadExcel } from '../../../shared/utils/export';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
 import churchLogo from '../../../assets/church.png';
 import { useKasMasukQuery, useAddKasMasukMutation, useFundBalancesQuery } from '../hooks/useKasMasukQuery';
+import { cn } from '../../../shared/utils/cn';
 
 /**
  * Standardized high-contrast, high-density Kas Masuk Management page.
@@ -337,6 +338,51 @@ const KasMasukPage = () => {
       color: colors[index % colors.length],
     }));
   }, [searchedData]);
+
+  const getPosDanaDot = (fundName: string) => {
+    const key = fundName.toLowerCase();
+    let dotColor = 'bg-slate-400';
+    let label = fundName;
+
+    if (key.includes('liturgi')) {
+      dotColor = 'bg-indigo-500';
+      label = 'Liturgi';
+    } else if (key.includes('omk') || key.includes('kepemudaan')) {
+      dotColor = 'bg-rose-500';
+      label = 'OMK';
+    } else if (key.includes('pse') || key.includes('sosial')) {
+      dotColor = 'bg-emerald-500';
+      label = 'PSE (Sosial)';
+    } else if (key.includes('operasional')) {
+      dotColor = 'bg-slate-500';
+      label = 'Operasional';
+    } else if (key.includes('pemeliharaan') || key.includes('sarpras')) {
+      dotColor = 'bg-amber-500';
+      label = 'Pemeliharaan';
+    } else if (key.includes('pendidikan') || key.includes('kateketik')) {
+      dotColor = 'bg-purple-500';
+      label = 'Pendidikan';
+    } else if (key.includes('pembangunan')) {
+      dotColor = 'bg-blue-500';
+      label = 'Pembangunan';
+    } else if (key.includes('kapel')) {
+      dotColor = 'bg-indigo-600';
+      label = 'Dana Khusus Kapel';
+    } else if (key.includes('ambulans')) {
+      dotColor = 'bg-emerald-600';
+      label = 'Dana Khusus Ambulans';
+    } else if (key.includes('pastoran')) {
+      dotColor = 'bg-amber-600';
+      label = 'Dana Khusus Pastoran';
+    }
+
+    return (
+      <div className="flex items-center gap-2">
+        <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", dotColor)}></span>
+        <span className="text-xs font-semibold text-slate-700">{label}</span>
+      </div>
+    );
+  };
 
   const handleExportCSV = () => {
     const filename = `laporan_kas_masuk_${activeTab.toLowerCase()}_${new Date().toISOString().slice(0, 10)}.csv`;
@@ -713,14 +759,12 @@ const KasMasukPage = () => {
                   </p>
                 </td>
 
-                {/* 3. Pos Dana & Jenis - Dibuat Minimalis dan Flat */}
+                {/* 3. Pos Dana & Jenis - Identik dengan Kas Keluar */}
                 <td className="px-5 py-4 border-r border-slate-100">
-                  <div className="flex flex-col items-start gap-1">
-                    <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-none tracking-tight">
-                      {item.fundCategory?.name}
-                    </span>
+                  <div className="flex flex-col gap-1 items-start">
+                    {getPosDanaDot(item.fundCategory?.name || '')}
                     {item.incomeType?.name && (
-                      <span className="text-[10px] font-medium text-slate-500 tracking-tight">
+                      <span className="text-[10px] font-semibold text-slate-500 ml-3.5">
                         {item.incomeType.name}
                       </span>
                     )}
@@ -772,10 +816,8 @@ const KasMasukPage = () => {
                     <p className="text-[10px] text-slate-500 font-medium">
                       {new Date(item.transactionDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </p>
-                    <div className="flex gap-1.5">
-                      <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded-none font-semibold tracking-tight text-[9px]">
-                        {item.fundCategory?.name}
-                      </span>
+                    <div className="flex gap-1.5 mt-1">
+                      {getPosDanaDot(item.fundCategory?.name || '')}
                     </div>
                   </div>
                   <span className="text-sm font-bold text-emerald-600">{formatIDR(Number(item.amount))}</span>
