@@ -1,312 +1,858 @@
 import { useState, useMemo } from 'react';
-import { Wallet, Users, ArrowUpRight, History, Plus } from 'lucide-react';
+import {
+  History, Plus, Search,
+  CheckCircle, Play, XCircle, Trash2, ArrowRightLeft, FileSpreadsheet, FileDown, Eye
+} from 'lucide-react';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Modal } from '../../../shared/components/ui/Modal';
-import { MOCK_DANA_KHUSUS } from '../../../shared/mock/anggaranData';
-import { formatIDR } from '../../../shared/utils/formatter';
+import { Badge } from '../../../shared/components/ui/Badge';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
+import { formatIDR } from '../../../shared/utils/formatter';
+import { useAuthStore } from '../../../app/store/useAuthStore';
+import { useFundCategoriesQuery } from '../../kas-masuk/hooks/useKasMasukQuery';
+import {
+  useSpecialFundsQuery,
+  useCreateSpecialFundMutation,
+  useActivateSpecialFundMutation,
+  useCloseSpecialFundMutation,
+  useDeleteSpecialFundMutation,
+  useAllocateSpecialFundMutation,
+  useSpecialFundTransactionsQuery,
+  useSpecialFundReportQuery
+} from '../hooks/useSpecialFundQuery';
+// Removed unused SpecialFund import
 
-const MOCK_HISTORY = [
-    {
-        id: 1,
-        tanggal: '24 Mar 2024',
-        donatur: 'Keluarga Bpk. Santoso',
-        program: 'Pembangunan Gedung Karya',
-        jumlah: 5000000,
-        metode: 'Transfer Bank'
-    },
-    {
-        id: 2,
-        tanggal: '23 Mar 2024',
-        donatur: 'Hamba Allah',
-        program: 'Beasiswa Pendidikan Anak',
-        jumlah: 1000000,
-        metode: 'Tunai'
-    }
-];
-
-// Mock donors by program id
-const MOCK_DONORS_BY_PROGRAM: Record<string, { nama: string; jumlah: number; tanggal: string }[]> = {
-    'DK-01': [
-        { nama: 'Keluarga Bpk. Santoso', jumlah: 500000000, tanggal: '10 Mar 2024' },
-        { nama: 'Ibu Maria Lucia', jumlah: 300000000, tanggal: '15 Mar 2024' },
-        { nama: 'Kolekte Pembangunan', jumlah: 400000000, tanggal: '20 Mar 2024' }
-    ],
-    'DK-02': [
-        { nama: 'Hamba Allah', jumlah: 12500000, tanggal: '12 Mar 2024' },
-        { nama: 'Bapak FX. Bambang', jumlah: 20000000, tanggal: '14 Mar 2024' },
-        { nama: 'Donasi OMK Wilayah 2', jumlah: 20000000, tanggal: '18 Mar 2024' }
-    ],
-    'DK-03': [
-        { nama: 'Keluarga Bpk. Andi', jumlah: 35000000, tanggal: '05 Mar 2024' },
-        { nama: 'Ibu Susanti Semarang', jumlah: 30000000, tanggal: '08 Mar 2024' },
-        { nama: 'Dewan Paroki', jumlah: 20000000, tanggal: '15 Mar 2024' }
-    ]
-};
-
-/**
- * Typesafe Dana Khusus page showing dedicated donation programs.
- * Formatted with tight density spacing and standard flat borders.
- * Fully interactive with simulated form submissions, sharp-edge styling, and donor details modal.
- */
 const DanaKhususPage = () => {
-    const [programs, setPrograms] = useState(MOCK_DANA_KHUSUS);
-    const [isAddProgramOpen, setIsAddProgramOpen] = useState(false);
-    const [selectedProgram, setSelectedProgram] = useState<typeof MOCK_DANA_KHUSUS[0] | null>(null);
+  const { user } = useAuthStore();
+  const isBendahara = user?.role === 'BENDAHARA' || user?.role === 'SUPER_ADMIN';
 
-    const processedPrograms = useMemo(() => {
-        return programs.map((dana) => {
-            const collectionPercent = dana.target > 0 ? (dana.terkumpul / dana.target) * 100 : 0;
-            return {
-                ...dana,
-                collectionPercent,
-            };
-        });
-    }, [programs]);
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'DRAFT' | 'AKTIF' | 'DITUTUP'>('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
 
-    const handleAddProgramSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const namaDana = formData.get('namaDana') as string;
-        const target = Number(formData.get('target'));
+  // Fetch Special Funds list
+  const { data: specialFunds = [], isLoading } = useSpecialFundsQuery();
+  // Fetch general Pos Dana categories for allocation dropdown
+  const { data: fundCategories = [] } = useFundCategoriesQuery();
 
-        if (!namaDana || !target) return;
+  // Mutations
+  const createMutation = useCreateSpecialFundMutation();
+  const activateMutation = useActivateSpecialFundMutation();
+  const closeMutation = useCloseSpecialFundMutation();
+  const deleteMutation = useDeleteSpecialFundMutation();
+  const allocateMutation = useAllocateSpecialFundMutation();
 
-        const newProgram = {
-            id: `DK-${String(programs.length + 1).padStart(2, '0')}`,
-            namaDana,
-            target,
-            terkumpul: 0,
-            terpakai: 0,
-            status: 'Aktif' as const,
-            color: 'blue',
-        };
+  // Selected Program for Details
+  const [selectedFundId, setSelectedFundId] = useState<string | null>(null);
 
-        setPrograms([newProgram, ...programs]);
-        setIsAddProgramOpen(false);
-    };
+  // Modal open states
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isAllocateOpen, setIsAllocateOpen] = useState(false);
 
-    const activeDonors = useMemo(() => {
-        if (!selectedProgram) return [];
-        return MOCK_DONORS_BY_PROGRAM[selectedProgram.id] || [
-            { nama: 'Donatur Awal', jumlah: selectedProgram.terkumpul, tanggal: '01 Mar 2024' }
-        ];
-    }, [selectedProgram]);
+  const activeDetail = useMemo(() => {
+    return specialFunds.find(f => f.id === selectedFundId) || null;
+  }, [specialFunds, selectedFundId]);
 
-    return (
-        <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
-            {/* Header section */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Dana Khusus</h2>
-                    <p className="text-sm text-gray-500">Pengelolaan dana terikat dan donasi pembangunan.</p>
-                </div>
-                <Button onClick={() => setIsAddProgramOpen(true)} className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 shadow-none rounded-none">
-                    <Plus size={16} /> Buka Program Dana Baru
-                </Button>
-            </div>
+  const { data: reportData } = useSpecialFundReportQuery(selectedFundId || '');
+  const { data: transactions = [], isLoading: isLoadingTx } = useSpecialFundTransactionsQuery(selectedFundId || '');
 
-            {/* Program cards - Seamless flat surfaces */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {processedPrograms.map((dana) => (
-                    <Card key={dana.id} className="flex flex-col h-full border-slate-200 shadow-none rounded-none hover:border-slate-300 transition-colors">
-                        <div className="p-4 flex-1">
-                            <div className="flex justify-between items-start mb-3">
-                                <div className="p-1.5 bg-blue-50 text-blue-600 rounded-none border border-blue-100/50">
-                                    <Wallet size={16} />
-                                </div>
-                                <span className="text-[9px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100/50 px-2 py-0.5 rounded-none uppercase">
-                                    {dana.status}
-                                </span>
-                            </div>
+  // Allocation Form State
+  const [targetPosDanaId, setTargetPosDanaId] = useState('');
+  const [allocationAmount, setAllocationAmount] = useState<number | ''>('');
+  const [allocationNotes, setAllocationNotes] = useState('');
+  const [allocationError, setAllocationError] = useState<string | null>(null);
 
-                            <h3 className="font-bold text-sm text-slate-800 leading-snug tracking-tight">{dana.namaDana}</h3>
-                            <p className="text-[10px] font-mono text-slate-400 mt-0.5 uppercase tracking-tighter">ID: {dana.id}</p>
+  // Filtered listing
+  const filteredFunds = useMemo(() => {
+    return specialFunds.filter(fund => {
+      const matchesSearch =
+        fund.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        fund.code.toLowerCase().includes(searchTerm.toLowerCase());
 
-                            <div className="space-y-3 mt-4">
-                                <div>
-                                    <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1.5">
-                                        <span>Progress Pengumpulan</span>
-                                        <span className="text-blue-600">{Math.round(dana.collectionPercent)}%</span>
-                                    </div>
-                                    <div className="w-full bg-slate-100 h-2 rounded-none overflow-hidden">
-                                        <div
-                                            className="bg-blue-600 h-full rounded-none"
-                                            style={{ width: `${Math.min(dana.collectionPercent, 100)}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
+      const matchesStatus =
+        statusFilter === 'ALL' || fund.status === statusFilter;
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="py-2.5 border-r border-slate-100">
-                                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-wider">Terkumpul</p>
-                                        <p className="text-xs font-black text-slate-800 tracking-tight mt-0.5">{formatIDR(dana.terkumpul)}</p>
-                                    </div>
-                                    <div className="py-2.5 pl-1">
-                                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-wider">Target</p>
-                                        <p className="text-xs font-black text-slate-800 tracking-tight mt-0.5">{formatIDR(dana.target)}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+      return matchesSearch && matchesStatus;
+    });
+  }, [specialFunds, searchTerm, statusFilter]);
 
-                        <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center text-[11px]">
-                            <div className="flex items-center gap-1.5 font-bold text-slate-400">
-                                <Users size={12} />
-                                <span>{activeDonors.length} Donatur</span>
-                            </div>
-                            <button
-                                onClick={() => setSelectedProgram(dana)}
-                                className="font-black text-blue-600 flex items-center gap-0.5 hover:text-blue-700 transition-colors uppercase tracking-tight text-[10px] cursor-pointer"
-                            >
-                                Lihat Detail <ArrowUpRight size={12} />
-                            </button>
-                        </div>
-                    </Card>
-                ))}
-            </div>
+  // Aggregate high-level stats from all special funds
+  const stats = useMemo(() => {
+    let totalCollected = 0;
+    let totalSpent = 0;
+    let totalBalance = 0;
 
-            {/* Aktivitas Dana Khusus - Responsive Table using AdaptiveList */}
-            <div className="space-y-4">
-                <div className="p-4 bg-white border border-slate-200 rounded-none shadow-none flex items-center justify-between">
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <History size={14} /> Riwayat Donasi Terakhir
-                    </h3>
-                </div>
+    specialFunds.forEach(f => {
+      totalCollected += Number(f.income || 0);
+      totalSpent += Number(f.expense || 0);
+      totalBalance += Number(f.balance || 0);
+    });
 
-                <AdaptiveList
-                    data={MOCK_HISTORY}
-                    desktopHeaders={[
-                        'Tanggal',
-                        'Donatur',
-                        'Program',
-                        'Jumlah',
-                        'Metode'
-                    ]}
-                    renderDesktopRow={(item) => (
-                        <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-5 py-2.5 text-xs text-slate-500 font-medium border-r border-slate-100">{item.tanggal}</td>
-                            <td className="px-5 py-2.5 text-xs font-bold text-slate-700 border-r border-slate-100">{item.donatur}</td>
-                            <td className="px-5 py-2.5 text-xs font-semibold text-slate-600 border-r border-slate-100">{item.program}</td>
-                            <td className="px-5 py-2.5 text-xs font-black text-right text-emerald-600 border-r border-slate-100">{formatIDR(item.jumlah)}</td>
-                            <td className="px-5 py-2.5 text-center">
-                                <span className="px-2 py-0.5 bg-slate-100 rounded-none text-[9px] font-black uppercase text-slate-500 border border-slate-200/50">
-                                    {item.metode}
-                                </span>
-                            </td>
-                        </tr>
-                    )}
-                    renderMobileCard={(item) => (
-                        <div className="flex flex-col gap-2.5">
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs font-bold text-slate-700">{item.donatur}</span>
-                                <span className="px-2 py-0.5 bg-slate-100 rounded-none text-[9px] font-black uppercase text-slate-500 border border-slate-200/50">
-                                    {item.metode}
-                                </span>
-                            </div>
-                            <div className="text-xs font-semibold text-slate-600">{item.program}</div>
-                            <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium mt-1">
-                                <span>{item.tanggal}</span>
-                                <span className="font-black text-emerald-600 text-xs">{formatIDR(item.jumlah)}</span>
-                            </div>
-                        </div>
-                    )}
-                />
-            </div>
+    return { totalCollected, totalSpent, totalBalance };
+  }, [specialFunds]);
 
-            {/* Modal Program Dana Baru */}
-            <Modal
-                isOpen={isAddProgramOpen}
-                onClose={() => setIsAddProgramOpen(false)}
-                title="Buka Program Dana Baru"
-            >
-                <form onSubmit={handleAddProgramSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-[11px] font-black text-slate-500 uppercase mb-1">NAMA PROGRAM DANA</label>
-                        <input
-                            type="text"
-                            name="namaDana"
-                            required
-                            placeholder="Contoh: Dana Kemanusiaan Bencana Banjir"
-                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-[11px] font-black text-slate-500 uppercase mb-1">TARGET DANA (IDR)</label>
-                        <input
-                            type="number"
-                            name="target"
-                            required
-                            placeholder="0"
-                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500"
-                        />
-                    </div>
-                    <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
-                        <Button type="button" variant="outline" size="sm" onClick={() => setIsAddProgramOpen(false)} className="rounded-none">
-                            Batal
-                        </Button>
-                        <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-none shadow-none text-xs py-2 px-4">
-                            Buat Program Dana
-                        </Button>
-                    </div>
-                </form>
-            </Modal>
+  // Handle Create Program
+  const handleAddSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const code = (formData.get('code') as string).toUpperCase();
+    const name = formData.get('name') as string;
+    const description = formData.get('description') as string;
+    const tujuanPenggalangan = formData.get('tujuanPenggalangan') as string;
+    const targetNominal = Number(formData.get('targetNominal'));
+    const tanggalMulai = formData.get('tanggalMulai') as string;
+    const tanggalSelesai = formData.get('tanggalSelesai') as string;
 
-            {/* Modal Detail Program Dana & Donatur */}
-            <Modal
-                isOpen={!!selectedProgram}
-                onClose={() => setSelectedProgram(null)}
-                title={selectedProgram ? `Rincian: ${selectedProgram.namaDana}` : 'Detail Dana Khusus'}
-            >
-                {selectedProgram && (
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4 border-b border-slate-100 pb-3">
-                            <div>
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">ID PROGRAM</span>
-                                <span className="text-xs font-black text-blue-600">{selectedProgram.id}</span>
-                            </div>
-                            <div>
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">STATUS</span>
-                                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 border border-emerald-100 rounded-none uppercase">{selectedProgram.status}</span>
-                            </div>
-                        </div>
+    if (new Date(tanggalMulai) > new Date(tanggalSelesai)) {
+      alert('Tanggal mulai tidak boleh melebihi tanggal selesai!');
+      return;
+    }
 
-                        <div className="border-b border-slate-100 pb-3">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TARGET PENGUMPULAN</span>
-                            <span className="text-sm font-black text-slate-800">{formatIDR(selectedProgram.target)}</span>
-                        </div>
+    try {
+      await createMutation.mutateAsync({
+        code,
+        name,
+        description,
+        tujuanPenggalangan,
+        targetNominal: targetNominal || undefined,
+        tanggalMulai,
+        tanggalSelesai,
+      });
+      setIsAddOpen(false);
+    } catch (err: any) {
+      alert(err?.response?.data?.message || err?.message || 'Gagal membuat program dana.');
+    }
+  };
 
-                        <div className="border-b border-slate-100 pb-3">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">DANA TERKUMPUL</span>
-                            <span className="text-sm font-black text-emerald-600">{formatIDR(selectedProgram.terkumpul)}</span>
-                        </div>
+  // Handle Allocation Submit
+  const handleAllocateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setAllocationError(null);
 
-                        <div>
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-2">DAFTAR DONATUR TERBARU</span>
-                            <div className="divide-y divide-slate-100 border border-slate-200 bg-slate-50 max-h-48 overflow-y-auto">
-                                {activeDonors.map((donor, idx) => (
-                                    <div key={idx} className="p-2.5 flex justify-between items-center text-xs font-semibold">
-                                        <div>
-                                            <p className="text-slate-800">{donor.nama}</p>
-                                            <p className="text-[10px] text-slate-400 font-medium mt-0.5">{donor.tanggal}</p>
-                                        </div>
-                                        <span className="font-black text-emerald-600">{formatIDR(donor.jumlah)}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+    if (!activeDetail) return;
+    if (!targetPosDanaId) {
+      setAllocationError('Pilih Pos Dana tujuan alokasi.');
+      return;
+    }
+    const amountNum = Number(allocationAmount);
+    if (!amountNum || amountNum <= 0) {
+      setAllocationError('Nominal alokasi harus lebih dari 0.');
+      return;
+    }
+    if (amountNum > Number(activeDetail.balance)) {
+      setAllocationError('Nominal alokasi melebihi sisa saldo Dana Khusus.');
+      return;
+    }
 
-                        <div className="flex justify-end pt-4 border-t border-slate-100">
-                            <Button onClick={() => setSelectedProgram(null)} variant="outline" size="sm" className="rounded-none">
-                                Tutup
-                            </Button>
-                        </div>
-                    </div>
-                )}
-            </Modal>
+    try {
+      await allocateMutation.mutateAsync({
+        id: activeDetail.id,
+        payload: {
+          targetPosDanaId,
+          nominal: amountNum,
+          keterangan: allocationNotes,
+        },
+      });
+      // Reset form
+      setTargetPosDanaId('');
+      setAllocationAmount('');
+      setAllocationNotes('');
+      setIsAllocateOpen(false);
+    } catch (err: any) {
+      setAllocationError(err?.response?.data?.message || err?.message || 'Gagal memproses alokasi sisa dana.');
+    }
+  };
+
+  const handleActivate = async (id: string) => {
+    if (!confirm('Apakah Anda yakin ingin mengaktifkan program Dana Khusus ini?')) return;
+    try {
+      await activateMutation.mutateAsync(id);
+    } catch (err: any) {
+      alert(err?.response?.data?.message || err?.message || 'Gagal mengaktifkan.');
+    }
+  };
+
+  const handleClose = async (id: string) => {
+    if (!confirm('Apakah Anda yakin ingin menutup program Dana Khusus ini? Setelah ditutup, dana tidak dapat menerima donasi atau membiayai pengeluaran baru.')) return;
+    try {
+      await closeMutation.mutateAsync(id);
+    } catch (err: any) {
+      alert(err?.response?.data?.message || err?.message || 'Gagal menutup.');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus program Dana Khusus Draft ini?')) return;
+    try {
+      await deleteMutation.mutateAsync(id);
+    } catch (err: any) {
+      alert(err?.response?.data?.message || err?.message || 'Gagal menghapus.');
+    }
+  };
+
+  // Simulated CSV/Excel report generation
+  const exportToCSV = (report: any) => {
+    if (!report) return;
+    const details = report.fundDetails;
+    let csvContent = 'data:text/csv;charset=utf-8,';
+    csvContent += `LAPORAN DANA KHUSUS\n`;
+    csvContent += `Nama Program,${details.name}\n`;
+    csvContent += `Kode,${details.code}\n`;
+    csvContent += `Status,${details.status}\n`;
+    csvContent += `Periode,${new Date(details.tanggalMulai).toLocaleDateString('id-ID')} s/d ${new Date(details.tanggalSelesai).toLocaleDateString('id-ID')}\n`;
+    csvContent += `Target Nominal,Rp ${details.target}\n`;
+    csvContent += `Total Donasi Terkumpul,Rp ${details.totalIncome}\n`;
+    csvContent += `Total Belanja Terpakai,Rp ${details.totalExpense}\n`;
+    csvContent += `Sisa Saldo,Rp ${details.balance}\n\n`;
+
+    csvContent += `RIWAYAT TRANSAKSI\n`;
+    csvContent += `No Transaksi,Tanggal,Tipe,Jumlah,Keterangan\n`;
+    report.transactions.forEach((t: any) => {
+      csvContent += `${t.no},${new Date(t.tanggal).toLocaleDateString('id-ID')},${t.tipe},${t.jumlah},"${t.keterangan}"\n`;
+    });
+
+    if (report.allocations.length > 0) {
+      csvContent += `\nRIWAYAT ALOKASI SISA SALDO\n`;
+      csvContent += `Tanggal,Nominal,Pos Dana Tujuan,Keterangan\n`;
+      report.allocations.forEach((a: any) => {
+        csvContent += `${new Date(a.tanggal).toLocaleDateString('id-ID')},${a.nominal},${a.targetPos},"${a.keterangan}"\n`;
+      });
+    }
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `laporan_dana_khusus_${details.code}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Trigger browser print for PDF
+  const triggerPrintReport = () => {
+    window.print();
+  };
+
+  return (
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
+      {/* Print styles */}
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #print-section, #print-section * {
+            visibility: visible;
+          }
+          #print-section {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+        }
+      `}</style>
+
+      {/* Header section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Dana Khusus</h2>
+          <p className="text-sm text-gray-500">Pengelolaan program donasi terikat dan dana pembangunan temporer.</p>
         </div>
-    );
+        {isBendahara && (
+          <Button onClick={() => setIsAddOpen(true)} className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 shadow-none rounded-none w-full sm:w-auto justify-center">
+            <Plus size={16} /> Buka Program Dana Baru
+          </Button>
+        )}
+      </div>
+
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-4 border-l-4 border-l-blue-600 border-y-slate-200 border-r-slate-200">
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Total Donasi Masuk</p>
+          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">
+            {isLoading ? '...' : formatIDR(stats.totalCollected)}
+          </h4>
+          <span className="text-[10px] text-slate-400 font-bold">Akumulasi donasi terkumpul</span>
+        </Card>
+
+        <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200">
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Total Pengeluaran Dana</p>
+          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">
+            {isLoading ? '...' : formatIDR(stats.totalSpent)}
+          </h4>
+          <span className="text-[10px] text-slate-400 font-bold">Total belanja tersalurkan</span>
+        </Card>
+
+        <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Sisa Saldo Kas Aktif</p>
+          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">
+            {isLoading ? '...' : formatIDR(stats.totalBalance)}
+          </h4>
+          <span className="text-[10px] text-slate-400 font-bold">Saldo tersisa di rekening</span>
+        </Card>
+      </div>
+
+      {/* Filter and list controls */}
+      <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col md:flex-row gap-4 justify-between">
+        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-none w-full md:w-80">
+          <Search size={16} className="text-slate-400" />
+          <input
+            type="text"
+            placeholder="Cari program dana..."
+            className="bg-transparent outline-none text-xs w-full text-slate-800 font-semibold"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Filter Status:</span>
+          <div className="flex border border-slate-200 rounded-none overflow-hidden">
+            {(['ALL', 'DRAFT', 'AKTIF', 'DITUTUP'] as const).map((status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-3 py-1.5 text-xs font-black transition-colors ${
+                  statusFilter === status ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {status === 'ALL' ? 'Semua' : status}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Listing Programs */}
+      <AdaptiveList
+        data={filteredFunds}
+        isLoading={isLoading}
+        desktopHeaders={[
+          'Kode',
+          'Nama Dana Khusus',
+          'Status',
+          'Saldo Saat Ini',
+          'Terkumpul',
+          'Target Nominal',
+          'Progress',
+          'Tanggal Mulai',
+          'Tanggal Selesai',
+          'Aksi'
+        ]}
+        renderDesktopRow={(fund) => {
+          const targetNum = Number(fund.targetNominal || 0);
+          const collectedNum = Number(fund.income || 0);
+          const percent = targetNum > 0 ? Math.min(Math.round((collectedNum / targetNum) * 100), 100) : 0;
+          
+          return (
+            <tr key={fund.id} className="hover:bg-slate-50/50 transition-colors">
+              <td className="px-5 py-3.5 text-xs font-black text-blue-600 border-r border-slate-100 uppercase font-mono">{fund.code}</td>
+              <td className="px-5 py-3.5 text-xs font-bold text-slate-700 border-r border-slate-100 max-w-[250px] truncate" title={fund.name}>{fund.name}</td>
+              <td className="px-5 py-3.5 border-r border-slate-100 text-center">
+                <Badge variant={fund.status === 'AKTIF' ? 'success' : fund.status === 'DITUTUP' ? 'danger' : 'warning'}>
+                  {fund.status}
+                </Badge>
+              </td>
+              <td className="px-5 py-3.5 text-xs font-black text-right text-slate-800 border-r border-slate-100">{formatIDR(Number(fund.balance))}</td>
+              <td className="px-5 py-3.5 text-xs font-bold text-right text-emerald-600 border-r border-slate-100">{formatIDR(collectedNum)}</td>
+              <td className="px-5 py-3.5 text-xs font-medium text-right text-slate-500 border-r border-slate-100">{targetNum > 0 ? formatIDR(targetNum) : '-'}</td>
+              <td className="px-5 py-3.5 border-r border-slate-100">
+                {targetNum > 0 ? (
+                  <div className="flex items-center gap-1.5 min-w-[100px]">
+                    <div className="w-16 bg-slate-100 h-1.5 rounded-none overflow-hidden">
+                      <div className="bg-blue-600 h-full rounded-none" style={{ width: `${percent}%` }} />
+                    </div>
+                    <span className="text-[9px] font-bold text-slate-500">{percent}%</span>
+                  </div>
+                ) : (
+                  <span className="text-[10px] text-slate-400 font-semibold">Tanpa Target</span>
+                )}
+              </td>
+              <td className="px-5 py-3.5 text-[10px] text-slate-500 font-semibold border-r border-slate-100">
+                {new Date(fund.tanggalMulai).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+              </td>
+              <td className="px-5 py-3.5 text-[10px] text-slate-500 font-semibold border-r border-slate-100">
+                {new Date(fund.tanggalSelesai).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+              </td>
+              <td className="px-5 py-3.5 text-center">
+                <div className="flex items-center justify-center gap-1.5">
+                  <button
+                    onClick={() => setSelectedFundId(fund.id)}
+                    className="p-1 text-slate-400 hover:text-blue-600 transition-colors border border-transparent hover:border-slate-200"
+                    title="Lihat Detail"
+                  >
+                    <Eye size={14} />
+                  </button>
+                  {isBendahara && fund.status === 'DRAFT' && (
+                    <>
+                      <button
+                        onClick={() => handleActivate(fund.id)}
+                        className="p-1 text-slate-400 hover:text-emerald-600 transition-colors border border-transparent hover:border-slate-200"
+                        title="Aktifkan Dana"
+                      >
+                        <Play size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(fund.id)}
+                        className="p-1 text-slate-400 hover:text-rose-600 transition-colors border border-transparent hover:border-slate-200"
+                        title="Hapus Program"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
+                  {isBendahara && fund.status === 'AKTIF' && (
+                    <button
+                      onClick={() => handleClose(fund.id)}
+                      className="p-1 text-slate-400 hover:text-rose-600 transition-colors border border-transparent hover:border-slate-200"
+                      title="Tutup Program Dana"
+                    >
+                      <XCircle size={14} />
+                    </button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          );
+        }}
+        renderMobileCard={(fund) => {
+          const targetNum = Number(fund.targetNominal || 0);
+          const collectedNum = Number(fund.income || 0);
+          const percent = targetNum > 0 ? Math.min(Math.round((collectedNum / targetNum) * 100), 100) : 0;
+          return (
+            <div className="flex flex-col gap-2.5">
+              <div className="flex justify-between items-center">
+                <div className="flex gap-2 items-center">
+                  <span className="text-xs font-black text-blue-600 font-mono uppercase">{fund.code}</span>
+                  <Badge variant={fund.status === 'AKTIF' ? 'success' : fund.status === 'DITUTUP' ? 'danger' : 'warning'}>
+                    {fund.status}
+                  </Badge>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setSelectedFundId(fund.id)}
+                    className="p-1 hover:bg-slate-100 rounded text-slate-500 border border-slate-200 flex items-center justify-center"
+                  >
+                    <Eye size={14} />
+                  </button>
+                  {isBendahara && fund.status === 'DRAFT' && (
+                    <>
+                      <button onClick={() => handleActivate(fund.id)} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded border border-slate-200">
+                        <Play size={14} />
+                      </button>
+                      <button onClick={() => handleDelete(fund.id)} className="p-1 text-rose-600 hover:bg-rose-50 rounded border border-slate-200">
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
+                  {isBendahara && fund.status === 'AKTIF' && (
+                    <button onClick={() => handleClose(fund.id)} className="p-1 text-rose-600 hover:bg-rose-50 rounded border border-slate-200">
+                      <XCircle size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-bold text-slate-800">{fund.name}</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">{fund.description || 'Tanpa deskripsi'}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-2 text-[10px] font-bold text-slate-500">
+                <div>
+                  <p className="text-[8px] text-slate-400 uppercase">Saldo Aktif</p>
+                  <p className="text-xs font-black text-slate-800 mt-0.5">{formatIDR(Number(fund.balance))}</p>
+                </div>
+                <div>
+                  <p className="text-[8px] text-slate-400 uppercase">Terkumpul</p>
+                  <p className="text-xs font-black text-emerald-600 mt-0.5">{formatIDR(collectedNum)}</p>
+                </div>
+              </div>
+
+              {targetNum > 0 && (
+                <div className="pt-1.5">
+                  <div className="flex justify-between text-[8px] font-bold text-slate-400 mb-1">
+                    <span>PROGRESS TARGET ({formatIDR(targetNum)})</span>
+                    <span>{percent}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 h-1.5 rounded-none overflow-hidden">
+                    <div className="bg-blue-600 h-full rounded-none" style={{ width: `${percent}%` }} />
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }}
+      />
+
+      {/* Modal Program Dana Baru */}
+      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="Buka Program Dana Baru">
+        <form onSubmit={handleAddSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="md:col-span-1">
+              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">KODE DANA</label>
+              <input
+                type="text"
+                name="code"
+                required
+                placeholder="Misal: DK-05"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 uppercase font-mono font-bold"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">NAMA PROGRAM DANA</label>
+              <input
+                type="text"
+                name="name"
+                required
+                placeholder="Contoh: Renovasi Atap Gereja Utama"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 font-bold"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">DESKRIPSI PROGRAM</label>
+            <textarea
+              name="description"
+              placeholder="Penjelasan singkat mengenai asal-usul program..."
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 h-16 resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">TUJUAN PENGGUNAAN DANA</label>
+            <input
+              type="text"
+              name="tujuanPenggalangan"
+              placeholder="Contoh: Mengganti kayu penyangga yang lapuk..."
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">TARGET PENGGALAINGAN (IDR, OPSIONAL)</label>
+            <input
+              type="number"
+              name="targetNominal"
+              placeholder="Misal: 150000000 (boleh kosong)"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 font-mono"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">TANGGAL MULAI</label>
+              <input
+                type="date"
+                name="tanggalMulai"
+                required
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">TANGGAL SELESAI</label>
+              <input
+                type="date"
+                name="tanggalSelesai"
+                required
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsAddOpen(false)} className="rounded-none">
+              Batal
+            </Button>
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-none shadow-none text-xs py-2 px-4 font-bold">
+              Buat Program Dana
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal Detail Dana Khusus */}
+      <Modal
+        isOpen={!!selectedFundId}
+        onClose={() => setSelectedFundId(null)}
+        title={activeDetail ? `Detail: ${activeDetail.name} (${activeDetail.code})` : 'Detail Dana Khusus'}
+        size="xl"
+      >
+        {activeDetail && (
+          <div className="space-y-6" id="print-section">
+            {/* Action Header on Detail Modal */}
+            <div className="flex flex-wrap gap-2 justify-between items-center border-b border-slate-100 pb-3 no-print">
+              <div className="flex gap-2">
+                <span className="text-[10px] font-black text-slate-400 uppercase self-center">Status saat ini:</span>
+                <Badge variant={activeDetail.status === 'AKTIF' ? 'success' : activeDetail.status === 'DITUTUP' ? 'danger' : 'warning'}>
+                  {activeDetail.status}
+                </Badge>
+              </div>
+
+              <div className="flex gap-2">
+                {reportData && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => exportToCSV(reportData)}
+                      className="text-slate-600 border-slate-200 flex items-center gap-1.5 rounded-none text-[10px]"
+                    >
+                      <FileSpreadsheet size={14} /> Export CSV
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={triggerPrintReport}
+                      className="text-slate-600 border-slate-200 flex items-center gap-1.5 rounded-none text-[10px]"
+                    >
+                      <FileDown size={14} /> Cetak Laporan / PDF
+                    </Button>
+                  </>
+                )}
+
+                {isBendahara && activeDetail.status === 'DITUTUP' && Number(activeDetail.balance) > 0 && (
+                  <Button
+                    onClick={() => setIsAllocateOpen(true)}
+                    className="bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1.5 rounded-none text-[10px] font-bold py-1.5 shadow-none"
+                  >
+                    <ArrowRightLeft size={14} /> Alokasikan Sisa Dana ({formatIDR(Number(activeDetail.balance))})
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Print Header */}
+            <div className="hidden print:block text-center border-b-2 border-slate-800 pb-3 mb-4">
+              <h1 className="text-xl font-bold uppercase text-slate-800">Laporan Akuntabilitas Dana Khusus</h1>
+              <p className="text-xs text-slate-500 font-semibold uppercase">{activeDetail.name} ({activeDetail.code})</p>
+              <p className="text-[10px] text-slate-400 mt-1">Dicetak pada: {new Date().toLocaleString('id-ID')}</p>
+            </div>
+
+            {/* Core Info Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50/50 p-4 border border-slate-100">
+              <div className="space-y-2 text-xs font-semibold">
+                <div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Tujuan Penggalangan</span>
+                  <span className="text-slate-800">{activeDetail.tujuanPenggalangan || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Keterangan / Deskripsi</span>
+                  <span className="text-slate-600 leading-normal block">{activeDetail.description || '-'}</span>
+                </div>
+              </div>
+              <div className="space-y-2 text-xs font-semibold">
+                <div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Periode Aktif Program</span>
+                  <span className="text-slate-800 font-mono">
+                    {new Date(activeDetail.tanggalMulai).toLocaleDateString('id-ID')} s/d {new Date(activeDetail.tanggalSelesai).toLocaleDateString('id-ID')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Target Penggalangan</span>
+                  <span className="text-slate-800">{Number(activeDetail.targetNominal) > 0 ? formatIDR(Number(activeDetail.targetNominal)) : 'Tidak memiliki batasan target nominal'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Detail Stats */}
+            <div className="grid grid-cols-3 gap-4 border-y border-slate-100 py-4 text-center">
+              <div>
+                <p className="text-[9px] text-slate-400 font-black uppercase tracking-wider">Total Donasi Masuk</p>
+                <p className="text-sm font-black text-emerald-600 mt-1">{formatIDR(Number(activeDetail.income))}</p>
+              </div>
+              <div>
+                <p className="text-[9px] text-slate-400 font-black uppercase tracking-wider">Total Pengeluaran / Belanja</p>
+                <p className="text-sm font-black text-rose-500 mt-1">{formatIDR(Number(activeDetail.expense))}</p>
+              </div>
+              <div>
+                <p className="text-[9px] text-slate-400 font-black uppercase tracking-wider">Sisa Saldo Tersedia</p>
+                <p className="text-sm font-black text-slate-800 mt-1">{formatIDR(Number(activeDetail.balance))}</p>
+              </div>
+            </div>
+
+            {/* Progress Bar Detail */}
+            {Number(activeDetail.targetNominal) > 0 && (
+              <div className="p-4 bg-blue-50/30 border border-blue-100/30">
+                <div className="flex justify-between text-[10px] font-bold text-blue-700 mb-1.5">
+                  <span>Pencapaian Target Penggalangan</span>
+                  <span>{Math.round((Number(activeDetail.income) / Number(activeDetail.targetNominal)) * 100)}%</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2.5 rounded-none overflow-hidden border border-slate-200/50">
+                  <div
+                    className="bg-blue-600 h-full rounded-none"
+                    style={{ width: `${Math.min(Math.round((Number(activeDetail.income) / Number(activeDetail.targetNominal)) * 100), 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Tabs for Transactions & Allocations History */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-200 pb-2">
+                  <History size={14} /> Histori Transaksi Mutasi Kas
+                </h3>
+              </div>
+
+              {isLoadingTx ? (
+                <div className="text-center py-4 text-xs font-bold text-slate-500">Memuat riwayat transaksi...</div>
+              ) : transactions.length === 0 ? (
+                <div className="text-center py-8 text-xs font-bold text-slate-400 bg-slate-50 border border-dashed border-slate-200">
+                  Belum ada transaksi mutasi kas (pemasukan donasi atau pengeluaran belanja) untuk program ini.
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse border border-slate-200 text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 font-black uppercase text-[10px] text-slate-500 divide-x divide-slate-100 border-b border-slate-200">
+                      <th className="px-4 py-2">No Transaksi</th>
+                      <th className="px-4 py-2">Tanggal</th>
+                      <th className="px-4 py-2">Keterangan</th>
+                      <th className="px-4 py-2 text-right">Tipe</th>
+                      <th className="px-4 py-2 text-right">Jumlah (IDR)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {transactions.map((tx: any) => (
+                      <tr key={tx.id} className="hover:bg-slate-50/40">
+                        <td className="px-4 py-2.5 font-bold font-mono text-blue-600">{tx.transactionNo}</td>
+                        <td className="px-4 py-2.5 font-medium text-slate-500">
+                          {new Date(tx.transactionDate).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                        </td>
+                        <td className="px-4 py-2.5 font-bold text-slate-700 max-w-[300px] truncate" title={tx.description}>{tx.description}</td>
+                        <td className="px-4 py-2.5 text-right font-black">
+                          <span className={`px-1.5 py-0.5 rounded text-[8px] border font-black ${
+                            tx.transactionType === 'INCOME' 
+                              ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                              : 'bg-rose-50 text-rose-500 border-rose-100'
+                          }`}>
+                            {tx.transactionType === 'INCOME' ? 'MASUK' : 'KELUAR'}
+                          </span>
+                        </td>
+                        <td className={`px-4 py-2.5 text-right font-black ${
+                          tx.transactionType === 'INCOME' ? 'text-emerald-600' : 'text-rose-500'
+                        }`}>
+                          {tx.transactionType === 'INCOME' ? '+' : '-'}{formatIDR(Number(tx.amount))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
+              {/* Allocations Table inside report data */}
+              {reportData && reportData.allocations.length > 0 && (
+                <div className="space-y-2 mt-4 pt-4 border-t border-slate-100">
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <ArrowRightLeft size={14} className="text-amber-500" /> Riwayat Alokasi Sisa Saldo
+                  </h3>
+                  <table className="w-full text-left border-collapse border border-slate-200 text-xs">
+                    <thead>
+                      <tr className="bg-slate-50 font-black uppercase text-[10px] text-slate-500 divide-x divide-slate-100 border-b border-slate-200">
+                        <th className="px-4 py-2">Tanggal Alokasi</th>
+                        <th className="px-4 py-2">Pos Dana Tujuan</th>
+                        <th className="px-4 py-2">Keterangan</th>
+                        <th className="px-4 py-2 text-right">Nominal (IDR)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {reportData.allocations.map((alloc: any) => (
+                        <tr key={alloc.id} className="hover:bg-slate-50/40">
+                          <td className="px-4 py-2.5 font-medium text-slate-500">
+                            {new Date(alloc.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                          </td>
+                          <td className="px-4 py-2.5 font-bold text-blue-600 uppercase">{alloc.targetPos}</td>
+                          <td className="px-4 py-2.5 font-medium text-slate-600">{alloc.keterangan || '-'}</td>
+                          <td className="px-4 py-2.5 text-right font-black text-amber-600">
+                            {formatIDR(Number(alloc.nominal))}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-4 border-t border-slate-100 no-print">
+              <Button onClick={() => setSelectedFundId(null)} variant="outline" size="sm" className="rounded-none">
+                Tutup Detail
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal Alokasi Sisa Dana */}
+      <Modal
+        isOpen={isAllocateOpen}
+        onClose={() => setIsAllocateOpen(false)}
+        title="Alokasikan Sisa Saldo Dana Khusus"
+      >
+        {activeDetail && (
+          <form onSubmit={handleAllocateSubmit} className="space-y-4">
+            <div className="p-3 bg-amber-50 border border-amber-100 text-amber-800 text-xs rounded-none font-semibold space-y-1">
+              <p className="font-bold">⚠️ PROSES ALOKASI SALDO AKHIR</p>
+              <p>Dana Khusus <strong className="font-black">{activeDetail.name}</strong> telah DITUTUP. Sisa saldo akhir sebesar <strong className="font-black text-amber-700">{formatIDR(Number(activeDetail.balance))}</strong> wajib dipindahkan ke Pos Dana permanen.</p>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">POS DANA TUJUAN (PERMANEN)</label>
+              <select
+                value={targetPosDanaId}
+                onChange={(e) => setTargetPosDanaId(e.target.value)}
+                required
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 font-bold"
+              >
+                <option value="">-- Pilih Pos Dana Penerima --</option>
+                {fundCategories.filter(f => f.isActive).map((f) => (
+                  <option key={f.id} value={f.id}>{f.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">NOMINAL ALOKASI (IDR)</label>
+              <input
+                type="number"
+                value={allocationAmount}
+                onChange={(e) => setAllocationAmount(e.target.value !== '' ? Number(e.target.value) : '')}
+                required
+                placeholder={String(activeDetail.balance)}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 font-mono font-bold text-slate-800"
+              />
+              <span className="text-[9px] text-slate-400 font-bold block mt-1">Maksimal: {formatIDR(Number(activeDetail.balance))}</span>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">KETERANGAN / DESKRIPSI</label>
+              <textarea
+                value={allocationNotes}
+                onChange={(e) => setAllocationNotes(e.target.value)}
+                placeholder="Contoh: Pemindahan sisa dana bencana alam ke Pos Dana Sosial Paroki"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-xs outline-none focus:border-blue-500 h-16 resize-none"
+              />
+            </div>
+
+            {allocationError && (
+              <p className="text-[10px] text-rose-500 font-bold">{allocationError}</p>
+            )}
+
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsAllocateOpen(false)} className="rounded-none">
+                Batal
+              </Button>
+              <Button type="submit" disabled={allocateMutation.isPending} className="bg-amber-600 hover:bg-amber-700 text-white rounded-none shadow-none text-xs py-2 px-4 font-bold flex items-center gap-1.5">
+                {allocateMutation.isPending ? 'Memproses...' : <><CheckCircle size={14} /> Proses Alokasi</>}
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
+    </div>
+  );
 };
 
 export default DanaKhususPage;

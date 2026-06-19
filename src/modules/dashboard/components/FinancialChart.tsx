@@ -62,7 +62,7 @@ export const FinancialChart = () => {
                     </p>
                 </div>
                 <div className="pt-2 lg:pt-3 lg:border-t lg:border-slate-100">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Surplus</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Selisih</p>
                     <p className="text-base font-black text-blue-600 tracking-tight leading-snug">
                         {formatIDR(SUMMARY_TOTALS.surplus)}
                     </p>

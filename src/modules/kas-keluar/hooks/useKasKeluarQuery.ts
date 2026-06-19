@@ -52,6 +52,8 @@ export interface CashTransactionExpense {
   } | null;
   createdAt: string;
   updatedAt: string;
+  specialFundId?: string | null;
+  specialFund?: any;
 }
 
 export interface ApprovedPermohonan {
@@ -88,6 +90,7 @@ export interface CreateExpensePayload {
   amount: number;
   description: string;
   file?: File | null;
+  special_fund_id?: string;
 }
 
 /**
@@ -157,6 +160,10 @@ export const useAddKasKeluarMutation = () => {
 
       if (payload.file) {
         formData.append('file', payload.file);
+      }
+      
+      if (payload.special_fund_id) {
+        formData.append('special_fund_id', payload.special_fund_id);
       }
 
       const response = await axiosInstance.post('/v1/cash/expenses', formData, {

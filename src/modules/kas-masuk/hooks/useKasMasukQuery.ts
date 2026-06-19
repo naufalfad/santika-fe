@@ -34,6 +34,8 @@ export interface CashTransactionIncome {
   description: string;
   createdAt: string;
   updatedAt: string;
+  specialFundId?: string | null;
+  specialFund?: any;
 }
 
 export interface CreateIncomePayload {
@@ -43,6 +45,7 @@ export interface CreateIncomePayload {
   amount: number;
   description: string;
   parent_transaction_id?: string | null;
+  special_fund_id?: string | null;
 }
 
 /**
@@ -169,6 +172,31 @@ export const useAddKasKeluarMutation = () => {
       addKasKeluar(data);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kasKeluar'] });
+    },
+  });
+};
+
+export interface TransferBalancePayload {
+  source_fund_category_id: string;
+  target_fund_category_id: string;
+  amount: number;
+  description: string;
+}
+
+/**
+ * Mutation hook to transfer balance between Pos Dana.
+ */
+export const useTransferBalanceMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: TransferBalancePayload) => {
+      const response = await axiosInstance.post('/v1/fund-categories/transfer', payload);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fundBalances'] });
+      queryClient.invalidateQueries({ queryKey: ['kasMasuk'] });
       queryClient.invalidateQueries({ queryKey: ['kasKeluar'] });
     },
   });

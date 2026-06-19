@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
 import {
   Plus, Search, Download,
-  Info, FileImage, PieChart as PieIcon, ArrowUpRight
+  Info, FileImage, PieChart as PieIcon, ArrowUpRight, TrendingUp
 } from 'lucide-react';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart as RechartsPieChart, Pie, Cell, Legend
 } from 'recharts';
 import { Card } from '../../../shared/components/ui/Card';
@@ -13,7 +13,6 @@ import { Badge } from '../../../shared/components/ui/Badge';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { KasKeluarForm } from '../components/KasKeluarForm';
 import { SPJUploadModal } from '../../spj/components/SPJUploadModal';
-import { CATEGORY_KELUAR_DATA, TREND_KELUAR_DATA } from '../../../shared/mock/kasKeluarData';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
 import { useKasKeluarQuery } from '../hooks/useKasKeluarQuery';
@@ -35,39 +34,59 @@ const KasKeluarPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSpjUploadOpen, setIsSpjUploadOpen] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | undefined>(undefined);
+  const [selectedBuktiUrl, setSelectedBuktiUrl] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'PERMANENT' | 'SPECIAL_FUND'>('PERMANENT');
 
   // 1. Calculate base API asset paths dynamically
   const apiAssetUrl = useMemo(() => {
     return (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace('/api', '');
   }, []);
 
-  // 2. Memoize overall cash balance (Sum of all active Pos Dana balances)
+  // Split transactions
+  const kasKeluarPermanent = useMemo(() => {
+    return kasKeluar.filter(item => !item.specialFundId);
+  }, [kasKeluar]);
+
+  const kasKeluarSpecial = useMemo(() => {
+    return kasKeluar.filter(item => !!item.specialFundId);
+  }, [kasKeluar]);
+
+  // Current transactions based on active tab
+  const currentTransactions = useMemo(() => {
+    return activeTab === 'PERMANENT' ? kasKeluarPermanent : kasKeluarSpecial;
+  }, [activeTab, kasKeluarPermanent, kasKeluarSpecial]);
+
+  // 2. Memoize overall cash balance (Sum of all active Pos Dana balances for current tab)
   const totalSaldoKas = useMemo(() => {
-    return fundBalances.reduce((sum, item) => sum + Number(item.balance || 0), 0);
-  }, [fundBalances]);
+    return fundBalances.reduce((sum, item) => {
+      const isSpecial = item.fund.startsWith('Dana Khusus:');
+      const shouldInclude = activeTab === 'PERMANENT' ? !isSpecial : isSpecial;
+      return sum + (shouldInclude ? Number(item.balance || 0) : 0);
+    }, 0);
+  }, [fundBalances, activeTab]);
 
   // 3. Memoize total expense for the current month
   const totalKeluarBulanIni = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-    return kasKeluar.reduce((sum, item) => {
+    return currentTransactions.reduce((sum, item) => {
       const d = new Date(item.transactionDate);
       if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
         return sum + Number(item.amount);
       }
       return sum;
     }, 0);
-  }, [kasKeluar]);
+  }, [currentTransactions]);
 
   // 4. Memoize number of transactions logged this month
   const transBulanIniCount = useMemo(() => {
     const now = new Date();
-    return kasKeluar.filter(item => {
+    return currentTransactions.filter(item => {
       const d = new Date(item.transactionDate);
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     }).length;
-  }, [kasKeluar]);
+  }, [currentTransactions]);
 
   // 5. Memoize entire paroki budget burn rate
   const totalPlafon = useMemo(() => {
@@ -83,15 +102,26 @@ const KasKeluarPage = () => {
     return Math.min(Math.round((totalRealisasi / totalPlafon) * 100), 100);
   }, [totalPlafon, totalRealisasi]);
 
+  // Average special fund expense
+  const avgSpecialExpense = useMemo(() => {
+    const specialTxsThisMonth = kasKeluarSpecial.filter(item => {
+      const d = new Date(item.transactionDate);
+      return d.getMonth() === new Date().getMonth() && d.getFullYear() === new Date().getFullYear();
+    });
+    if (specialTxsThisMonth.length === 0) return 0;
+    const sum = specialTxsThisMonth.reduce((acc, curr) => acc + Number(curr.amount), 0);
+    return Math.round(sum / specialTxsThisMonth.length);
+  }, [kasKeluarSpecial]);
+
   // 6. Memoize search query filter logic
   const filteredData = useMemo(() => {
-    return kasKeluar.filter(item =>
+    return currentTransactions.filter(item =>
       item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.transactionNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.fundCategory?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.expenseType?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [kasKeluar, searchTerm]);
+  }, [currentTransactions, searchTerm]);
 
   // 7. Memoize daily trend chart dataset
   const trendDataset = useMemo(() => {
@@ -100,7 +130,7 @@ const KasKeluarPage = () => {
     const currentYear = new Date().getFullYear();
 
     // Sort transactions chronologically
-    const sorted = [...kasKeluar]
+    const sorted = [...currentTransactions]
       .filter(item => {
         const d = new Date(item.transactionDate);
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
@@ -118,22 +148,24 @@ const KasKeluarPage = () => {
       jumlah
     }));
 
-    return chartData.length > 0 ? chartData : TREND_KELUAR_DATA;
-  }, [kasKeluar]);
+    return chartData.length > 0 ? chartData : [];
+  }, [currentTransactions]);
 
   // 8. Memoize category distribution donut dataset
   const categoryDataset = useMemo(() => {
     const sums: Record<string, number> = {};
     let total = 0;
 
-    kasKeluar.forEach(item => {
-      const name = item.expenseType?.name || 'Lain-lain';
+    currentTransactions.forEach(item => {
+      const name = activeTab === 'PERMANENT'
+        ? (item.expenseType?.name || 'Lain-lain')
+        : (item.specialFund?.name || 'Lain-lain');
       sums[name] = (sums[name] || 0) + Number(item.amount);
       total += Number(item.amount);
     });
 
     if (total === 0) {
-      return CATEGORY_KELUAR_DATA;
+      return [];
     }
 
     const colors = ['#e11d48', '#f59e0b', '#7c3aed', '#0284c7', '#10b981', '#94a3b8'];
@@ -142,7 +174,7 @@ const KasKeluarPage = () => {
       value: Math.round((sum / total) * 100),
       color: colors[index % colors.length]
     }));
-  }, [kasKeluar]);
+  }, [currentTransactions, activeTab]);
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
@@ -162,24 +194,59 @@ const KasKeluarPage = () => {
         </div>
       </div>
 
+      {/* Tab Selector */}
+      <div className="flex gap-6 border-b border-slate-200 overflow-x-auto no-scrollbar pb-0 text-sm font-bold text-slate-400">
+        <button
+          onClick={() => setActiveTab('PERMANENT')}
+          className={`pb-3 whitespace-nowrap transition-colors duration-200 rounded-none border-b-2 ${activeTab === 'PERMANENT'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent hover:text-slate-700 hover:border-slate-300'
+            }`}
+        >
+          Pos Dana Permanen
+        </button>
+        <button
+          onClick={() => setActiveTab('SPECIAL_FUND')}
+          className={`pb-3 whitespace-nowrap transition-colors duration-200 rounded-none border-b-2 ${activeTab === 'SPECIAL_FUND'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent hover:text-slate-700 hover:border-slate-300'
+            }`}
+        >
+          Dana Khusus
+        </button>
+      </div>
+
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200 shadow-sm">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Total Keluar (Bulan Ini)</p>
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+            {activeTab === 'PERMANENT' ? 'Total Keluar (Bulan Ini)' : 'Keluar Dana Khusus (Bulan Ini)'}
+          </p>
           <h4 className="text-lg font-black mt-1 text-rose-600 tracking-tight">{formatIDR(totalKeluarBulanIni)}</h4>
           <p className="text-[9px] text-emerald-600 mt-2 font-bold">✓ Terkalkulasi dari pengeluaran riil</p>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200 shadow-sm">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Burn Rate Anggaran</p>
-          <div className="flex items-end gap-1.5 mt-1">
-            <h4 className="text-lg font-black text-slate-800 tracking-tight">{burnRate}%</h4>
-            <p className="text-[9px] text-slate-400 font-bold mb-0.5">terpakai</p>
-          </div>
-          <div className="w-full bg-slate-100 h-1 rounded-full mt-3 overflow-hidden">
-            <div className="bg-amber-500 h-full transition-all duration-500" style={{ width: `${burnRate}%` }}></div>
-          </div>
-        </Card>
+        {activeTab === 'PERMANENT' ? (
+          <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Burn Rate Anggaran</p>
+            <div className="flex items-end gap-1.5 mt-1">
+              <h4 className="text-lg font-black text-slate-800 tracking-tight">{burnRate}%</h4>
+              <p className="text-[9px] text-slate-400 font-bold mb-0.5">terpakai</p>
+            </div>
+            <div className="w-full bg-slate-100 h-1 rounded-full mt-3 overflow-hidden">
+              <div className="bg-amber-500 h-full transition-all duration-500" style={{ width: `${burnRate}%` }}></div>
+            </div>
+          </Card>
+        ) : (
+          <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Rata-rata Pengeluaran</p>
+            <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(avgSpecialExpense)}</h4>
+            <div className="flex items-center gap-1 mt-2 text-amber-600 font-bold text-[10px]">
+              <TrendingUp size={12} />
+              <span>Rata-rata Bulan Ini</span>
+            </div>
+          </Card>
+        )}
 
         <Card className="p-4 border-l-4 border-l-blue-500 border-y-slate-200 border-r-slate-200 shadow-sm">
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Transaksi (Bulan Ini)</p>
@@ -190,7 +257,9 @@ const KasKeluarPage = () => {
         </Card>
 
         <Card className="p-4 border-l-4 border-l-slate-800 border-y-slate-200 border-r-slate-200 shadow-sm">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Saldo Kas Saat Ini</p>
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+            {activeTab === 'PERMANENT' ? 'Saldo Kas Saat Ini' : 'Sisa Saldo Dana Khusus'}
+          </p>
           <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(totalSaldoKas)}</h4>
           <p className="text-[9px] text-emerald-600 mt-2 font-bold">✓ Sinkron dengan neraca Pos Dana</p>
         </Card>
@@ -202,18 +271,12 @@ const KasKeluarPage = () => {
         <Card className="lg:col-span-8 p-5 border-slate-200 shadow-sm">
           <div className="mb-4">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <ArrowUpRight size={14} className="text-rose-500" /> Fluktuasi Pengeluaran Bulanan
+              <ArrowUpRight size={14} className="text-rose-500" /> Tren {activeTab === 'PERMANENT' ? 'Pengeluaran' : 'Pengeluaran Dana Khusus'} Bulanan
             </h3>
           </div>
           <div className="h-[230px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trendDataset}>
-                <defs>
-                  <linearGradient id="colorKeluar" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#e11d48" stopOpacity={0.06} />
-                    <stop offset="95%" stopColor="#e11d48" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
+              <LineChart data={trendDataset}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }} />
                 <YAxis
@@ -223,8 +286,8 @@ const KasKeluarPage = () => {
                   tickFormatter={(val) => formatIDR(val, { notation: 'compact' })}
                 />
                 <Tooltip contentStyle={{ border: '1px solid #f1f5f9', borderRadius: '8px', fontSize: '11px', fontWeight: 600 }} />
-                <Area type="monotone" dataKey="jumlah" stroke="#e11d48" fillOpacity={1} fill="url(#colorKeluar)" strokeWidth={2.5} />
-              </AreaChart>
+                <Line type="monotone" dataKey="jumlah" stroke="#e11d48" strokeWidth={2.5} dot={{ r: 3, fill: '#e11d48' }} activeDot={{ r: 5 }} />
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </Card>
@@ -233,7 +296,7 @@ const KasKeluarPage = () => {
         <div className="lg:col-span-4 space-y-6">
           <Card className="p-5 border-slate-200 shadow-sm">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <PieIcon size={14} className="text-purple-500" /> Alokasi Jenis Belanja
+              <PieIcon size={14} className="text-purple-500" /> {activeTab === 'PERMANENT' ? 'Alokasi Jenis Belanja' : 'Penyebaran Program'}
             </h3>
             <div className="h-[180px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -397,7 +460,10 @@ const KasKeluarPage = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => setSelectedBuktiUrl(item.buktiUrl || 'https://via.placeholder.com/600x800?text=Nota+Pembayaran+Fisik')}
+                  onClick={() => {
+                    const url = item.attachment?.fileUrl ? `${apiAssetUrl}${item.attachment.fileUrl}` : 'https://via.placeholder.com/600x800?text=Nota+Pembayaran+Fisik';
+                    setSelectedBuktiUrl(url);
+                  }}
                   className="mt-2 text-[10px] text-rose-600 hover:text-rose-700 font-black text-left uppercase tracking-wider cursor-pointer"
                 >
                   Lihat Bukti

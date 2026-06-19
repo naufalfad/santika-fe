@@ -163,7 +163,7 @@ export const SPJUploadModal = ({ onSuccess, onCancel, defaultCashTransactionId }
         <label className="block text-[11px] font-black text-slate-500 uppercase mb-2">
           UNGGAH DOKUMEN FISIK
         </label>
-        
+
         {!file ? (
           <div className="border-2 border-dashed border-slate-200 rounded-none p-8 flex flex-col items-center justify-center hover:bg-slate-50 hover:border-slate-300 transition-colors cursor-pointer relative">
             <input
@@ -215,13 +215,8 @@ export const SPJUploadModal = ({ onSuccess, onCancel, defaultCashTransactionId }
         </Button>
         <Button
           type="submit"
-<<<<<<< HEAD
           disabled={uploadMutation.isPending}
           className="flex-1 py-3 font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 flex justify-center items-center gap-2"
-=======
-          disabled={isSubmitting}
-          className="flex-1 py-3 font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-none flex justify-center items-center gap-2 rounded-none"
->>>>>>> 63673c40b5b166a37a4b7459f872da025e45db29
         >
           {uploadMutation.isPending ? 'Mengunggah...' : <><CheckCircle2 size={18} /> Simpan & Upload</>}
         </Button>

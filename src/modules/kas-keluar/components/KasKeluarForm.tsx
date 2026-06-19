@@ -8,6 +8,7 @@ import { useActivityStore } from '../../../app/store/useActivityStore';
 import { useFundCategoriesQuery } from '../../kas-masuk/hooks/useKasMasukQuery';
 import { useExpenseTypesQuery, useApprovalsQuery, useAddKasKeluarMutation } from '../hooks/useKasKeluarQuery';
 import { useAnggaranQuery } from '../../anggaran/hooks/useAnggaranQuery';
+import { useSpecialFundsQuery } from '../../dana-khusus/hooks/useSpecialFundQuery';
 
 const schema = z.object({
   transaction_date: z.string().min(1, 'Tanggal wajib diisi'),
@@ -19,6 +20,7 @@ const schema = z.object({
   penerima: z.string().min(3, 'Nama penerima/toko minimal 3 karakter'),
   amount: z.number().min(1000, 'Minimal pengeluaran Rp 1.000'),
   keterangan: z.string().optional(),
+  special_fund_id: z.string().optional().nullable(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -31,6 +33,7 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const { data: expenseTypes = [] } = useExpenseTypesQuery();
   const { data: budgets = [] } = useAnggaranQuery();
   const { data: approvals = [] } = useApprovalsQuery({ status: 'DISETUJUI' });
+  const { data: specialFunds = [] } = useSpecialFundsQuery('AKTIF');
 
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -42,11 +45,18 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
       budget_item_id: '',
       permohonan_anggaran_id: '',
       is_uang_muka: false,
+      special_fund_id: '',
     }
   });
 
   const selectedFundCategoryId = watch('fund_category_id');
   const selectedPermohonanId = watch('permohonan_anggaran_id');
+  const selectedSpecialFundId = watch('special_fund_id');
+
+  const selectedCategoryName = useMemo(() => {
+    const cat = fundCategories.find((f) => f.id === selectedFundCategoryId);
+    return cat ? cat.name : 'Pilih Pos Dana';
+  }, [fundCategories, selectedFundCategoryId]);
 
   // Filter budget items dynamically based on the selected Pos Dana
   const budgetItems = useMemo(() => {
@@ -74,6 +84,20 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
     }
   }, [selectedPermohonan, setValue]);
 
+  // Auto-populate when Special Fund is selected
+  useEffect(() => {
+    if (!selectedPermohonanId) {
+      if (selectedSpecialFundId) {
+        const foundFund = specialFunds.find(f => f.id === selectedSpecialFundId);
+        if (foundFund && foundFund.fundCategoryId) {
+          setValue('fund_category_id', foundFund.fundCategoryId);
+        }
+      } else {
+        setValue('fund_category_id', '');
+      }
+    }
+  }, [selectedSpecialFundId, selectedPermohonanId, specialFunds, setValue]);
+
   const onSubmit = async (data: FormData) => {
     addMutation.mutate({
       transaction_date: new Date(data.transaction_date).toISOString(),
@@ -85,6 +109,7 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
       amount: data.amount,
       description: data.keterangan ? `${data.penerima} - ${data.keterangan}` : data.penerima,
       file: file,
+      special_fund_id: data.special_fund_id || undefined,
     }, {
       onSuccess: () => {
         addLog(
@@ -141,6 +166,29 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
         {errors.permohonan_anggaran_id && <p className="text-red-500 text-[10px] mt-1">{errors.permohonan_anggaran_id.message}</p>}
       </div>
 
+      {/* Dana Khusus Selector */}
+      {!selectedPermohonanId && (
+        <div className="mb-4">
+          <label className="block text-xs font-bold text-gray-700 mb-1">PROGRAM DANA KHUSUS / TEMPORER (OPSIONAL)</label>
+          <select
+            {...register('special_fund_id')}
+            className="w-full p-2 border rounded-lg text-sm outline-blue-500 font-semibold text-slate-800 cursor-pointer"
+            onChange={(e) => {
+              setValue('special_fund_id', e.target.value || null);
+            }}
+          >
+            <option value="">-- Bukan Dana Khusus (Menggunakan Pos Dana Permanen) --</option>
+            {specialFunds.map(fund => (
+              <option key={fund.id} value={fund.id}>
+                {fund.name} ({fund.code}) - Saldo: Rp {Number(fund.balance).toLocaleString('id-ID')}
+              </option>
+            ))}
+          </select>
+          <p className="text-[10px] text-gray-400 mt-1 font-semibold italic">Pilih jika pengeluaran ini dibiayai menggunakan dana program temporer/khusus tertentu.</p>
+          {errors.special_fund_id && <p className="text-red-500 text-[10px] mt-1">{errors.special_fund_id.message}</p>}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-bold text-gray-700 mb-1">TANGGAL TRANSAKSI</label>
@@ -149,20 +197,28 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
         </div>
         <div>
           <label className="block text-xs font-bold text-gray-700 mb-1">POS DANA (KAS ASAL)</label>
-          <select
-            {...register('fund_category_id')}
-            className="w-full p-2 border rounded-lg text-sm outline-blue-500 font-semibold text-slate-800"
-            disabled={!!selectedPermohonanId}
-            onChange={(e) => {
-              register('fund_category_id').onChange(e);
-              setValue('budget_item_id', '');
-            }}
-          >
-            <option value="">Pilih Pos Dana</option>
-            {fundCategories.filter(f => f.isActive).map(f => (
-              <option key={f.id} value={f.id}>{f.name}</option>
-            ))}
-          </select>
+          {selectedPermohonanId || selectedSpecialFundId ? (
+            <>
+              <input type="hidden" {...register('fund_category_id')} />
+              <div className="w-full p-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 flex items-center h-10 border-l-4 border-l-emerald-500">
+                {selectedCategoryName}
+              </div>
+            </>
+          ) : (
+            <select
+              {...register('fund_category_id')}
+              className="w-full p-2 border rounded-lg text-sm outline-blue-500 font-semibold text-slate-800 cursor-pointer"
+              onChange={(e) => {
+                register('fund_category_id').onChange(e);
+                setValue('budget_item_id', '');
+              }}
+            >
+              <option value="">Pilih Pos Dana</option>
+              {fundCategories.filter(f => f.isActive).map(f => (
+                <option key={f.id} value={f.id}>{f.name}</option>
+              ))}
+            </select>
+          )}
           {errors.fund_category_id && <p className="text-red-500 text-[10px] mt-1">{errors.fund_category_id.message}</p>}
         </div>
       </div>

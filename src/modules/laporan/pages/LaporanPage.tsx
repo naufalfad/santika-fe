@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { FileSpreadsheet, FileText, Printer, Search, Calendar, Loader2 } from 'lucide-react';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
@@ -19,7 +19,35 @@ const LaporanPage = () => {
     const [isExporting, setIsExporting] = useState(false);
     const [search, setSearch] = useState('');
 
-    // Call the Information Expert hook to retrieve memoized report states
+    // Generate Indonesia-localized period dropdown options
+    const periods = useMemo(() => {
+        const list = [];
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        
+        for (let y = currentYear; y >= currentYear - 1; y--) {
+            const startMonth = y === currentYear ? now.getMonth() + 1 : 12;
+            for (let m = startMonth; m >= 1; m--) {
+                const monthVal = String(m).padStart(2, '0');
+                const value = `${y}-${monthVal}`;
+                const date = new Date(y, m - 1, 1);
+                const label = date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+                list.push({ value, label });
+            }
+        }
+        return list;
+    }, []);
+
+    const [selectedPeriod, setSelectedPeriod] = useState(periods[0]?.value || new Date().toISOString().slice(0, 7));
+
+    const selectedPeriodLabel = useMemo(() => {
+        const [y, m] = selectedPeriod.split('-');
+        return new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    }, [selectedPeriod]);
+
+    const selectedYear = selectedPeriod.split('-')[0];
+
+    // Call the Information Expert hook to retrieve memoized report states from backend
     const {
         bkuData,
         totalMasuk,
@@ -27,7 +55,8 @@ const LaporanPage = () => {
         endingSaldo,
         arusKasSummary,
         realisasiSummary,
-    } = useLaporanKeuangan(search);
+        isLoading,
+    } = useLaporanKeuangan(selectedPeriod, search);
 
     const handleExport = (format: 'PDF' | 'EXCEL') => {
         setIsExporting(true);
@@ -119,8 +148,16 @@ const LaporanPage = () => {
             <Card className="p-4 bg-slate-50 border border-slate-200/60 shadow-none flex flex-col md:flex-row gap-4 items-center rounded-none">
                 <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-200 rounded-none w-full md:w-auto">
                     <Calendar size={16} className="text-slate-400" />
-                    <select className="bg-transparent text-xs font-bold text-slate-600 outline-none cursor-pointer">
-                        <option>Mei 2025</option>
+                    <select
+                        className="bg-transparent text-xs font-bold text-slate-600 outline-none cursor-pointer"
+                        value={selectedPeriod}
+                        onChange={(e) => setSelectedPeriod(e.target.value)}
+                    >
+                        {periods.map((p) => (
+                            <option key={p.value} value={p.value}>
+                                {p.label}
+                            </option>
+                        ))}
                     </select>
                 </div>
                 {activeTab === 'BKU' && (
@@ -147,28 +184,39 @@ const LaporanPage = () => {
                     <div className="text-center mb-8 border-b-2 border-slate-900 pb-6">
                         <h1 className="text-xl font-black uppercase tracking-widest text-slate-900">KEUSKUPAN AGUNG MERAUKE</h1>
                         <h2 className="text-lg font-bold uppercase text-slate-700 mt-1">Paroki St. Stefanus - Sempan</h2>
-                        <p className="text-xs font-medium text-slate-500 mt-1">Tahun Anggaran: 2025</p>
+                        <p className="text-xs font-medium text-slate-500 mt-1">
+                            {activeTab === 'REALISASI' ? `Tahun Anggaran: ${selectedYear}` : `Periode Laporan: ${selectedPeriodLabel}`}
+                        </p>
                         <div className="mt-5 inline-block bg-slate-900 text-white px-4 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-none">
                             {activeTab === 'BKU' ? 'LAPORAN BUKU KAS UMUM' : activeTab === 'ARUS_KAS' ? 'LAPORAN ARUS KAS' : 'LAPORAN REALISASI ANGGARAN'}
                         </div>
                     </div>
 
                     {/* Sub Report Render Switcher */}
-                    {activeTab === 'BKU' && (
-                        <LaporanBKU
-                            records={bkuData}
-                            totalMasuk={totalMasuk}
-                            totalKeluar={totalKeluar}
-                            endingSaldo={endingSaldo}
-                        />
-                    )}
+                    {isLoading ? (
+                        <div className="py-20 text-center flex flex-col items-center justify-center gap-3">
+                            <Loader2 className="animate-spin text-blue-600" size={32} />
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Memuat Laporan Keuangan...</p>
+                        </div>
+                    ) : (
+                        <>
+                            {activeTab === 'BKU' && (
+                                <LaporanBKU
+                                    records={bkuData}
+                                    totalMasuk={totalMasuk}
+                                    totalKeluar={totalKeluar}
+                                    endingSaldo={endingSaldo}
+                                />
+                            )}
 
-                    {activeTab === 'ARUS_KAS' && (
-                        <LaporanArusKas summary={arusKasSummary} />
-                    )}
+                            {activeTab === 'ARUS_KAS' && (
+                                <LaporanArusKas summary={arusKasSummary} />
+                            )}
 
-                    {activeTab === 'REALISASI' && (
-                        <LaporanRealisasi realisations={realisasiSummary} />
+                            {activeTab === 'REALISASI' && (
+                                <LaporanRealisasi realisations={realisasiSummary} />
+                            )}
+                        </>
                     )}
 
                     {/* Tanda Tangan */}
@@ -180,7 +228,9 @@ const LaporanPage = () => {
                         </div>
                         <div></div>
                         <div>
-                            <p className="mb-20 text-xs font-semibold text-slate-600">Sempan, 20 Mei 2025</p>
+                            <p className="mb-20 text-xs font-semibold text-slate-600">
+                                Sempan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            </p>
                             <p className="font-bold border-b border-slate-800 inline-block px-6 pb-1">Yuliana Shanti</p>
                             <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">Bendahara Paroki</p>
                         </div>

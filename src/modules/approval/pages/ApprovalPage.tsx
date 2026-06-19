@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   CheckCircle2, XCircle, Users, FileText, ShieldCheck,
-  Wallet, ArrowLeft, Calendar, MapPin, Paperclip, Download, AlertCircle
+  ArrowLeft, Calendar, MapPin, Paperclip, Download
 } from 'lucide-react';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
@@ -12,7 +12,6 @@ import {
   useKegiatanQuery,
   useUpdateKegiatanStatusMutation,
   usePermohonanAnggaranQuery,
-  useUpdatePermohonanAnggaranStatusMutation,
   useFundCategoriesQuery
 } from '../hooks/useApprovalQuery';
 import { useAnggaranQuery } from '../../anggaran/hooks/useAnggaranQuery';
@@ -24,15 +23,15 @@ const ApprovalPage = () => {
 
   // 1. Fetch data
   const { data: kegiatanList = [], isLoading: isKegiatanLoading } = useKegiatanQuery();
-  const { data: anggaranList = [], isLoading: isAnggaranLoading } = usePermohonanAnggaranQuery();
+  const { data: anggaranList = [] } = usePermohonanAnggaranQuery();
   const { data: fundCategories = [] } = useFundCategoriesQuery();
   const { data: budgets = [] } = useAnggaranQuery();
 
   const updateKegiatanStatus = useUpdateKegiatanStatusMutation();
-  const updateAnggaranStatus = useUpdatePermohonanAnggaranStatusMutation();
+
 
   // Navigation states
-  const [activeModule, setActiveModule] = useState<'kegiatan' | 'anggaran'>('kegiatan');
+  const [activeModule] = useState<'kegiatan' | 'anggaran'>('kegiatan');
   const [activeTab, setActiveTab] = useState<'pending' | 'approved' | 'rejected'>('pending');
   const [selectedKegiatanId, setSelectedKegiatanId] = useState<string>('');
   const [selectedAnggaranId, setSelectedAnggaranId] = useState<string>('');
@@ -44,11 +43,8 @@ const ApprovalPage = () => {
   const [reviewCatatan, setReviewCatatan] = useState('');
 
   // Bendahara Anggaran Review Modal State
-  const [isBendaharaModalOpen, setIsBendaharaModalOpen] = useState(false);
   const [selectedPosDana, setSelectedPosDana] = useState('');
   const [approvedAmount, setApprovedAmount] = useState<number>(0);
-  const [bendaharaCatatan, setBendaharaCatatan] = useState('');
-  const [bendaharaError, setBendaharaError] = useState('');
 
   // Filter lists based on Tab and Role
   const filteredKegiatans = useMemo(() => {
@@ -120,22 +116,6 @@ const ApprovalPage = () => {
   }, [budgets, selectedPosDana]);
 
   // Pending count badges
-  const pendingCounts = useMemo(() => {
-    const kCount = kegiatanList.filter((item) => {
-      if (user?.role === 'PASTOR') return item.status === 'DIREVIEW';
-      if (user?.role === 'BENDAHARA') return item.status === 'DIAJUKAN';
-      return item.status === 'DIAJUKAN' || item.status === 'DIREVIEW';
-    }).length;
-
-    const aCount = anggaranList.filter((item) => {
-      if (user?.role === 'PASTOR') return item.status === 'MENUNGGU_PERSETUJUAN';
-      if (user?.role === 'BENDAHARA') return item.status === 'DIAJUKAN';
-      return item.status === 'DIAJUKAN' || item.status === 'MENUNGGU_PERSETUJUAN';
-    }).length;
-
-    return { kegiatan: kCount, anggaran: aCount };
-  }, [kegiatanList, anggaranList, user]);
-
   // Action clicks handler
   const handleActionClick = (type: 'REVIEW' | 'APPROVE' | 'REJECT' | 'REVISE') => {
     setActionType(type);

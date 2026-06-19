@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { KasMasukSchema } from '../types/kas-masuk';
@@ -7,6 +7,7 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Wallet, Calendar, Tag, FileText, CheckCircle2 } from 'lucide-react';
 import { useFundCategoriesQuery, useIncomeTypesQuery, useAddIncomeTypeMutation } from '../hooks/useKasMasukQuery';
 import { useKasKeluarQuery } from '../../kas-keluar/hooks/useKasKeluarQuery';
+import { useSpecialFundsQuery } from '../../dana-khusus/hooks/useSpecialFundQuery';
 import { useAuthStore } from '../../../app/store/useAuthStore';
 import { formatIDR } from '../../../shared/utils/formatter';
 
@@ -19,11 +20,12 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
     const { data: fundCategories = [], isLoading: isLoadingFunds } = useFundCategoriesQuery();
     const { data: incomeTypes = [], isLoading: isLoadingTypes } = useIncomeTypesQuery();
     const { data: kasKeluar = [] } = useKasKeluarQuery();
+    const { data: specialFunds = [] } = useSpecialFundsQuery('AKTIF');
     const addIncomeTypeMutation = useAddIncomeTypeMutation();
     const { user } = useAuthStore();
     const isBendahara = user?.role === 'BENDAHARA';
 
-    const [classification, setClassification] = useState<'NORMAL' | 'REFUND'>('NORMAL');
+    const [classification, setClassification] = useState<'NORMAL' | 'SPECIAL_FUND' | 'REFUND'>('NORMAL');
 
     // State for inline adding income type
     const [isAddingType, setIsAddingType] = useState(false);
@@ -51,6 +53,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
             amount: undefined,
             description: '',
             parent_transaction_id: null,
+            special_fund_id: '',
         }
     });
 
@@ -60,6 +63,21 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
         if (!selectedParentId) return null;
         return pendingUangMuka.find((item) => item.id === selectedParentId) || null;
     }, [selectedParentId, pendingUangMuka]);
+
+    const selectedSpecialFundId = watch('special_fund_id');
+
+    useEffect(() => {
+        if (classification === 'SPECIAL_FUND') {
+            if (selectedSpecialFundId) {
+                const foundFund = specialFunds.find((f) => f.id === selectedSpecialFundId);
+                if (foundFund && foundFund.fundCategoryId) {
+                    setValue('fund_category_id', foundFund.fundCategoryId);
+                }
+            } else {
+                setValue('fund_category_id', '');
+            }
+        }
+    }, [selectedSpecialFundId, classification, specialFunds, setValue]);
 
     const handleSaveIncomeType = async () => {
         setAddTypeError(null);
@@ -110,10 +128,11 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                     onClick={() => {
                         setClassification('NORMAL');
                         setValue('parent_transaction_id', null);
+                        setValue('special_fund_id', null);
                         setValue('fund_category_id', '');
                         setValue('description', '');
                     }}
-                    className={`flex-1 py-2 rounded-lg text-xs font-black transition-all uppercase tracking-wider ${classification === 'NORMAL'
+                    className={`flex-1 py-2 rounded-lg text-[10px] font-black transition-all uppercase tracking-wider ${classification === 'NORMAL'
                             ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
                             : 'text-slate-500 hover:text-slate-700'
                         }`}
@@ -123,12 +142,29 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                 <button
                     type="button"
                     onClick={() => {
-                        setClassification('REFUND');
-                        setValue('parent_transaction_id', '');
+                        setClassification('SPECIAL_FUND');
+                        setValue('parent_transaction_id', null);
+                        setValue('special_fund_id', '');
                         setValue('fund_category_id', '');
                         setValue('description', '');
                     }}
-                    className={`flex-1 py-2 rounded-lg text-xs font-black transition-all uppercase tracking-wider ${classification === 'REFUND'
+                    className={`flex-1 py-2 rounded-lg text-[10px] font-black transition-all uppercase tracking-wider ${classification === 'SPECIAL_FUND'
+                            ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
+                            : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                >
+                    Dana Khusus
+                </button>
+                <button
+                    type="button"
+                    onClick={() => {
+                        setClassification('REFUND');
+                        setValue('parent_transaction_id', '');
+                        setValue('special_fund_id', null);
+                        setValue('fund_category_id', '');
+                        setValue('description', '');
+                    }}
+                    className={`flex-1 py-2 rounded-lg text-[10px] font-black transition-all uppercase tracking-wider ${classification === 'REFUND'
                             ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
                             : 'text-slate-500 hover:text-slate-700'
                         }`}
@@ -191,6 +227,39 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                 </div>
             )}
 
+            {/* Dana Khusus Dropdown Selector */}
+            {classification === 'SPECIAL_FUND' && (
+                <div className="space-y-1.5">
+                    <label className="text-[11px] font-black text-slate-500 uppercase flex items-center gap-2">
+                        <Wallet size={14} className="text-blue-500" /> Program Dana Khusus
+                    </label>
+                    <select
+                        {...register('special_fund_id')}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setValue('special_fund_id', val);
+                            const found = specialFunds.find((f) => f.id === val);
+                            if (found && found.fundCategoryId) {
+                                setValue('fund_category_id', found.fundCategoryId);
+                                setValue('description', `Penerimaan Dana Khusus - ${found.name}`);
+                            } else {
+                                setValue('fund_category_id', '');
+                                setValue('description', '');
+                            }
+                        }}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                    >
+                        <option value="">Pilih Program Dana Khusus</option>
+                        {specialFunds.map((fund) => (
+                            <option key={fund.id} value={fund.id}>
+                                {fund.name} ({fund.code})
+                            </option>
+                        ))}
+                    </select>
+                    {errors.special_fund_id && <p className="text-[10px] text-rose-500 font-bold">{errors.special_fund_id.message}</p>}
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Tanggal */}
                 <div className="space-y-1.5">
@@ -215,6 +284,15 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                             <input type="hidden" {...register('fund_category_id')} />
                             <div className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 flex items-center h-10 border-l-4 border-l-emerald-500">
                                 {selectedParent.fundCategory?.name}
+                            </div>
+                        </>
+                    ) : classification === 'SPECIAL_FUND' && selectedSpecialFundId ? (
+                        <>
+                            <input type="hidden" {...register('fund_category_id')} />
+                            <div className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 flex items-center h-10 border-l-4 border-l-emerald-500">
+                                {specialFunds.find((f) => f.id === selectedSpecialFundId)?.name
+                                    ? `Dana Khusus: ${specialFunds.find((f) => f.id === selectedSpecialFundId)?.name}`
+                                    : 'Dana Khusus'}
                             </div>
                         </>
                     ) : (
@@ -338,6 +416,9 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                     )}
                 </div>
             </div>
+            
+            {/* Dana Khusus Selector */}
+
 
             {/* Deskripsi / Sumber */}
             <div className="space-y-1.5">

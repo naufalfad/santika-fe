@@ -7,6 +7,7 @@ import SPJPage from '../../modules/spj/pages/SPJPage';
 import ApprovalPage from '../../modules/approval/pages/ApprovalPage';
 import PengajuanPage from '../../modules/approval/pages/PengajuanPage';
 import AnggaranPage from '../../modules/anggaran/pages/AnggaranPage';
+import SaldoPosDanaPage from '../../modules/saldo-pos-dana/pages/SaldoPosDanaPage';
 import LaporanPage from '../../modules/laporan/pages/LaporanPage';
 import DanaKhususPage from '../../modules/dana-khusus/pages/DanaKhususPage';
 import UserManagementPage from '../../modules/users/pages/UserManagementPage';
@@ -58,6 +59,14 @@ export const router = createBrowserRouter([
         element: (
           <RouteGuard allowableRoles={['SUPER_ADMIN', 'PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN']}>
             <AnggaranPage />
+          </RouteGuard>
+        )
+      },
+      {
+        path: "/saldo-pos-dana",
+        element: (
+          <RouteGuard allowableRoles={['SUPER_ADMIN', 'PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN']}>
+            <SaldoPosDanaPage />
           </RouteGuard>
         )
       },

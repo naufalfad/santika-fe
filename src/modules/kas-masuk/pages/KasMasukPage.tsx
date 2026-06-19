@@ -31,6 +31,7 @@ const KasMasukPage = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'PERMANENT' | 'SPECIAL_FUND'>('PERMANENT');
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
@@ -43,6 +44,7 @@ const KasMasukPage = () => {
       amount: data.amount,
       description: data.description,
       parent_transaction_id: data.parent_transaction_id || undefined,
+      special_fund_id: data.special_fund_id || undefined,
     }, {
       onSuccess: () => {
         addLog(
@@ -55,29 +57,43 @@ const KasMasukPage = () => {
     });
   };
 
+  // Split transactions
+  const kasMasukPermanent = useMemo(() => {
+    return kasMasuk.filter(item => !item.specialFundId);
+  }, [kasMasuk]);
+
+  const kasMasukSpecial = useMemo(() => {
+    return kasMasuk.filter(item => !!item.specialFundId);
+  }, [kasMasuk]);
+
+  // Current transactions based on active tab
+  const currentTransactions = useMemo(() => {
+    return activeTab === 'PERMANENT' ? kasMasukPermanent : kasMasukSpecial;
+  }, [activeTab, kasMasukPermanent, kasMasukSpecial]);
+
   // Memoize search query execution
   const filteredData = useMemo(() => {
-    return kasMasuk.filter(item =>
+    return currentTransactions.filter(item =>
       item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.transactionNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.fundCategory?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.incomeType?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [kasMasuk, searchTerm]);
+  }, [currentTransactions, searchTerm]);
 
   // Memoize analytical calculations
   const totalBulanIni = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-    return kasMasuk.reduce((sum, item) => {
+    return currentTransactions.reduce((sum, item) => {
       const d = new Date(item.transactionDate);
       if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
         return sum + Number(item.amount);
       }
       return sum;
     }, 0);
-  }, [kasMasuk]);
+  }, [currentTransactions]);
 
   // Target Penerimaan (bulanan): Rp 50.000.000
   const targetBulanan = 50000000;
@@ -85,41 +101,52 @@ const KasMasukPage = () => {
     return Math.min(Math.round((totalBulanIni / targetBulanan) * 100), 100);
   }, [totalBulanIni]);
 
+  // Rata-rata special fund income
+  const avgSpecialIncome = useMemo(() => {
+    const specialTxsThisMonth = kasMasukSpecial.filter(item => {
+      const d = new Date(item.transactionDate);
+      return d.getMonth() === new Date().getMonth() && d.getFullYear() === new Date().getFullYear();
+    });
+    if (specialTxsThisMonth.length === 0) return 0;
+    const sum = specialTxsThisMonth.reduce((acc, curr) => acc + Number(curr.amount), 0);
+    return Math.round(sum / specialTxsThisMonth.length);
+  }, [kasMasukSpecial]);
+
   // Sumber Terbesar
   const sumberTerbesar = useMemo(() => {
-    if (kasMasuk.length === 0) {
+    if (currentTransactions.length === 0) {
       return { description: 'Belum ada data', amount: 0, percentage: 0 };
     }
-    const maxTx = kasMasuk.reduce((prev, current) => {
+    const maxTx = currentTransactions.reduce((prev, current) => {
       return (Number(prev.amount) > Number(current.amount)) ? prev : current;
     });
-    const total = kasMasuk.reduce((sum, item) => sum + Number(item.amount), 0);
+    const total = currentTransactions.reduce((sum, item) => sum + Number(item.amount), 0);
     const percentage = total > 0 ? Math.round((Number(maxTx.amount) / total) * 100) : 0;
     return {
       description: maxTx.description,
       amount: Number(maxTx.amount),
       percentage,
     };
-  }, [kasMasuk]);
+  }, [currentTransactions]);
 
   // Transaksi hari ini
   const totalHariIni = useMemo(() => {
     const todayStr = new Date().toDateString();
-    return kasMasuk.reduce((sum, item) => {
+    return currentTransactions.reduce((sum, item) => {
       const txStr = new Date(item.transactionDate).toDateString();
       if (txStr === todayStr) {
         return sum + Number(item.amount);
       }
       return sum;
     }, 0);
-  }, [kasMasuk]);
+  }, [currentTransactions]);
 
   const countHariIni = useMemo(() => {
     const todayStr = new Date().toDateString();
-    return kasMasuk.filter(item => {
+    return currentTransactions.filter(item => {
       return new Date(item.transactionDate).toDateString() === todayStr;
     }).length;
-  }, [kasMasuk]);
+  }, [currentTransactions]);
 
   // Tren 30 hari
   const trendData = useMemo(() => {
@@ -130,7 +157,7 @@ const KasMasukPage = () => {
       const key = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
       dataMap.set(key, 0);
     }
-    kasMasuk.forEach((item) => {
+    currentTransactions.forEach((item) => {
       const d = new Date(item.transactionDate);
       const key = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
       if (dataMap.has(key)) {
@@ -141,21 +168,25 @@ const KasMasukPage = () => {
       date,
       jumlah,
     }));
-  }, [kasMasuk]);
+  }, [currentTransactions]);
 
   // Komposisi Dana (PieChart)
   const categoryData = useMemo(() => {
     const colors = ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#3b82f6', '#14b8a6', '#f43f5e'];
-    const activeBalances = fundBalances.filter(item => item.income > 0);
+    const filteredBalances = fundBalances.filter(item => {
+      const isSpecial = item.fund.startsWith('Dana Khusus:');
+      return activeTab === 'PERMANENT' ? !isSpecial : isSpecial;
+    });
+    const activeBalances = filteredBalances.filter(item => item.income > 0);
     if (activeBalances.length === 0) {
       return [{ name: 'Belum ada penerimaan', value: 1, color: '#e2e8f0' }];
     }
     return activeBalances.map((item, index) => ({
-      name: item.fund,
+      name: activeTab === 'PERMANENT' ? item.fund : item.fund.replace('Dana Khusus: ', ''),
       value: Number(item.income),
       color: colors[index % colors.length]
     }));
-  }, [fundBalances]);
+  }, [fundBalances, activeTab]);
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
@@ -175,25 +206,66 @@ const KasMasukPage = () => {
         </div>
       </div>
 
+      {/* Tab Selector */}
+      <div className="flex gap-6 border-b border-slate-200 overflow-x-auto no-scrollbar pb-0 text-sm font-bold text-slate-400">
+        <button
+          onClick={() => setActiveTab('PERMANENT')}
+          className={`pb-3 whitespace-nowrap transition-colors duration-200 rounded-none border-b-2 ${activeTab === 'PERMANENT'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent hover:text-slate-700 hover:border-slate-300'
+            }`}
+        >
+          Pos Dana Permanen
+        </button>
+        <button
+          onClick={() => setActiveTab('SPECIAL_FUND')}
+          className={`pb-3 whitespace-nowrap transition-colors duration-200 rounded-none border-b-2 ${activeTab === 'SPECIAL_FUND'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent hover:text-slate-700 hover:border-slate-300'
+            }`}
+        >
+          Dana Khusus
+        </button>
+      </div>
+
       {/* Stats Cards Section - Compact Space Padding & Flat border styling */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 border-l-4 border-l-blue-600 border-y-slate-200 border-r-slate-200">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Total Bulan Ini</p>
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+            {activeTab === 'PERMANENT' ? 'Total Bulan Ini' : 'Pemasukan Dana Khusus (Bulan Ini)'}
+          </p>
           <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(totalBulanIni)}</h4>
           <div className="flex items-center gap-1 mt-2 text-emerald-600 font-bold text-[10px]">
             <TrendingUp size={12} />
-            <span>Target: {formatIDR(targetBulanan, { notation: 'compact' })}</span>
+            <span>
+              {activeTab === 'PERMANENT' ? `Target: ${formatIDR(targetBulanan, { notation: 'compact' })}` : 'Program Dana Khusus'}
+            </span>
           </div>
         </Card>
-        <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Pencapaian Target</p>
-          <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{progressTarget}%</h4>
-          <div className="w-full bg-slate-100 h-1 rounded-full mt-3 overflow-hidden">
-            <div className="bg-emerald-500 h-full transition-all duration-500" style={{ width: `${progressTarget}%` }}></div>
-          </div>
-        </Card>
+
+        {activeTab === 'PERMANENT' ? (
+          <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Pencapaian Target</p>
+            <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{progressTarget}%</h4>
+            <div className="w-full bg-slate-100 h-1 rounded-full mt-3 overflow-hidden">
+              <div className="bg-emerald-500 h-full transition-all duration-500" style={{ width: `${progressTarget}%` }}></div>
+            </div>
+          </Card>
+        ) : (
+          <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Rata-rata Sumbangan</p>
+            <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(avgSpecialIncome)}</h4>
+            <div className="flex items-center gap-1 mt-2 text-emerald-600 font-bold text-[10px]">
+              <TrendingUp size={12} />
+              <span>Rata-rata Bulan Ini</span>
+            </div>
+          </Card>
+        )}
+
         <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Sumber Terbesar</p>
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+            {activeTab === 'PERMANENT' ? 'Sumber Terbesar' : 'Sumbangan Terbesar'}
+          </p>
           <h4 className="text-sm font-black mt-2 text-slate-800 truncate tracking-tight text-slate-800" title={sumberTerbesar.description}>
             {sumberTerbesar.description}
           </h4>
@@ -201,6 +273,7 @@ const KasMasukPage = () => {
             {sumberTerbesar.amount > 0 ? `Kontribusi ${sumberTerbesar.percentage}% (${formatIDR(sumberTerbesar.amount, { notation: 'compact' })})` : 'Belum ada transaksi'}
           </p>
         </Card>
+
         <Card className="p-4 border-l-4 border-l-purple-600 border-y-slate-200 border-r-slate-200">
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Hari Ini</p>
           <h4 className="text-lg font-black mt-1 text-slate-800 tracking-tight">{formatIDR(totalHariIni)}</h4>
@@ -214,7 +287,7 @@ const KasMasukPage = () => {
         <Card className="lg:col-span-8 p-5 border-slate-200">
           <div className="mb-4">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Calendar size={14} className="text-blue-500" /> Tren Penerimaan 30 Hari Terakhir
+              <Calendar size={14} className="text-blue-500" /> Tren {activeTab === 'PERMANENT' ? 'Penerimaan' : 'Pemasukan Dana Khusus'} 30 Hari Terakhir
             </h3>
           </div>
           <div className="h-[230px]">
@@ -239,7 +312,7 @@ const KasMasukPage = () => {
         <div className="lg:col-span-4 space-y-6">
           <Card className="p-5 border-slate-200">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Target size={14} className="text-emerald-500" /> Komposisi Dana
+              <Target size={14} className="text-emerald-500" /> {activeTab === 'PERMANENT' ? 'Komposisi Dana' : 'Penyebaran Program'}
             </h3>
             <div className="h-[180px]">
               <ResponsiveContainer width="100%" height="100%">
