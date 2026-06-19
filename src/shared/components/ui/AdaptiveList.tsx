@@ -114,18 +114,34 @@ export const AdaptiveList = <T,>({
                     <th
                       key={idx}
                       className={cn(
-                        'px-5 py-3.5 border-r border-slate-200 last:border-r-0 whitespace-nowrap',
+                        'px-5 py-3.5 border-r border-slate-200 last:border-r-0 whitespace-nowrap text-slate-700 text-xs font-semibold',
                         // Alignment otomatis untuk kolom numerik (Rata Kanan)
                         typeof header === 'string' &&
                         (header.toLowerCase().includes('jumlah') ||
                           header.toLowerCase().includes('nominal') ||
                           header.toLowerCase().includes('saldo') ||
-                          header.toLowerCase().includes('total')) &&
+                          header.toLowerCase().includes('total') ||
+                          header.toLowerCase().includes('plafon') ||
+                          header.toLowerCase().includes('terpakai') ||
+                          header.toLowerCase().includes('sisa') ||
+                          header.toLowerCase().includes('anggaran') ||
+                          header.toLowerCase().includes('debit') ||
+                          header.toLowerCase().includes('kredit') ||
+                          header.toLowerCase().includes('limit') ||
+                          header.toLowerCase().includes('budget') ||
+                          header.toLowerCase().includes('amount')) &&
                         'text-right',
                         // Alignment otomatis untuk Status dan Aksi (Rata Tengah)
                         typeof header === 'string' &&
                         (header.toLowerCase() === 'aksi' ||
-                          header.toLowerCase() === 'status' || // 👈 TAMBAHKAN INI
+                          header.toLowerCase() === 'status' ||
+                          header.toLowerCase() === 'tahun' ||
+                          header.toLowerCase() === 'progress' ||
+                          header.toLowerCase() === 'tanggal' ||
+                          header.toLowerCase() === 'tgl' ||
+                          header.toLowerCase() === 'date' ||
+                          header.toLowerCase() === 'year' ||
+                          header.toLowerCase() === 'action' ||
                           header === '') &&
                         'text-center'
                       )}

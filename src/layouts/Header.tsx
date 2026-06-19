@@ -1,5 +1,7 @@
-import { Bell, Menu, Search, User, LogOut } from 'lucide-react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Bell, Menu, Search, User, LogOut, X, CheckCheck, Trash2 } from 'lucide-react';
 import { useAuthStore } from '../app/store/useAuthStore';
+import { useNotificationStore } from '../app/store/useNotificationStore';
 import { cn } from '../shared/utils/cn';
 import { getAvatarUrl } from '../shared/utils/formatter';
 
@@ -20,30 +22,48 @@ interface HeaderProps {
  * memanggil, dan tidak mengetahui keberadaan komponen Sidebar.
  * Komunikasi hanya lewat props dari MainLayout Controller.
  *
- * KOORDINAT POSISI HEADER — Aturan Layout Mutlak:
- *
- * Mobile (< md):
- *   - left-0, right-0: selalu full-width, tidak pernah bergeser.
- *   - Sidebar mobile adalah overlay z-50 yang menutupi Header dari atas.
- *   - Header z-30 tidak bergerak di mobile.
- *
- * Desktop (≥ md):
- *   - z-30: selalu di ATAS Sidebar desktop (z-20).
- *   - Sidebar OPEN  → md:left-64: Header bergeser kanan, berdampingan Sidebar.
- *   - Sidebar CLOSED → md:left-0: Header melebar penuh.
- *   - `transition-[left]` menganimasikan pergeseran secara smooth.
- *
- * TEKNIS TAILWIND — Mengapa md:left-64 dan md:left-0 aman dari purge:
- *   Kedua nilai ini adalah LITERAL STRINGS yang muncul sebagai conditional
- *   ternary di source code — Tailwind JIT scanner mendeteksinya dan
- *   menyertakannya dalam output CSS. Tidak ada string interpolation dinamis.
- *
  * DESIGN SYSTEM GUARD (MUTLAK):
- *   - rounded-none-none pada SEMUA elemen.
+ *   - rounded-none pada SEMUA elemen.
  *   - Flat solid colors, zero glassmorphism, zero shadow berwarna.
  */
 export const Header = ({ isOpen, onToggle }: HeaderProps) => {
   const { user, logout } = useAuthStore();
+  const { notifications, markAsRead, markAllAsRead, clearNotification, clearAll } = useNotificationStore();
+
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  const unreadCount = useMemo(() => {
+    return notifications.filter((n) => !n.read).length;
+  }, [notifications]);
+
+  // Close notifications panel when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        setIsNotificationsOpen(false);
+      }
+    };
+    if (isNotificationsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isNotificationsOpen]);
+
+  // Close when pressing Escape key
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsNotificationsOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   return (
     <header
@@ -75,11 +95,11 @@ export const Header = ({ isOpen, onToggle }: HeaderProps) => {
 
         {/* TOMBOL HAMBURGER TOGGLE
             Mendelegasikan aksi ke onToggle dari MainLayout Controller.
-            DESIGN SYSTEM GUARD: rounded-none-none */}
+            DESIGN SYSTEM GUARD: rounded-none */}
         <button
           id="btn-hamburger-toggle"
           onClick={onToggle}
-          className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-none-none text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors duration-150"
+          className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-none text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors duration-150 cursor-pointer"
           aria-label={isOpen ? 'Tutup navigasi sidebar' : 'Buka navigasi sidebar'}
           aria-expanded={isOpen}
           aria-controls="sidebar-nav"
@@ -95,9 +115,8 @@ export const Header = ({ isOpen, onToggle }: HeaderProps) => {
         {/* Separator vertikal */}
         <span className="hidden sm:block w-px h-5 bg-slate-200 flex-shrink-0" />
 
-        {/* SEARCH BAR — visible md ke atas
-            DESIGN SYSTEM GUARD: rounded-none-none pada container */}
-        <div className="hidden md:flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-none-none px-3 py-1.5 w-64 lg:w-80">
+        {/* SEARCH BAR — visible md ke atas */}
+        <div className="hidden md:flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-none px-3 py-1.5 w-64 lg:w-80">
           <Search size={14} className="text-slate-400 shrink-0" />
           <input
             id="input-global-search"
@@ -114,24 +133,124 @@ export const Header = ({ isOpen, onToggle }: HeaderProps) => {
           ══════════════════════════════════════════ */}
       <div className="flex items-center gap-3 flex-shrink-0">
 
+        {/* TOMBOL NOTIFIKASI DENGAN DROPDOWN POPOVER */}
+        <div className="relative" ref={popoverRef}>
+          <button
+            id="btn-notification"
+            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+            className={cn(
+              "relative flex items-center justify-center w-9 h-9 rounded-none text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors duration-150 cursor-pointer",
+              isNotificationsOpen && "bg-slate-100 text-slate-900"
+            )}
+            aria-label={`Notifikasi (${unreadCount} belum dibaca)`}
+            aria-expanded={isNotificationsOpen}
+            aria-haspopup="true"
+          >
+            <Bell size={18} />
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-none bg-rose-500 text-white text-[8px] font-bold flex items-center justify-center leading-none">
+                {unreadCount}
+              </span>
+            )}
+          </button>
 
-        {/* TOMBOL NOTIFIKASI
-            DESIGN SYSTEM GUARD: rounded-none-none pada tombol dan badge status */}
-        <button
-          id="btn-notification"
-          className="relative flex items-center justify-center w-9 h-9 rounded-none-none text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors duration-150"
-          aria-label="Notifikasi (3 belum dibaca)"
-        >
-          <Bell size={18} />
-          {/* Badge: rounded-none-none — tag status yang tegas, bukan pill */}
-          <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-none-none bg-rose-500 text-white text-[8px] font-medium flex items-center justify-center leading-none">
-            3
-          </span>
-        </button>
+          {/* Popover Dropdown Panel */}
+          {isNotificationsOpen && (
+            <div 
+              className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-slate-200 rounded-none shadow-sm z-50 text-slate-800"
+              role="menu"
+              aria-label="Daftar notifikasi"
+            >
+              {/* Popover Header */}
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200">
+                <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Notifikasi</h3>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={() => markAllAsRead()}
+                    className="text-[10px] text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1 cursor-pointer bg-transparent border-none outline-none"
+                    title="Tandai semua dibaca"
+                  >
+                    <CheckCheck size={12} /> Tandai dibaca
+                  </button>
+                )}
+              </div>
 
-        {/* PROFIL PENGGUNA
-            border-l satu sisi: no-box-inside-box rule
-            DESIGN SYSTEM GUARD: rounded-none-none pada avatar */}
+              {/* Popover Body */}
+              <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 no-scrollbar">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-slate-400 font-semibold">
+                    Tidak ada notifikasi baru
+                  </div>
+                ) : (
+                  notifications.map((notif) => {
+                    let dotColor = 'bg-blue-500';
+                    if (notif.type === 'success') dotColor = 'bg-emerald-500';
+                    if (notif.type === 'warning') dotColor = 'bg-amber-500';
+                    if (notif.type === 'error') dotColor = 'bg-rose-500';
+
+                    return (
+                      <div
+                        key={notif.id}
+                        onClick={() => !notif.read && markAsRead(notif.id)}
+                        className={cn(
+                          "p-4 transition-colors flex gap-3 relative group",
+                          !notif.read ? "bg-blue-50/30 hover:bg-blue-50/50 cursor-pointer" : "hover:bg-slate-50 cursor-default"
+                        )}
+                        role="menuitem"
+                      >
+                        {/* Status Type Dot */}
+                        <span className={cn("w-2 h-2 rounded-full mt-1.5 shrink-0", dotColor)} />
+
+                        {/* Text Message */}
+                        <div className="flex-1 min-w-0 pr-4">
+                          <p className={cn(
+                            "text-xs font-semibold text-slate-800 leading-tight",
+                            !notif.read ? "text-slate-900" : "text-slate-500"
+                          )}>
+                            {notif.title}
+                          </p>
+                          <p className="text-[11px] text-slate-500 mt-1 leading-normal font-medium break-words">
+                            {notif.message}
+                          </p>
+                          <p className="text-[9px] text-slate-400 mt-1.5 font-bold tracking-tight">
+                            {notif.createdAt}
+                          </p>
+                        </div>
+
+                        {/* Individual Clear Button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            clearNotification(notif.id);
+                          }}
+                          className="absolute right-3 top-3 p-1 text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all rounded-none opacity-0 group-hover:opacity-100 cursor-pointer"
+                          title="Hapus"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Popover Footer */}
+              {notifications.length > 0 && (
+                <div className="px-4 py-2 border-t border-slate-200 flex justify-end bg-slate-50">
+                  <button
+                    onClick={() => clearAll()}
+                    className="text-[10px] text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 cursor-pointer bg-transparent border-none outline-none"
+                    title="Hapus semua notifikasi"
+                  >
+                    <Trash2 size={12} /> Hapus semua
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* PROFIL PENGGUNA */}
         <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">
           {/* Info teks — hanya visible lg ke atas untuk zero clipping */}
           <div className="text-right hidden lg:block">
@@ -143,10 +262,10 @@ export const Header = ({ isOpen, onToggle }: HeaderProps) => {
             </p>
           </div>
 
-          {/* Avatar — flat bg-slate-800, rounded-none-none */}
+          {/* Avatar */}
           <button
             id="btn-user-profile"
-            className="w-8 h-8 bg-slate-800 rounded-none-none flex items-center justify-center text-white hover:bg-slate-700 transition-colors duration-150 cursor-pointer"
+            className="w-8 h-8 bg-slate-800 rounded-none flex items-center justify-center text-white hover:bg-slate-700 transition-colors duration-150 cursor-pointer"
             aria-label={`Profil pengguna: ${user?.name ?? 'Pengguna'}`}
             title={user?.name ?? 'Pengguna'}
           >
@@ -154,7 +273,7 @@ export const Header = ({ isOpen, onToggle }: HeaderProps) => {
               <img
                 src={getAvatarUrl(user.avatarUrl) || undefined}
                 alt={`Avatar ${user.name}`}
-                className="w-full h-full object-cover rounded-none-none"
+                className="w-full h-full object-cover rounded-none"
               />
             ) : (
               <User size={15} />

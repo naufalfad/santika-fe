@@ -1185,13 +1185,14 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 };
 
 --- FILE: src\modules\anggaran\components\BuatAnggaranModal.tsx ---
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Plus, Trash2, Calendar, Folder, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
 import { Select } from '../../../shared/components/ui/Select';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 import { useFundCategoriesQuery } from '../../kas-masuk/hooks/useKasMasukQuery';
 import { useKomisiQuery, useCreateAnggaranMutation } from '../hooks/useAnggaranQuery';
 
@@ -1340,11 +1341,17 @@ export const BuatAnggaranModal = ({ onSuccess, onCancel }: Props) => {
                 </div>
 
                 <div className="w-full md:w-48">
-                  <Input
-                    type="number"
-                    placeholder="Plafon (Rp)"
-                    error={plafonError}
-                    {...register(`items.${index}.plafon` as const, { valueAsNumber: true })}
+                  <Controller
+                    name={`items.${index}.plafon` as const}
+                    control={control}
+                    render={({ field }) => (
+                      <CurrencyInput
+                        value={field.value ?? undefined}
+                        onChange={field.onChange}
+                        placeholder="Plafon (Rp)"
+                        error={plafonError}
+                      />
+                    )}
                   />
                 </div>
 
@@ -1402,13 +1409,14 @@ export const BuatAnggaranModal = ({ onSuccess, onCancel }: Props) => {
 };
 
 --- FILE: src\modules\anggaran\components\EditAnggaranModal.tsx ---
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Plus, Trash2, Calendar, Folder, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
 import { Select } from '../../../shared/components/ui/Select';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 import { useKomisiQuery, useUpdateAnggaranMutation } from '../hooks/useAnggaranQuery';
 import type { Budget } from '../hooks/useAnggaranQuery';
 
@@ -1554,11 +1562,17 @@ export const EditAnggaranModal = ({ budget, onSuccess, onCancel }: Props) => {
                 </div>
 
                 <div className="w-full md:w-48">
-                  <Input
-                    type="number"
-                    placeholder="Plafon (Rp)"
-                    error={plafonError}
-                    {...register(`items.${index}.plafon` as const, { valueAsNumber: true })}
+                  <Controller
+                    name={`items.${index}.plafon` as const}
+                    control={control}
+                    render={({ field }) => (
+                      <CurrencyInput
+                        value={field.value ?? undefined}
+                        onChange={field.onChange}
+                        placeholder="Plafon (Rp)"
+                        error={plafonError}
+                      />
+                    )}
                   />
                 </div>
 
@@ -1740,7 +1754,7 @@ export const useUpdateAnggaranMutation = () => {
 
 --- FILE: src\modules\anggaran\pages\AnggaranPage.tsx ---
 import { useMemo, useState } from 'react';
-import { ShieldAlert, Plus, Calculator, Wallet, ArrowUpRight, TrendingUp } from 'lucide-react';
+import { ShieldAlert, Plus, Calculator, Wallet, ArrowUpRight, TrendingUp, Edit2 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart as RechartsPieChart, Pie, Cell
@@ -1871,7 +1885,7 @@ const AnggaranPage = () => {
 
             {/* Quick Metrics Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="p-4 border-l-4 border-l-indigo-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+                <Card className="p-4 border border-slate-200 shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">Total Plafon Anggaran</p>
                     <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(metrics.totalPlafon)}</h4>
                     <p className="text-[9px] text-indigo-600 mt-2 font-medium flex items-center gap-1">
@@ -1879,7 +1893,7 @@ const AnggaranPage = () => {
                     </p>
                 </Card>
 
-                <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+                <Card className="p-4 border border-slate-200 shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">Realisasi (Terpakai)</p>
                     <h4 className="text-lg font-semibold mt-1 text-rose-600 tracking-tight">{formatIDR(metrics.totalRealisasi)}</h4>
                     <p className="text-[9px] text-rose-600 mt-2 font-medium flex items-center gap-1">
@@ -1887,13 +1901,13 @@ const AnggaranPage = () => {
                     </p>
                 </Card>
 
-                <Card className="p-4 border-l-4 border-l-emerald-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+                <Card className="p-4 border border-slate-200 shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">Sisa Anggaran Tersedia</p>
                     <h4 className="text-lg font-semibold mt-1 text-emerald-600 tracking-tight">{formatIDR(metrics.totalSisa)}</h4>
                     <p className="text-[9px] text-emerald-600 mt-2 font-medium">✓ Siap dialokasikan</p>
                 </Card>
 
-                <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+                <Card className="p-4 border border-slate-200 shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">Persentase Penyerapan</p>
                     <div className="flex items-end gap-1 mt-1">
                         <h4 className="text-lg font-semibold text-slate-800 tracking-tight">{Math.round(metrics.burnRate)}%</h4>
@@ -2024,7 +2038,8 @@ const AnggaranPage = () => {
                                     <td className={cn("px-5 py-2.5 text-xs text-right font-semibold text-emerald-600", isBendahara && "border-r ")}>{formatIDR(item.sisa)}</td>
                                     {isBendahara && (
                                         <td className="px-5 py-2.5 text-center">
-                                            <Button
+                                            <button
+                                                title="Edit Anggaran"
                                                 onClick={() => {
                                                     const parentBudget = budgets.find((b) => b.id === item.budgetId);
                                                     if (parentBudget) {
@@ -2032,10 +2047,10 @@ const AnggaranPage = () => {
                                                         setIsEditModalOpen(true);
                                                     }
                                                 }}
-                                                variant="ghost" className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-transparent p-0 h-auto"
+                                                className="p-1.5 text-slate-400 hover:text-blue-600 border border-transparent hover:border-slate-200 transition-colors rounded-none"
                                             >
-                                                Edit
-                                            </Button>
+                                                <Edit2 size={14} />
+                                            </button>
                                         </td>
                                     )}
                                 </tr>
@@ -2071,7 +2086,8 @@ const AnggaranPage = () => {
                                     </div>
                                     {isBendahara && (
                                         <div className="pt-2 border-t flex justify-end">
-                                            <Button
+                                            <button
+                                                title="Edit Anggaran"
                                                 onClick={() => {
                                                     const parentBudget = budgets.find((b) => b.id === item.budgetId);
                                                     if (parentBudget) {
@@ -2079,10 +2095,10 @@ const AnggaranPage = () => {
                                                         setIsEditModalOpen(true);
                                                     }
                                                 }}
-                                                variant="ghost" className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-transparent p-0 h-auto"
+                                                className="p-1.5 text-slate-400 hover:text-blue-600 border border-transparent hover:border-slate-200 transition-colors rounded-none flex items-center gap-1.5 text-[10px] font-semibold"
                                             >
-                                                Edit Anggaran
-                                            </Button>
+                                                <Edit2 size={13} /> Edit
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -2511,15 +2527,16 @@ export const useFundCategoriesQuery = () => {
 };
 
 --- FILE: src\modules\approval\pages\ApprovalPage.tsx ---
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   CheckCircle2, XCircle, Users, FileText, ShieldCheck,
-  ArrowLeft, Calendar, MapPin, Paperclip, Download
+  ArrowLeft, Calendar, MapPin, Paperclip, Download, Inbox
 } from 'lucide-react';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { Modal } from '../../../shared/components/ui/Modal';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 import { useAuthStore } from '../../../app/store/useAuthStore';
 import {
   useKegiatanQuery,
@@ -2744,6 +2761,17 @@ const ApprovalPage = () => {
           <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-none animate-spin"></div>
           Memuat daftar pengajuan...
         </div>
+      ) : currentFilteredList.length === 0 ? (
+        // UNIFIED EMPTY STATE: Pencegahan render grid ketika data kosong
+        <Card className="p-16 flex flex-col items-center justify-center text-center border-slate-200 shadow-sm rounded-none">
+          <div className="mb-4 bg-slate-50 p-4 border border-slate-100 rounded-none text-slate-400">
+            <Inbox size={32} />
+          </div>
+          <h3 className="text-sm font-semibold text-slate-700 mb-1">Tidak Ada Antrean</h3>
+          <p className="text-xs text-slate-500 font-medium max-w-sm">
+            Tidak ada dokumen pengajuan atau kegiatan yang menunggu tinjauan pada kategori ini.
+          </p>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* LEFT COLUMN: LIST */}
@@ -2757,66 +2785,60 @@ const ApprovalPage = () => {
             </div>
 
             <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-              {currentFilteredList.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-none font-medium text-xs">
-                  Tidak ada pengajuan dalam kategori ini.
-                </div>
-              ) : (
-                currentFilteredList.map((item: any) => {
-                  const isSelected = selectedKegiatan?.id === item.id;
-                  const budgetInfo = item.anggaran?.[0];
-                  return (
-                    <Card
-                      key={item.id}
-                      className={cn(
-                        "p-4 cursor-pointer transition-all duration-200 border-l-4",
-                        isSelected
-                          ? "border-l-blue-600 bg-blue-50/20 shadow-md ring-1 ring-blue-100"
-                          : "border-l-transparent hover:bg-white hover:shadow-sm"
-                      )}
-                      onClick={() => {
-                        setSelectedKegiatanId(item.id);
-                        setShowMobileDetail(true);
-                      }}
-                    >
-                      <div className="flex gap-4">
-                        <div className="text-indigo-600 h-fit">
-                          <FileText size={18} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-slate-800 leading-snug truncate">
-                            {item.namaKegiatan}
-                          </h4>
-                          <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                            Komisi: {item.komisi?.nama}
+              {currentFilteredList.map((item: any) => {
+                const isSelected = selectedKegiatan?.id === item.id;
+                const budgetInfo = item.anggaran?.[0];
+                return (
+                  <Card
+                    key={item.id}
+                    className={cn(
+                      "p-4 cursor-pointer transition-all duration-200 border-l-4",
+                      isSelected
+                        ? "border-l-blue-600 bg-blue-50/20 shadow-md ring-1 ring-blue-100"
+                        : "border-l-transparent hover:bg-white hover:shadow-sm"
+                    )}
+                    onClick={() => {
+                      setSelectedKegiatanId(item.id);
+                      setShowMobileDetail(true);
+                    }}
+                  >
+                    <div className="flex gap-4">
+                      <div className="text-indigo-600 h-fit">
+                        <FileText size={18} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-medium text-slate-800 leading-snug truncate">
+                          {item.namaKegiatan}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                          Komisi: {item.komisi?.nama}
+                        </p>
+                        {budgetInfo && (
+                          <p className="text-[11px] text-emerald-650 font-medium mt-0.5">
+                            Anggaran: {formatIDR(budgetInfo.estimasiBiaya)} ({budgetInfo.posDana?.name || 'Belum ada pos dana'})
                           </p>
-                          {budgetInfo && (
-                            <p className="text-[11px] text-emerald-650 font-medium mt-0.5">
-                              Anggaran: {formatIDR(budgetInfo.estimasiBiaya)} ({budgetInfo.posDana?.name || 'Belum ada pos dana'})
-                            </p>
-                          )}
+                        )}
 
-                          <div className="flex justify-between items-end mt-4">
-                            <div>
-                              <p className="text-sm font-semibold text-slate-900">
-                                {item.nomorKegiatan}
-                              </p>
-                              <p className="text-[10px] text-slate-400 mt-1">
-                                {new Date(item.createdAt).toLocaleDateString('id-ID', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  year: 'numeric'
-                                })}
-                              </p>
-                            </div>
-                            {getStatusBadge(item.status)}
+                        <div className="flex justify-between items-end mt-4">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">
+                              {item.nomorKegiatan}
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-1">
+                              {new Date(item.createdAt).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                              })}
+                            </p>
                           </div>
+                          {getStatusBadge(item.status)}
                         </div>
                       </div>
-                    </Card>
-                  );
-                })
-              )}
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           </div>
 
@@ -2986,8 +3008,6 @@ const ApprovalPage = () => {
                 </Card>
               )
             )}
-
-            {/* B. ANGGARAN DETAIL PANEL is no longer needed since it's unified with kegiatan */}
           </div>
         </div>
       )}
@@ -3070,14 +3090,11 @@ const ApprovalPage = () => {
                 <label className="block text-[10px] font-semibold text-slate-700">
                   Jumlah Anggaran Disetujui (Rp) *
                 </label>
-                <input
-                  type="number"
-                  required
-                  min={1000}
-                  value={approvedAmount || ''}
-                  onChange={(e) => setApprovedAmount(Number(e.target.value))}
+                <CurrencyInput
+                  value={approvedAmount || undefined}
+                  onChange={(val) => setApprovedAmount(val ?? 0)}
                   placeholder="0"
-                  className="w-full px-3 py-2 text-xs rounded-none outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white transition-all font-semibold text-slate-800"
+                  className="text-xs bg-white font-semibold text-slate-800"
                 />
               </div>
             </div>
@@ -3132,6 +3149,7 @@ import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { Modal } from '../../../shared/components/ui/Modal';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 import {
   useKegiatanQuery,
   useKegiatanByIdQuery,
@@ -3169,7 +3187,7 @@ const PengajuanPage = () => {
   const [formPeserta, setFormPeserta] = useState(0);
   const [formPrioritas, setFormPrioritas] = useState('SEDANG');
   const [formFiles, setFormFiles] = useState<File[]>([]);
-  const [formTotalAnggaran, setFormTotalAnggaran] = useState('');
+  const [formTotalAnggaran, setFormTotalAnggaran] = useState<number | undefined>(undefined);
   const [kegiatanError, setKegiatanError] = useState('');
 
   // Filter and search activities
@@ -3236,7 +3254,7 @@ const PengajuanPage = () => {
         prioritas: formPrioritas,
         status: 'DIAJUKAN',
         files: formFiles,
-        totalAnggaran: formTotalAnggaran ? Number(formTotalAnggaran) : undefined
+        totalAnggaran: formTotalAnggaran ?? undefined
       });
 
       // Clear Form & Close
@@ -3247,7 +3265,7 @@ const PengajuanPage = () => {
       setFormTglMulai('');
       setFormTglSelesai('');
       setFormPeserta(0);
-      setFormTotalAnggaran('');
+      setFormTotalAnggaran(undefined);
       setFormFiles([]);
       setIsKegiatanModalOpen(false);
     } catch (err: any) {
@@ -3824,13 +3842,11 @@ const PengajuanPage = () => {
             {/* Total Anggaran */}
             <div className="space-y-1">
               <label className="block text-[10px] font-semibold text-slate-700">Total Anggaran yang Diajukan (Rp)</label>
-              <input
-                type="number"
-                min={0}
-                value={formTotalAnggaran || ''}
-                onChange={(e) => setFormTotalAnggaran(e.target.value)}
-                placeholder="Contoh: 5000000"
-                className="w-full px-3 py-2 text-xs rounded-none outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 transition-all font-semibold"
+              <CurrencyInput
+                value={formTotalAnggaran}
+                onChange={(val) => setFormTotalAnggaran(val)}
+                placeholder="Contoh: 5.000.000"
+                className="text-xs bg-slate-50 font-semibold"
               />
             </div>
           </div>
@@ -3923,60 +3939,149 @@ const PengajuanPage = () => {
 
 export default PengajuanPage;
 
+--- FILE: src\modules\audit-trail\hooks\useAuditLogsQuery.ts ---
+import { useQuery } from '@tanstack/react-query';
+import axiosInstance from '../../../app/api/axios.config';
+
+export interface AuditLogActor {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export interface AuditLogItem {
+  id: string;
+  tanggal: string;
+  type: 'IN' | 'OUT' | 'APPROVE' | 'SPJ' | 'REJECT' | 'REVISE' | 'AUTH';
+  action: string;
+  amount: number | null;
+  actorId: string;
+  actor: AuditLogActor;
+  parokiId: string;
+  oldData: any;
+  newData: any;
+}
+
+export interface AuditLogsResponse {
+  logs: AuditLogItem[];
+  pagination: {
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    itemsPerPage: number;
+  };
+}
+
+/**
+ * Hook to retrieve audit trail logs from backend with optional filters and pagination
+ */
+export const useAuditLogsQuery = (filters?: {
+  search?: string;
+  type?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  return useQuery<AuditLogsResponse>({
+    queryKey: ['audit-logs', filters],
+    queryFn: async () => {
+      const params: Record<string, string | number> = {};
+      if (filters?.search) params.search = filters.search;
+      if (filters?.type && filters.type !== 'ALL') params.type = filters.type;
+      if (filters?.page) params.page = filters.page;
+      if (filters?.limit) params.limit = filters.limit;
+
+      const response = await axiosInstance.get('/v1/audit-logs', { params });
+      return response.data.data;
+    },
+  });
+};
+
 --- FILE: src\modules\audit-trail\pages\AuditTrailPage.tsx ---
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Filter, History, Calendar, Shield } from 'lucide-react';
-import { useActivityStore } from '../../../app/store/useActivityStore';
 import { Card } from '../../../shared/components/ui/Card';
 import { Badge } from '../../../shared/components/ui/Badge';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
+import { useAuditLogsQuery } from '../hooks/useAuditLogsQuery';
 
 /**
- * Typesafe Audit Trail ledger page utilizing centralized formatters.
- * Memoizes log filtration and utilizes AdaptiveList for responsive viewport rendering.
- * Pure flat design with zero overlapping component animations.
+ * Typesafe Audit Trail ledger page connected to backend.
+ * Uses useAuditLogsQuery to fetch logs from the database, supporting filters and pagination.
  */
 const AuditTrailPage = () => {
-  const logs = useActivityStore((state) => state.logs);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<string>('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  // Memoize state filtering logic to maintain performance under large audit history datasets
-  const filteredLogs = useMemo(() => {
-    return logs.filter((log) => {
-      const matchesSearch = log.action.toLowerCase().includes(search.toLowerCase());
-      const matchesFilter = filterType === 'ALL' || log.type.toUpperCase() === filterType;
-      return matchesSearch && matchesFilter;
-    });
-  }, [logs, search, filterType]);
+  // React Query Hook with server-side filters and pagination
+  const { data: logsData, isLoading, error } = useAuditLogsQuery({
+    search: search || undefined,
+    type: filterType !== 'ALL' ? filterType : undefined,
+    page: currentPage,
+    limit: itemsPerPage,
+  });
+
+  // Reset to first page when search or filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterType]);
+
+  const logs = logsData?.logs || [];
+  const pagination = logsData?.pagination || {
+    totalItems: 0,
+    totalPages: 0,
+    currentPage: 1,
+    itemsPerPage: itemsPerPage,
+  };
 
   const getBadgeVariant = (type: string) => {
-    switch (type) {
+    const t = type.toLowerCase();
+    switch (t) {
       case 'in': return 'success';
-      case 'out': return 'default';
+      case 'out': return 'danger';
       case 'approve': return 'success';
       case 'spj': return 'warning';
-      case 'reject': return 'default';
+      case 'reject': return 'danger';
       case 'revise': return 'warning';
+      case 'auth': return 'info';
       default: return 'default';
     }
   };
 
   const getLogTypeLabel = (type: string) => {
-    switch (type) {
+    const t = type.toLowerCase();
+    switch (t) {
       case 'in': return 'Penerimaan';
       case 'out': return 'Disbursement';
       case 'approve': return 'Disetujui';
       case 'spj': return 'SPJ';
       case 'reject': return 'Ditolak';
       case 'revise': return 'Revisi';
+      case 'auth': return 'Keamanan';
       default: return type;
     }
   };
 
+  const formatMutasi = (amount: number | null, type: string) => {
+    if (!amount || amount === 0) return <span className="text-slate-400">-</span>;
+    const t = type.toLowerCase();
+    const isPositive = t === 'in' || t === 'approve';
+    const isNegative = t === 'out';
+    const colorClass = isPositive ? 'text-emerald-600' : isNegative ? 'text-rose-600' : 'text-slate-700';
+    const prefix = isPositive ? '+' : isNegative ? '-' : '';
+
+    return (
+      <span className={colorClass}>
+        {prefix} {formatIDR(amount)}
+      </span>
+    );
+  };
+
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -3987,13 +4092,13 @@ const AuditTrailPage = () => {
         </div>
       </div>
 
-      {/* Filter Toolbar - Clean flat container with compact density */}
+      {/* Filter Toolbar */}
       <Card className="p-4 bg-slate-50 flex flex-col md:flex-row gap-4 items-center rounded-none shadow-sm">
         <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-200 rounded-none w-full md:w-80 transition-colors focus-within:border-slate-700">
           <Search size={16} className="text-slate-400" />
           <input
             type="text"
-            placeholder="Cari aktivitas..."
+            placeholder="Cari aktivitas atau nama aktor..."
             className="bg-transparent text-xs outline-none w-full font-semibold text-slate-700"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -4007,12 +4112,13 @@ const AuditTrailPage = () => {
             className="bg-transparent text-xs font-medium outline-none text-slate-600 cursor-pointer"
           >
             <option value="ALL">Semua Aktivitas</option>
-            <option value="IN">Penerimaan</option>
-            <option value="OUT">Disbursement</option>
-            <option value="APPROVE">Persetujuan</option>
-            <option value="SPJ">Unggahan SPJ</option>
-            <option value="REJECT">Penolakan</option>
-            <option value="REVISE">Revisi</option>
+            <option value="IN">Penerimaan (IN)</option>
+            <option value="OUT">Disbursement (OUT)</option>
+            <option value="APPROVE">Persetujuan (APPROVE)</option>
+            <option value="SPJ">Unggahan SPJ (SPJ)</option>
+            <option value="REJECT">Penolakan (REJECT)</option>
+            <option value="REVISE">Revisi (REVISE)</option>
+            <option value="AUTH">Keamanan / Login (AUTH)</option>
           </select>
         </div>
         <div className="ml-auto flex items-center gap-1.5 text-[10px] font-semibold text-slate-400">
@@ -4020,68 +4126,94 @@ const AuditTrailPage = () => {
         </div>
       </Card>
 
-      {/* Logs Table - Powered by AdaptiveList */}
-      <AdaptiveList
-        data={filteredLogs}
-        desktopHeaders={[
-          'Waktu',
-          'Jenis Aksi',
-          'Deskripsi Aktivitas',
-          'Nilai Mutasi'
-        ]}
-        renderDesktopRow={(log) => (
-          <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
-            <td className="px-5 py-2.5 text-xs text-slate-500 font-medium border-r whitespace-nowrap">
-              <span className="flex items-center gap-1.5">
-                <Calendar size={12} className="text-slate-400" /> {log.time}
-              </span>
-            </td>
-            <td className="px-5 py-2.5 border-r">
-              <Badge
-                variant={getBadgeVariant(log.type)}
-                className={log.type === 'out' || log.type === 'reject' ? 'text-rose-600' : ''}
-              >
-                {getLogTypeLabel(log.type)}
-              </Badge>
-            </td>
-            <td className="px-5 py-2.5 text-xs font-semibold text-slate-800 leading-relaxed border-r">
-              {log.action}
-            </td>
-            <td className="px-5 py-2.5 text-xs text-right font-semibold">
-              {log.amount > 0 ? (
-                <span className={log.type === 'in' ? 'text-emerald-600' : log.type === 'out' ? 'text-rose-600' : 'text-slate-700'}>
-                  {log.type === 'in' ? '+' : log.type === 'out' ? '-' : ''} {formatIDR(log.amount)}
+      {/* Error & Loading state */}
+      {error ? (
+        <div className="p-8 text-center text-rose-500 bg-white border border-rose-250 rounded-none shadow-sm font-semibold text-xs">
+          Gagal mengambil data log audit dari server. Pastikan Anda masuk sebagai Super Admin atau Pastor.
+        </div>
+      ) : (
+        <AdaptiveList
+          data={logs}
+          isLoading={isLoading}
+          pagination={{
+            currentPage: pagination.currentPage,
+            totalPages: pagination.totalPages,
+            totalItems: pagination.totalItems,
+            itemsPerPage: pagination.itemsPerPage,
+            onPageChange: setCurrentPage,
+          }}
+          desktopHeaders={[
+            'Waktu',
+            'Jenis Aksi',
+            'Pelaku (Actor)',
+            'Deskripsi Aktivitas',
+            'Nilai Mutasi',
+          ]}
+          renderDesktopRow={(log) => (
+            <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+              <td className="px-5 py-2.5 text-xs text-slate-500 font-medium border-r whitespace-nowrap">
+                <span className="flex items-center gap-1.5">
+                  <Calendar size={12} className="text-slate-400" />
+                  {new Date(log.tanggal).toLocaleString('id-ID', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
                 </span>
-              ) : (
-                <span className="text-slate-400">-</span>
-              )}
-            </td>
-          </tr>
-        )}
-        renderMobileCard={(log) => (
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
-                <Calendar size={12} className="text-slate-400" /> {log.time}
-              </span>
-              <Badge
-                variant={getBadgeVariant(log.type)}
-                className={log.type === 'out' || log.type === 'reject' ? 'text-rose-600' : ''}
-              >
-                {getLogTypeLabel(log.type)}
-              </Badge>
-            </div>
-            <div className="text-xs font-semibold text-slate-800 leading-relaxed">{log.action}</div>
-            {log.amount > 0 && (
-              <div className="text-right pt-1 text-xs font-semibold">
-                <span className={log.type === 'in' ? 'text-emerald-600' : log.type === 'out' ? 'text-rose-600' : 'text-slate-700'}>
-                  {log.type === 'in' ? '+' : '-'} {formatIDR(log.amount)}
+              </td>
+              <td className="px-5 py-2.5 border-r">
+                <Badge variant={getBadgeVariant(log.type)}>
+                  {getLogTypeLabel(log.type)}
+                </Badge>
+              </td>
+              <td className="px-5 py-2.5 text-xs font-semibold text-slate-700 border-r whitespace-nowrap">
+                {log.actor?.name || 'Sistem'}
+                <span className="text-[10px] text-slate-400 block font-normal">
+                  {log.actor?.role.replace(/_/g, ' ') || ''}
                 </span>
+              </td>
+              <td className="px-5 py-2.5 text-xs font-semibold text-slate-800 leading-relaxed border-r">
+                {log.action}
+              </td>
+              <td className="px-5 py-2.5 text-xs text-right font-semibold">
+                {formatMutasi(log.amount ? Number(log.amount) : null, log.type)}
+              </td>
+            </tr>
+          )}
+          renderMobileCard={(log) => (
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                  <Calendar size={12} className="text-slate-400" />
+                  {new Date(log.tanggal).toLocaleString('id-ID', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+                <Badge variant={getBadgeVariant(log.type)}>
+                  {getLogTypeLabel(log.type)}
+                </Badge>
               </div>
-            )}
-          </div>
-        )}
-      />
+              <div className="text-xs font-semibold text-slate-800 leading-relaxed">{log.action}</div>
+              <div className="flex justify-between items-center pt-1 border-t border-slate-50">
+                <span className="text-[10px] text-slate-400 font-normal">
+                  Oleh: {log.actor?.name || 'Sistem'} ({log.actor?.role.replace(/_/g, ' ') || ''})
+                </span>
+                {log.amount && log.amount !== 0 && (
+                  <div className="text-right text-xs font-semibold">
+                    {formatMutasi(Number(log.amount), log.type)}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        />
+      )}
     </div>
   );
 };
@@ -4440,6 +4572,7 @@ import {
   History, Plus, Search,
   CheckCircle, Play, XCircle, Trash2, ArrowRightLeft, FileSpreadsheet, FileDown, Eye
 } from 'lucide-react';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Modal } from '../../../shared/components/ui/Modal';
@@ -4495,9 +4628,12 @@ const DanaKhususPage = () => {
 
   // Allocation Form State
   const [targetPosDanaId, setTargetPosDanaId] = useState('');
-  const [allocationAmount, setAllocationAmount] = useState<number | ''>('');
+  const [allocationAmount, setAllocationAmount] = useState<number | undefined>(undefined);
   const [allocationNotes, setAllocationNotes] = useState('');
   const [allocationError, setAllocationError] = useState<string | null>(null);
+
+  // Controlled state untuk field targetNominal di form Buka Program
+  const [targetNominalState, setTargetNominalState] = useState<number | undefined>(undefined);
 
   // Filtered listing
   const filteredFunds = useMemo(() => {
@@ -4536,7 +4672,7 @@ const DanaKhususPage = () => {
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
     const tujuanPenggalangan = formData.get('tujuanPenggalangan') as string;
-    const targetNominal = Number(formData.get('targetNominal'));
+    const targetNominal = targetNominalState ?? 0;
     const tanggalMulai = formData.get('tanggalMulai') as string;
     const tanggalSelesai = formData.get('tanggalSelesai') as string;
 
@@ -4556,6 +4692,7 @@ const DanaKhususPage = () => {
         tanggalSelesai,
       });
       setIsAddOpen(false);
+      setTargetNominalState(undefined);
     } catch (err: any) {
       alert(err?.response?.data?.message || err?.message || 'Gagal membuat program dana.');
     }
@@ -4571,7 +4708,7 @@ const DanaKhususPage = () => {
       setAllocationError('Pilih Pos Dana tujuan alokasi.');
       return;
     }
-    const amountNum = Number(allocationAmount);
+    const amountNum = Number(allocationAmount ?? 0);
     if (!amountNum || amountNum <= 0) {
       setAllocationError('Nominal alokasi harus lebih dari 0.');
       return;
@@ -4592,7 +4729,7 @@ const DanaKhususPage = () => {
       });
       // Reset form
       setTargetPosDanaId('');
-      setAllocationAmount('');
+      setAllocationAmount(undefined);
       setAllocationNotes('');
       setIsAllocateOpen(false);
     } catch (err: any) {
@@ -4705,7 +4842,7 @@ const DanaKhususPage = () => {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 border-l-4 border-l-blue-600 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">Total Donasi Masuk</p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(stats.totalCollected)}
@@ -4713,7 +4850,7 @@ const DanaKhususPage = () => {
           <span className="text-[10px] text-slate-400 font-medium">Akumulasi donasi terkumpul</span>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">Total Pengeluaran Dana</p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(stats.totalSpent)}
@@ -4721,7 +4858,7 @@ const DanaKhususPage = () => {
           <span className="text-[10px] text-slate-400 font-medium">Total belanja tersalurkan</span>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">Sisa Saldo Kas Aktif</p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(stats.totalBalance)}
@@ -4969,12 +5106,12 @@ const DanaKhususPage = () => {
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-slate-500 mb-1">TARGET PENGGALAINGAN (IDR, OPSIONAL)</label>
-            <input
-              type="number"
-              name="targetNominal"
-              placeholder="Misal: 150000000 (boleh kosong)"
-              className="w-full px-3 py-2 bg-slate-50 rounded-none text-xs outline-none focus:border-blue-500 font-mono"
+            <label className="block text-[10px] font-semibold text-slate-500 mb-1">TARGET PENGGALANGAN (IDR, OPSIONAL)</label>
+            <CurrencyInput
+              value={targetNominalState}
+              onChange={(val) => setTargetNominalState(val)}
+              placeholder="Misal: 150.000.000 (boleh kosong)"
+              className="text-xs bg-slate-50 font-mono"
             />
           </div>
 
@@ -5248,13 +5385,11 @@ const DanaKhususPage = () => {
 
             <div>
               <label className="block text-[10px] font-semibold text-slate-500 mb-1">NOMINAL ALOKASI (IDR)</label>
-              <input
-                type="number"
+              <CurrencyInput
                 value={allocationAmount}
-                onChange={(e) => setAllocationAmount(e.target.value !== '' ? Number(e.target.value) : '')}
-                required
-                placeholder={String(activeDetail.balance)}
-                className="w-full px-3 py-2 bg-slate-50 rounded-none text-xs outline-none focus:border-blue-500 font-mono font-medium text-slate-800"
+                onChange={(val) => setAllocationAmount(val)}
+                placeholder={formatIDR(Number(activeDetail.balance))}
+                className="text-xs bg-slate-50 font-mono font-medium text-slate-800"
               />
               <span className="text-[9px] text-slate-400 font-medium block mt-1">Maksimal: {formatIDR(Number(activeDetail.balance))}</span>
             </div>
@@ -5353,18 +5488,15 @@ import { Wallet, Landmark } from 'lucide-react';
 import { BANK_BALANCES } from '../../../shared/mock/dashboardData';
 import { formatIDR } from '../../../shared/utils/formatter';
 
-/**
- * Flat & Seamless presentation list displaying localized bank and cash balances.
- * Implements high contrast typography over nested card layers.
- */
 export const BalancePosition = () => {
     return (
-        <div className="space-y-4">
-            <h3 className="text-xs font-semibold text-slate-400">
+        <div className="flex flex-col h-full">
+            <h3 className="text-xs font-semibold text-slate-400 shrink-0">
                 Posisi Saldo Per Rekening
             </h3>
 
-            <div className="space-y-2">
+            {/* Scrollable Area Tengah */}
+            <div className="flex-1 overflow-y-auto no-scrollbar mt-4 pr-1 space-y-2">
                 {BANK_BALANCES.map((bank, i) => (
                     <div
                         key={i}
@@ -5383,7 +5515,8 @@ export const BalancePosition = () => {
                 ))}
             </div>
 
-            <div className="pt-3 border-t border-slate-200 flex justify-between items-center">
+            {/* Sticky Footer Total memeluk lantai card */}
+            <div className="mt-auto pt-3 border-t border-slate-200 flex justify-between items-center shrink-0">
                 <p className="text-[10px] font-semibold text-blue-600">
                     Total Saldo
                 </p>
@@ -5400,11 +5533,6 @@ import { useMemo } from 'react';
 import { useKasStore } from '../../../app/store/useKasStore';
 import { formatIDR } from '../../../shared/utils/formatter';
 
-/**
- * High-density tabular summary showing dynamic budget realizations.
- * Computes complex metrics via useMemo for optimal client performance.
- * Sharp-corner styling.
- */
 export const BudgetSummary = () => {
     const kasKeluar = useKasStore((state) => state.kasKeluar);
 
@@ -5416,7 +5544,6 @@ export const BudgetSummary = () => {
         { id: 5, nama: 'Administrasi', anggaran: 40000000, baseRealisasi: 18000000, matchKategori: 'Operasional' },
     ], []);
 
-    // Compute budget aggregations incrementally based on current cash-out store states
     const { budgetSummary, totalAnggaran, totalRealisasi, totalSisa, totalPersen } = useMemo(() => {
         const summary = BUDGET_CATEGORIES.map((cat) => {
             const currentSum = kasKeluar
@@ -5426,14 +5553,7 @@ export const BudgetSummary = () => {
             const sisa = cat.anggaran - realisasi;
             const persen = Math.round((realisasi / cat.anggaran) * 100);
 
-            return {
-                id: cat.id,
-                nama: cat.nama,
-                anggaran: cat.anggaran,
-                realisasi,
-                sisa,
-                persen
-            };
+            return { id: cat.id, nama: cat.nama, anggaran: cat.anggaran, realisasi, sisa, persen };
         });
 
         const tAnggaran = summary.reduce((sum, i) => sum + i.anggaran, 0);
@@ -5441,65 +5561,69 @@ export const BudgetSummary = () => {
         const tSisa = tAnggaran - tRealisasi;
         const tPersen = Math.round((tRealisasi / tAnggaran) * 100);
 
-        return {
-            budgetSummary: summary,
-            totalAnggaran: tAnggaran,
-            totalRealisasi: tRealisasi,
-            totalSisa: tSisa,
-            totalPersen: tPersen
-        };
+        return { budgetSummary: summary, totalAnggaran: tAnggaran, totalRealisasi: tRealisasi, totalSisa: tSisa, totalPersen: tPersen };
     }, [kasKeluar, BUDGET_CATEGORIES]);
 
     return (
-        <div className="overflow-x-auto">
-            <h3 className="text-xs font-semibold text-slate-400 mb-4">
+        <div className="flex flex-col h-full">
+            <h3 className="text-xs font-semibold text-slate-400 shrink-0">
                 Ringkasan Anggaran Tahun 2025
             </h3>
-            <table className="w-full text-left">
-                <thead>
-                    <tr className="text-[10px] font-semibold text-slate-400 border-b border-slate-100">
-                        <th className="pb-2 font-medium">Program / Kegiatan</th>
-                        <th className="pb-2 text-right">Anggaran</th>
-                        <th className="pb-2 text-right">Realisasi</th>
-                        <th className="pb-2 text-right">Sisa Anggaran</th>
-                        <th className="pb-2 text-center w-20">%</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100/60">
-                    {budgetSummary.map((item) => (
-                        <tr key={item.id} className="text-[11px] hover:bg-slate-50/50 transition-colors">
-                            <td className="py-2.5 font-medium text-slate-700">{item.id}. {item.nama}</td>
-                            <td className="py-2.5 text-right text-slate-500 font-medium">{formatIDR(item.anggaran)}</td>
-                            <td className="py-2.5 text-right text-slate-500 font-medium">{formatIDR(item.realisasi)}</td>
-                            <td className="py-2.5 text-right font-medium text-slate-700">{formatIDR(item.sisa)}</td>
-                            <td className="py-2.5 px-3">
-                                <div className="flex items-center gap-1.5">
-                                    <div className="flex-1 bg-slate-100 h-1 rounded-none overflow-hidden">
-                                        <div className="bg-emerald-500 h-full rounded-none" style={{ width: `${Math.min(item.persen, 100)}%` }}></div>
+
+            {/* Scrollable Area Tengah */}
+            <div className="flex-1 overflow-y-auto no-scrollbar mt-4 pr-1">
+                <table className="w-full text-left relative">
+                    <thead className="sticky top-0 bg-white z-10">
+                        <tr className="text-[10px] font-semibold text-slate-400 border-b border-slate-100">
+                            <th className="pb-2 font-medium bg-white">Program / Kegiatan</th>
+                            <th className="pb-2 text-right bg-white">Anggaran</th>
+                            <th className="pb-2 text-right bg-white">Realisasi</th>
+                            <th className="pb-2 text-right bg-white">Sisa Anggaran</th>
+                            <th className="pb-2 text-center w-20 bg-white">%</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100/60">
+                        {budgetSummary.map((item) => (
+                            <tr key={item.id} className="text-[11px] hover:bg-slate-50/50 transition-colors">
+                                <td className="py-2.5 font-medium text-slate-700">{item.id}. {item.nama}</td>
+                                <td className="py-2.5 text-right text-slate-500 font-medium">{formatIDR(item.anggaran)}</td>
+                                <td className="py-2.5 text-right text-slate-500 font-medium">{formatIDR(item.realisasi)}</td>
+                                <td className="py-2.5 text-right font-medium text-slate-700">{formatIDR(item.sisa)}</td>
+                                <td className="py-2.5 px-3">
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="flex-1 bg-slate-100 h-1 rounded-none overflow-hidden">
+                                            <div className="bg-emerald-500 h-full rounded-none" style={{ width: `${Math.min(item.persen, 100)}%` }}></div>
+                                        </div>
+                                        <span className="font-medium text-slate-500 w-5 text-right text-[10px]">{item.persen}%</span>
                                     </div>
-                                    <span className="font-medium text-slate-500 w-5 text-right text-[10px]">{item.persen}%</span>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Sticky Footer Total (mt-auto memaksanya menempel ke paling bawah card) */}
+            <div className="mt-auto pt-3 border-t border-slate-200 shrink-0">
+                <table className="w-full text-left">
+                    <tbody>
+                        <tr className="text-[11px] font-semibold text-blue-800">
+                            <td className="py-1 font-semibold text-[10px]">Total</td>
+                            <td className="py-1 text-right font-semibold">{formatIDR(totalAnggaran)}</td>
+                            <td className="py-1 text-right font-semibold">{formatIDR(totalRealisasi)}</td>
+                            <td className="py-1 text-right font-semibold">{formatIDR(totalSisa)}</td>
+                            <td className="py-1 px-3 w-20">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="flex-1 bg-blue-100 h-1 rounded-none overflow-hidden">
+                                        <div className="bg-blue-600 h-full rounded-none" style={{ width: `${Math.min(totalPersen, 100)}%` }}></div>
+                                    </div>
+                                    <span className="text-blue-600 font-semibold w-5 text-right text-[10px]">{totalPersen}%</span>
                                 </div>
                             </td>
                         </tr>
-                    ))}
-                </tbody>
-                <tfoot>
-                    <tr className="text-[11px] font-semibold bg-blue-50/40 text-blue-800">
-                        <td className="py-2.5 pl-2 font-semibold text-[10px]">Total</td>
-                        <td className="py-2.5 text-right font-semibold">{formatIDR(totalAnggaran)}</td>
-                        <td className="py-2.5 text-right font-semibold">{formatIDR(totalRealisasi)}</td>
-                        <td className="py-2.5 text-right font-semibold">{formatIDR(totalSisa)}</td>
-                        <td className="py-2.5 px-3">
-                            <div className="flex items-center gap-1.5">
-                                <div className="flex-1 bg-blue-100 h-1 rounded-none overflow-hidden">
-                                    <div className="bg-blue-600 h-full rounded-none" style={{ width: `${Math.min(totalPersen, 100)}%` }}></div>
-                                </div>
-                                <span className="text-blue-600 font-semibold w-5 text-right text-[10px]">{totalPersen}%</span>
-                            </div>
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };
@@ -5772,29 +5896,25 @@ import { ChevronRight } from 'lucide-react';
 import { useActivityStore } from '../../../app/store/useActivityStore';
 import { formatIDR } from '../../../shared/utils/formatter';
 
-/**
- * Flat & Seamless recent activity list showing system audit logs.
- * Optimized with useMemo and utilizing centralized formatting.
- */
 export const RecentActivity = () => {
     const logs = useActivityStore((state) => state.logs);
 
-    // Memoize slice operation to reduce render computation
     const activeLogs = useMemo(() => {
         return logs.slice(0, 5);
     }, [logs]);
 
     return (
-        <div className="space-y-4">
-            <h3 className="text-xs font-semibold text-slate-400">
+        <div className="flex flex-col h-full">
+            <h3 className="text-xs font-semibold text-slate-400 shrink-0">
                 Aktivitas Terakhir
             </h3>
 
-            <div className="divide-y divide-slate-100/80">
+            {/* Scrollable Area Tengah */}
+            <div className="flex-1 overflow-y-auto no-scrollbar mt-3 pr-1 divide-y divide-slate-100/80">
                 {activeLogs.map((log) => (
                     <div key={log.id} className="flex justify-between items-start gap-4 py-2.5">
                         <div className="min-w-0 flex-1">
-                            <p className="text-[11px] font-medium text-slate-700 leading-snug">
+                            <p className="text-[11px] font-medium text-slate-700 leading-snug truncate">
                                 {log.action}
                             </p>
                             <p className="text-[9px] text-slate-400 font-medium mt-1 tracking-tight">
@@ -5802,7 +5922,7 @@ export const RecentActivity = () => {
                             </p>
                         </div>
                         {log.amount > 0 && (
-                            <p className={`text-[11px] font-semibold whitespace-nowrap ${log.type === 'in' ? 'text-emerald-600' :
+                            <p className={`text-[11px] font-semibold whitespace-nowrap shrink-0 ${log.type === 'in' ? 'text-emerald-600' :
                                 log.type === 'out' ? 'text-rose-600' : 'text-slate-800'
                                 }`}>
                                 {log.type === 'in' ? '+' : '-'} {formatIDR(log.amount)}
@@ -5812,7 +5932,8 @@ export const RecentActivity = () => {
                 ))}
             </div>
 
-            <button className="w-full pt-3.5 pb-1 text-[10px] font-semibold text-blue-600 flex items-center justify-between border-t border-slate-100 hover:text-blue-700 transition-colors">
+            {/* Sticky Tombol memeluk lantai card */}
+            <button className="mt-auto pt-3.5 pb-1 text-[10px] font-semibold text-blue-600 flex items-center justify-between border-t border-slate-100 hover:text-blue-700 transition-colors shrink-0">
                 LIHAT SEMUA AKTIVITAS <ChevronRight size={12} />
             </button>
         </div>
@@ -5820,7 +5941,7 @@ export const RecentActivity = () => {
 };
 
 --- FILE: src\modules\dashboard\pages\DashboardPage.tsx ---
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   Wallet, Building2, Heart, TrendingUp, TrendingDown,
   Calendar, ChevronRight
@@ -5835,7 +5956,6 @@ import { BudgetSummary } from '../components/BudgetSummary';
 import { BalancePosition } from '../components/BalancePosition';
 import { RecentActivity } from '../components/RecentActivity';
 import { DASHBOARD_HERO } from '../../../shared/mock/dashboardData';
-import { cn } from '../../../shared/utils/cn';
 import { formatIDR } from '../../../shared/utils/formatter';
 
 const DashboardPage = () => {
@@ -5843,6 +5963,14 @@ const DashboardPage = () => {
   const kasMasuk = useKasStore((state) => state.kasMasuk);
   const kasKeluar = useKasStore((state) => state.kasKeluar);
   const navigate = useNavigate();
+
+  // Live Clock State
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Update tiap 1 menit
+    return () => clearInterval(timer);
+  }, []);
 
   // Memoized aggregation to prevent unnecessary computational renders
   const totalIn = useMemo(() => {
@@ -5860,115 +5988,119 @@ const DashboardPage = () => {
   // Memoized statistics tailored based on the authenticated user role
   const stats = useMemo(() => {
     const dynamicStats = [
-      { label: 'DANA OPERASIONAL', val: currentSaldo, sub: 'Dana Operasional', color: 'blue', icon: 'wallet', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'SUPER_ADMIN'] },
-      { label: 'DANA PEMBANGUNAN', val: 785000000, sub: 'Dana Pembangunan', color: 'emerald', icon: 'building', visible: ['PASTOR', 'BENDAHARA', 'TIM_PEMBANGUNAN', 'SUPER_ADMIN'] },
-      { label: 'DANA SOSIAL (PSE)', val: 58000000, sub: 'Dana Sosial', color: 'purple', icon: 'heart', visible: ['PASTOR', 'BENDAHARA', 'KETUA_KOMISI', 'SUPER_ADMIN'] },
-      { label: 'PENDAPATAN BULAN INI', val: totalIn, sub: 'Mei 2025', color: 'orange', icon: 'trending-up', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'SEKRETARIAT', 'SUPER_ADMIN'] },
-      { label: 'PENGELUARAN BULAN INI', val: totalOut, sub: 'Mei 2025', color: 'cyan', icon: 'trending-down', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'KETUA_KOMISI', 'SUPER_ADMIN'] },
+      { label: 'DANA OPERASIONAL', val: currentSaldo, sub: 'Dana Operasional', color: 'text-blue-600', icon: 'wallet', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'SUPER_ADMIN'] },
+      { label: 'DANA PEMBANGUNAN', val: 785000000, sub: 'Dana Pembangunan', color: 'text-emerald-600', icon: 'building', visible: ['PASTOR', 'BENDAHARA', 'TIM_PEMBANGUNAN', 'SUPER_ADMIN'] },
+      { label: 'DANA SOSIAL (PSE)', val: 58000000, sub: 'Dana Sosial', color: 'text-purple-600', icon: 'heart', visible: ['PASTOR', 'BENDAHARA', 'KETUA_KOMISI', 'SUPER_ADMIN'] },
+      { label: 'PENDAPATAN BULAN INI', val: totalIn, sub: 'Bulan Berjalan', color: 'text-orange-600', icon: 'trending-up', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'SEKRETARIAT', 'SUPER_ADMIN'] },
+      { label: 'PENGELUARAN BULAN INI', val: totalOut, sub: 'Bulan Berjalan', color: 'text-cyan-600', icon: 'trending-down', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'KETUA_KOMISI', 'SUPER_ADMIN'] },
     ];
     return dynamicStats.filter(s => s.visible.includes(user?.role || ''));
   }, [currentSaldo, totalIn, totalOut, user?.role]);
 
-  const getIcon = (iconName: string) => {
+  const getIcon = (iconName: string, colorClass: string) => {
+    const props = { size: 18, className: colorClass, strokeWidth: 2 };
     switch (iconName) {
-      case 'wallet': return <Wallet size={18} />;
-      case 'building': return <Building2 size={18} />;
-      case 'heart': return <Heart size={18} />;
-      case 'trending-up': return <TrendingUp size={18} />;
-      case 'trending-down': return <TrendingDown size={18} />;
-      default: return <Wallet size={18} />;
+      case 'wallet': return <Wallet {...props} />;
+      case 'building': return <Building2 {...props} />;
+      case 'heart': return <Heart {...props} />;
+      case 'trending-up': return <TrendingUp {...props} />;
+      case 'trending-down': return <TrendingDown {...props} />;
+      default: return <Wallet {...props} />;
     }
   };
 
   return (
     <div className="space-y-6 pb-10 max-w-[1600px] mx-auto animate-fade-slide">
-      {/* 1. HERO SECTION - High Contrast & High Density */}
-      <div className="relative overflow-hidden bg-white p-5 rounded-none border border-slate-200 shadow-sm">
-        <div className="absolute right-0 top-0 h-full w-[28%] hidden lg:block">
+
+      {/* 1. HERO SECTION - Left Aligned Tight Flexbox */}
+      <div className="relative bg-white px-6 py-5 rounded-none border border-slate-200 shadow-sm flex overflow-hidden">
+
+        {/* Background Image (Absolute Right) */}
+        <div className="absolute right-0 top-0 h-full w-[35%] hidden md:block opacity-60 pointer-events-none">
           <img
             src="src/assets/church-bg.png"
             alt="Church BG"
-            className="w-full h-full object-cover opacity-90"
+            className="w-full h-full object-cover"
+            style={{
+              maskImage: 'linear-gradient(to right, transparent, black 15%)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 15%)'
+            }}
           />
         </div>
 
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 items-center gap-4">
+        {/* Content Wrapper - Di-group agar menempel di sisi kiri */}
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-10">
+
+          {/* Greeting Context (Tanpa flex-1, hanya mengambil ruang yang dibutuhkan) */}
           <div>
             <h1 className="text-xl font-semibold text-slate-800 tracking-tight">
-              Dashboard {user?.role.toLowerCase().replace('_', ' ')}
+              Dashboard {user?.role.toLowerCase().replace(/_/g, ' ')}
             </h1>
             <p className="text-rose-600 font-medium text-base leading-tight mt-0.5">
               {DASHBOARD_HERO.paroki}
             </p>
-            <div className="mt-3">
+            <div className="mt-4">
               <p className="text-xs font-semibold text-slate-700">
                 Selamat datang, {user?.name}
               </p>
-              <p className="text-[11px] text-slate-400 font-medium">
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
                 Berikut adalah ringkasan konsolidasi kondisi keuangan paroki saat ini.
               </p>
             </div>
           </div>
 
-          <div className="flex justify-center lg:justify-center">
-            <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-none">
-              <div className="p-2 bg-white text-blue-600 rounded-none shadow-none border border-slate-100">
-                <Calendar size={18} />
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold text-blue-600 tracking-tighter">Selasa</p>
-                <p className="text-xs font-semibold text-slate-800">20 Mei 2025</p>
-                <p className="text-[9px] text-slate-400 font-medium">10:30 WIB</p>
-              </div>
+          {/* Vertical Separator */}
+          <div className="hidden md:block w-px h-16 bg-slate-200" />
+
+          {/* Date & Time Info (Menempel di sebelah separator) */}
+          <div className="flex items-center gap-3">
+            <Calendar size={24} className="text-blue-600" strokeWidth={1.5} />
+            <div>
+              <p className="text-[10px] font-semibold text-blue-600 tracking-tighter uppercase">Hari Ini</p>
+              <p className="text-sm font-semibold text-slate-800 tracking-tight leading-tight">
+                {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+              <p className="text-[10px] font-medium text-slate-400 mt-0.5">
+                Pukul {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+              </p>
             </div>
           </div>
-          <div />
+
         </div>
       </div>
 
-      {/* 2. STAT CARDS SECTION - Standardized Spacing & Hover States */}
+      {/* 2. STAT CARDS SECTION */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {stats.map((item, idx) => (
-          <Card key={idx} className="p-0 border-slate-200 hover:shadow-none hover:border-slate-300 transition-all duration-300 flex flex-col rounded-none shadow-sm">
-            <div className={cn("h-1",
-              item.color === 'blue' ? 'bg-blue-600' :
-                item.color === 'emerald' ? 'bg-emerald-600' :
-                  item.color === 'purple' ? 'bg-purple-600' :
-                    item.color === 'orange' ? 'bg-orange-600' : 'bg-cyan-600'
-            )} />
+          <Card key={idx} className="p-0 border-slate-200 hover:shadow-none hover:border-slate-300 transition-all duration-300 flex flex-col rounded-none shadow-sm group">
 
             <div className="p-4 flex-1 flex flex-col justify-between">
-              <div className="flex items-center gap-2 mb-3">
-                <div className={cn("p-1.5 rounded-none border",
-                  item.color === 'blue' ? 'bg-blue-50 text-blue-600 border-blue-100/50' :
-                    item.color === 'emerald' ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' :
-                      item.color === 'purple' ? 'bg-purple-50 text-purple-600 border-purple-100/50' :
-                        item.color === 'orange' ? 'bg-orange-50 text-orange-600 border-orange-100/50' : 'bg-cyan-50 text-cyan-600 border-cyan-100/50'
-                )}>
-                  {getIcon(item.icon)}
-                </div>
+              <div className="flex items-center gap-2.5 mb-3">
+                {getIcon(item.icon, item.color)}
                 <div className="min-w-0">
-                  <p className="text-[9px] font-semibold text-slate-400 tracking-tighter truncate">{item.label}</p>
+                  <p className="text-[9px] font-semibold text-slate-400 tracking-tight truncate">{item.label}</p>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-slate-800 tracking-tight leading-none">{formatIDR(item.val)}</h3>
-                <p className="text-[9px] text-slate-400 font-medium mt-1">{item.sub}</p>
+                <h3 className="text-lg font-semibold text-slate-800 tracking-tight leading-none group-hover:text-blue-600 transition-colors">
+                  {formatIDR(item.val)}
+                </h3>
+                <p className="text-[9px] text-slate-400 font-medium mt-1.5">{item.sub}</p>
               </div>
             </div>
 
             <button
               onClick={() => {
-                if (item.label === 'SALDO OPERASIONAL') navigate('/kas-keluar');
+                if (item.label === 'DANA OPERASIONAL') navigate('/kas-keluar');
                 else if (item.label === 'PENDAPATAN BULAN INI') navigate('/kas-masuk');
                 else if (item.label === 'PENGELUARAN BULAN INI') navigate('/kas-keluar');
                 else if (item.label === 'DANA PEMBANGUNAN') navigate('/dana-khusus');
                 else if (item.label === 'DANA SOSIAL (PSE)') navigate('/dana-khusus');
               }}
-              className="px-4 py-2 text-[10px] font-medium text-blue-600 border-t border-slate-100 flex items-center justify-between hover:bg-slate-50 hover:text-blue-700 transition-colors cursor-pointer rounded-none text-left"
+              className="px-4 py-2 text-[10px] font-medium text-slate-500 border-t border-slate-100 flex items-center justify-between hover:bg-slate-50 hover:text-blue-600 transition-colors cursor-pointer rounded-none text-left"
             >
-              Lihat Detail <ChevronRight size={10} />
+              Lihat Detail <ChevronRight size={12} />
             </button>
           </Card>
         ))}
@@ -5986,26 +6118,26 @@ const DashboardPage = () => {
       </div>
 
       {/* 4. BOTTOM SECTION: Budget, Balances, & Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Budget Summary (Left wide) */}
-        <Card className="lg:col-span-6 p-5 border-slate-200 rounded-none shadow-sm">
+        <Card className="lg:col-span-6 p-5 border-slate-200 rounded-none shadow-sm h-[420px]">
           <BudgetSummary />
         </Card>
 
         {/* Balance Position (Middle) */}
-        <Card className="lg:col-span-3 p-5 border-slate-200 rounded-none shadow-sm">
+        <Card className="lg:col-span-3 p-5 border-slate-200 rounded-none shadow-sm h-[420px]">
           <BalancePosition />
         </Card>
 
         {/* Recent Activity (Right) */}
-        <Card className="lg:col-span-3 p-5 border-slate-200 rounded-none shadow-sm">
+        <Card className="lg:col-span-3 p-5 border-slate-200 rounded-none shadow-sm h-[420px]">
           <RecentActivity />
         </Card>
       </div>
 
       <footer className="mt-12 text-center text-[10px] text-slate-400 font-medium">
         <p>SANTIKA - Sistem Akuntansi dan Tata Kelola Keuangan Gereja</p>
-        <p>© 2025 Paroki St. Stefanus - Sempan. Semua hak dilindungi.</p>
+        <p>© {new Date().getFullYear()} Paroki St. Stefanus - Sempan. Semua hak dilindungi.</p>
       </footer>
     </div>
   );
@@ -6015,11 +6147,12 @@ export default DashboardPage;
 
 --- FILE: src\modules\kas-keluar\components\KasKeluarForm.tsx ---
 import { useState, useMemo, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Upload, X, CheckCircle2, AlertCircle, HelpCircle } from 'lucide-react';
 import { Button } from '../../../shared/components/ui/Button';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 import { useActivityStore } from '../../../app/store/useActivityStore';
 import { useFundCategoriesQuery } from '../../kas-masuk/hooks/useKasMasukQuery';
 import { useExpenseTypesQuery, useApprovalsQuery, useAddKasKeluarMutation } from '../hooks/useKasKeluarQuery';
@@ -6054,7 +6187,7 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
 
-  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, watch, setValue, control, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       transaction_date: new Date().toISOString().substring(0, 10),
@@ -6287,7 +6420,19 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">NOMINAL (RP)</label>
-          <input type="number" {...register('amount', { valueAsNumber: true })} disabled={!!selectedPermohonanId} placeholder="0" className="w-full p-2 border rounded-none text-sm outline-blue-500 font-semibold text-slate-800" />
+          <Controller
+            name="amount"
+            control={control}
+            render={({ field }) => (
+              <CurrencyInput
+                value={field.value ?? undefined}
+                onChange={field.onChange}
+                disabled={!!selectedPermohonanId}
+                placeholder="0"
+                className="text-sm font-semibold text-slate-800"
+              />
+            )}
+          />
           {errors.amount && <p className="text-red-500 text-[10px] mt-1">{errors.amount.message}</p>}
         </div>
       </div>
@@ -6527,11 +6672,11 @@ export const useAddKasKeluarMutation = () => {
 };
 
 --- FILE: src\modules\kas-keluar\pages\KasKeluarPage.tsx ---
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Plus, Search, Download,
   FileImage, ArrowUpRight, TrendingUp,
-  Info
+  Info, UploadCloud
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -6568,6 +6713,10 @@ const KasKeluarPage = () => {
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | undefined>(undefined);
   const [selectedBuktiUrl, setSelectedBuktiUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'PERMANENT' | 'SPECIAL_FUND'>('PERMANENT');
+  const [timeRange, setTimeRange] = useState<'ALL' | 'THIS_MONTH' | 'LAST_MONTH'>('ALL');
+  const [sortBy, setSortBy] = useState<'LATEST' | 'OLDEST' | 'AMOUNT_DESC' | 'AMOUNT_ASC'>('LATEST');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // 1. Calculate base API asset paths dynamically
   const apiAssetUrl = useMemo(() => {
@@ -6645,15 +6794,74 @@ const KasKeluarPage = () => {
     return Math.round(sum / specialTxsThisMonth.length);
   }, [kasKeluarSpecial]);
 
-  // 6. Memoize search query filter logic
-  const filteredData = useMemo(() => {
-    return currentTransactions.filter(item =>
-      item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.transactionNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.fundCategory?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.expenseType?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+  // Cascading data processing engine:
+  // 1. Filter by time
+  const filteredByTime = useMemo(() => {
+    if (timeRange === 'ALL') return currentTransactions;
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    return currentTransactions.filter(item => {
+      const d = new Date(item.transactionDate);
+      if (timeRange === 'THIS_MONTH') {
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      }
+      if (timeRange === 'LAST_MONTH') {
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
+      }
+      return true;
+    });
+  }, [currentTransactions, timeRange]);
+
+  // 2. Filter by search term
+  const searchedData = useMemo(() => {
+    if (!searchTerm) return filteredByTime;
+    const term = searchTerm.toLowerCase();
+    return filteredByTime.filter(item =>
+      item.description.toLowerCase().includes(term) ||
+      item.transactionNo.toLowerCase().includes(term) ||
+      (item.fundCategory?.name || '').toLowerCase().includes(term) ||
+      (item.expenseType?.name || '').toLowerCase().includes(term)
     );
-  }, [currentTransactions, searchTerm]);
+  }, [filteredByTime, searchTerm]);
+
+  // 3. Sort data
+  const sortedData = useMemo(() => {
+    const dataCopy = [...searchedData];
+    return dataCopy.sort((a, b) => {
+      if (sortBy === 'LATEST') {
+        return new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime();
+      }
+      if (sortBy === 'OLDEST') {
+        return new Date(a.transactionDate).getTime() - new Date(b.transactionDate).getTime();
+      }
+      if (sortBy === 'AMOUNT_DESC') {
+        return Number(b.amount) - Number(a.amount);
+      }
+      if (sortBy === 'AMOUNT_ASC') {
+        return Number(a.amount) - Number(b.amount);
+      }
+      return 0;
+    });
+  }, [searchedData, sortBy]);
+
+  // 4. Paginate data
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return sortedData.slice(startIndex, startIndex + itemsPerPage);
+  }, [sortedData, currentPage, itemsPerPage]);
+
+  const totalPages = useMemo(() => {
+    return Math.ceil(sortedData.length / itemsPerPage);
+  }, [sortedData, itemsPerPage]);
+
+  // Reset page to 1 when filters or active tab change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchTerm, timeRange, sortBy]);
 
   // 7. Memoize daily trend chart dataset
   const trendDataset = useMemo(() => {
@@ -6751,7 +6959,7 @@ const KasKeluarPage = () => {
 
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+        <Card className="p-4 border border-slate-200 shadow-sm">
           <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Total Keluar (Bulan Ini)' : 'Keluar Dana Khusus (Bulan Ini)'}
           </p>
@@ -6760,7 +6968,7 @@ const KasKeluarPage = () => {
         </Card>
 
         {activeTab === 'PERMANENT' ? (
-          <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+          <Card className="p-4 border border-slate-200 shadow-sm">
             <p className="text-[10px] text-slate-400 font-semibold">Burn Rate Anggaran</p>
             <div className="flex items-end gap-1.5 mt-1">
               <h4 className="text-lg font-semibold text-slate-800 tracking-tight">{burnRate}%</h4>
@@ -6771,7 +6979,7 @@ const KasKeluarPage = () => {
             </div>
           </Card>
         ) : (
-          <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+          <Card className="p-4 border border-slate-200 shadow-sm">
             <p className="text-[10px] text-slate-400 font-semibold">Rata-rata Pengeluaran</p>
             <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(avgSpecialExpense)}</h4>
             <div className="flex items-center gap-1 mt-2 text-amber-600 font-medium text-[10px]">
@@ -6781,7 +6989,7 @@ const KasKeluarPage = () => {
           </Card>
         )}
 
-        <Card className="p-4 border-l-4 border-l-blue-500 border-y-slate-200 border-r-slate-200 shadow-sm">
+        <Card className="p-4 border border-slate-200 shadow-sm">
           <p className="text-[10px] text-slate-400 font-semibold">Transaksi (Bulan Ini)</p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{transBulanIniCount}</h4>
           <p className="text-[9px] text-blue-600 mt-2 font-medium flex items-center gap-1">
@@ -6789,7 +6997,7 @@ const KasKeluarPage = () => {
           </p>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-slate-800 border-y-slate-200 border-r-slate-200 shadow-sm">
+        <Card className="p-4 border border-slate-200 shadow-sm">
           <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Saldo Kas Saat Ini' : 'Sisa Saldo Dana Khusus'}
           </p>
@@ -6857,9 +7065,9 @@ const KasKeluarPage = () => {
 
       {/* Main Table */}
       <div className="space-y-4">
-        <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col md:flex-row gap-4 justify-between">
-          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-none w-full md:w-80">
-            <Search size={16} className="text-slate-400" />
+        <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col lg:flex-row gap-3 justify-between items-stretch lg:items-center">
+          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-none w-full lg:w-80">
+            <Search size={14} className="text-slate-400 shrink-0" />
             <input
               type="text"
               placeholder="Cari nomor transaksi, rincian, atau kategori..."
@@ -6868,9 +7076,37 @@ const KasKeluarPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200 cursor-not-allowed" disabled>
-            Filter Kategori
-          </Button>
+
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Rentang Waktu */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rentang Waktu:</span>
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value as any)}
+                className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+              >
+                <option value="ALL">Semua Waktu</option>
+                <option value="THIS_MONTH">Bulan Ini</option>
+                <option value="LAST_MONTH">Bulan Lalu</option>
+              </select>
+            </div>
+
+            {/* Urutan */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Urutan:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+              >
+                <option value="LATEST">Terbaru</option>
+                <option value="OLDEST">Terlama</option>
+                <option value="AMOUNT_DESC">Nominal Tertinggi</option>
+                <option value="AMOUNT_ASC">Nominal Terendah</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {isLoading ? (
@@ -6880,7 +7116,15 @@ const KasKeluarPage = () => {
           </div>
         ) : (
           <AdaptiveList
-            data={filteredData}
+            data={paginatedData}
+            isLoading={isLoading}
+            pagination={{
+              currentPage,
+              totalPages,
+              totalItems: sortedData.length,
+              itemsPerPage,
+              onPageChange: setCurrentPage,
+            }}
             desktopHeaders={[
               'No. Transaksi',
               'Tanggal',
@@ -6915,13 +7159,14 @@ const KasKeluarPage = () => {
                     <div className="flex flex-col gap-1.5 items-start">
                       <Badge variant="warning">Menunggu SPJ</Badge>
                       <button
+                        title="Upload SPJ"
                         onClick={() => {
                           setSelectedTransactionId(item.id);
                           setIsSpjUploadOpen(true);
                         }}
-                        className="text-[10px] text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                        className="p-1 text-slate-400 hover:text-blue-600 border border-transparent hover:border-slate-200 transition-colors rounded-none"
                       >
-                        Upload SPJ
+                        <UploadCloud size={14} />
                       </button>
                     </div>
                   ) : (
@@ -6953,13 +7198,14 @@ const KasKeluarPage = () => {
                     <div className="flex flex-col items-end gap-1">
                       <Badge variant="warning">Menunggu SPJ</Badge>
                       <button
+                        title="Upload SPJ"
                         onClick={() => {
                           setSelectedTransactionId(item.id);
                           setIsSpjUploadOpen(true);
                         }}
-                        className="text-[9px] text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                        className="p-1 text-slate-400 hover:text-blue-600 border border-transparent hover:border-slate-200 transition-colors rounded-none"
                       >
-                        Upload SPJ
+                        <UploadCloud size={13} />
                       </button>
                     </div>
                   ) : (
@@ -7043,7 +7289,7 @@ export default KasKeluarPage;
 
 --- FILE: src\modules\kas-masuk\components\KasMasukForm.tsx ---
 import { useState, useMemo, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { KasMasukSchema } from '../types/kas-masuk';
 import type { KasMasukInput } from '../types/kas-masuk';
@@ -7054,6 +7300,7 @@ import { useKasKeluarQuery } from '../../kas-keluar/hooks/useKasKeluarQuery';
 import { useSpecialFundsQuery } from '../../dana-khusus/hooks/useSpecialFundQuery';
 import { useAuthStore } from '../../../app/store/useAuthStore';
 import { formatIDR } from '../../../shared/utils/formatter';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 
 interface Props {
     onSubmit: (data: KasMasukInput) => void;
@@ -7085,6 +7332,7 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
     const {
         register,
         handleSubmit,
+        control,
         setValue,
         watch,
         formState: { errors, isSubmitting },
@@ -7482,15 +7730,18 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                 <label className="text-[11px] font-semibold text-slate-500 flex items-center gap-2">
                     <Wallet size={14} className="text-amber-500" /> Nominal (IDR)
                 </label>
-                <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 font-medium text-slate-400 text-sm">Rp</div>
-                    <input
-                        type="number"
-                        placeholder="0"
-                        {...register('amount', { valueAsNumber: true })}
-                        className="w-full pl-12 pr-4 py-3 bg-slate-50 rounded-none text-lg font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                    />
-                </div>
+                <Controller
+                    name="amount"
+                    control={control}
+                    render={({ field }) => (
+                        <CurrencyInput
+                            value={field.value ?? undefined}
+                            onChange={field.onChange}
+                            placeholder="0"
+                            className="text-lg font-semibold text-slate-800 bg-slate-50"
+                        />
+                    )}
+                />
                 {errors.amount && <p className="text-[10px] text-rose-500 font-medium">{errors.amount.message}</p>}
             </div>
 
@@ -7519,10 +7770,6 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
 --- FILE: src\modules\kas-masuk\hooks\useKasMasukQuery.ts ---
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '../../../app/api/axios.config';
-import { useKasStore } from '../../../app/store/useKasStore';
-import type { KasKeluar } from '../../../shared/mock/kasKeluarData';
-
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export interface FundCategory {
   id: string;
@@ -7665,37 +7912,6 @@ export const useAddKasMasukMutation = () => {
   });
 };
 
-/**
- * Hook to retrieve Kas Keluar asynchronously with simulated delay (legacy mock).
- */
-export const useKasKeluarQuery = () => {
-  const kasKeluar = useKasStore((state) => state.kasKeluar);
-  return useQuery<KasKeluar[]>({
-    queryKey: ['kasKeluar'],
-    queryFn: async () => {
-      await delay(800); // Simulate network latency
-      return kasKeluar;
-    },
-  });
-};
-
-/**
- * Mutation hook to add a new Kas Keluar entry (legacy mock).
- */
-export const useAddKasKeluarMutation = () => {
-  const queryClient = useQueryClient();
-  const addKasKeluar = useKasStore((state) => state.addKasKeluar);
-  return useMutation({
-    mutationFn: async (data: Omit<KasKeluar, 'id' | 'status'> & { buktiUrl?: string }) => {
-      await delay(600); // Simulate network latency
-      addKasKeluar(data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kasKeluar'] });
-    },
-  });
-};
-
 export interface TransferBalancePayload {
   source_fund_category_id: string;
   target_fund_category_id: string;
@@ -7722,9 +7938,9 @@ export const useTransferBalanceMutation = () => {
 };
 
 --- FILE: src\modules\kas-masuk\pages\KasMasukPage.tsx ---
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
-  Plus, Search, Filter, Download, MoreVertical,
+  Plus, Search, Download, MoreVertical,
   TrendingUp, Calendar,
   Info
 } from 'lucide-react';
@@ -7759,6 +7975,10 @@ const KasMasukPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'PERMANENT' | 'SPECIAL_FUND'>('PERMANENT');
+  const [timeRange, setTimeRange] = useState<'ALL' | 'THIS_MONTH' | 'LAST_MONTH'>('ALL');
+  const [sortBy, setSortBy] = useState<'LATEST' | 'OLDEST' | 'AMOUNT_DESC' | 'AMOUNT_ASC'>('LATEST');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
@@ -7798,15 +8018,74 @@ const KasMasukPage = () => {
     return activeTab === 'PERMANENT' ? kasMasukPermanent : kasMasukSpecial;
   }, [activeTab, kasMasukPermanent, kasMasukSpecial]);
 
-  // Memoize search query execution
-  const filteredData = useMemo(() => {
-    return currentTransactions.filter(item =>
-      item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.transactionNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.fundCategory?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.incomeType?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+  // Cascading data processing engine:
+  // 1. Filter by time
+  const filteredByTime = useMemo(() => {
+    if (timeRange === 'ALL') return currentTransactions;
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    return currentTransactions.filter(item => {
+      const d = new Date(item.transactionDate);
+      if (timeRange === 'THIS_MONTH') {
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      }
+      if (timeRange === 'LAST_MONTH') {
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
+      }
+      return true;
+    });
+  }, [currentTransactions, timeRange]);
+
+  // 2. Filter by search term
+  const searchedData = useMemo(() => {
+    if (!searchTerm) return filteredByTime;
+    const term = searchTerm.toLowerCase();
+    return filteredByTime.filter(item =>
+      item.description.toLowerCase().includes(term) ||
+      item.transactionNo.toLowerCase().includes(term) ||
+      (item.fundCategory?.name || '').toLowerCase().includes(term) ||
+      (item.incomeType?.name || '').toLowerCase().includes(term)
     );
-  }, [currentTransactions, searchTerm]);
+  }, [filteredByTime, searchTerm]);
+
+  // 3. Sort data
+  const sortedData = useMemo(() => {
+    const dataCopy = [...searchedData];
+    return dataCopy.sort((a, b) => {
+      if (sortBy === 'LATEST') {
+        return new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime();
+      }
+      if (sortBy === 'OLDEST') {
+        return new Date(a.transactionDate).getTime() - new Date(b.transactionDate).getTime();
+      }
+      if (sortBy === 'AMOUNT_DESC') {
+        return Number(b.amount) - Number(a.amount);
+      }
+      if (sortBy === 'AMOUNT_ASC') {
+        return Number(a.amount) - Number(b.amount);
+      }
+      return 0;
+    });
+  }, [searchedData, sortBy]);
+
+  // 4. Paginate data
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return sortedData.slice(startIndex, startIndex + itemsPerPage);
+  }, [sortedData, currentPage, itemsPerPage]);
+
+  const totalPages = useMemo(() => {
+    return Math.ceil(sortedData.length / itemsPerPage);
+  }, [sortedData, itemsPerPage]);
+
+  // Reset page to 1 when filters or active tab change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchTerm, timeRange, sortBy]);
 
   // Memoize analytical calculations
   const totalBulanIni = useMemo(() => {
@@ -7961,7 +8240,7 @@ const KasMasukPage = () => {
 
       {/* Stats Cards Section */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4 border-l-4 border-l-blue-600 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Total Bulan Ini' : 'Pemasukan Dana Khusus (Bulan Ini)'}
           </p>
@@ -7975,7 +8254,7 @@ const KasMasukPage = () => {
         </Card>
 
         {activeTab === 'PERMANENT' ? (
-          <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
+          <Card className="p-4 border border-slate-200">
             <p className="text-[10px] text-slate-400 font-semibold">Pencapaian Target</p>
             <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{progressTarget}%</h4>
             <div className="w-full bg-slate-100 h-1 rounded-none mt-3 overflow-hidden">
@@ -7983,7 +8262,7 @@ const KasMasukPage = () => {
             </div>
           </Card>
         ) : (
-          <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
+          <Card className="p-4 border border-slate-200">
             <p className="text-[10px] text-slate-400 font-semibold">Rata-rata Sumbangan</p>
             <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(avgSpecialIncome)}</h4>
             <div className="flex items-center gap-1 mt-2 text-emerald-600 font-medium text-[10px]">
@@ -7993,7 +8272,7 @@ const KasMasukPage = () => {
           </Card>
         )}
 
-        <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Sumber Terbesar' : 'Sumbangan Terbesar'}
           </p>
@@ -8005,7 +8284,7 @@ const KasMasukPage = () => {
           </p>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-purple-600 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">Hari Ini</p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(totalHariIni)}</h4>
           <p className="text-[9px] text-slate-400 mt-2 font-medium">{countHariIni} Transaksi masuk</p>
@@ -8074,9 +8353,9 @@ const KasMasukPage = () => {
 
       {/* Main Table Section */}
       <div className="space-y-4">
-        <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col md:flex-row gap-4 justify-between">
-          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-none w-full md:w-80">
-            <Search size={16} className="text-slate-400" />
+        <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col lg:flex-row gap-3 justify-between items-stretch lg:items-center">
+          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-none w-full lg:w-80">
+            <Search size={14} className="text-slate-400 shrink-0" />
             <input
               type="text"
               placeholder="Cari transaksi..."
@@ -8085,9 +8364,37 @@ const KasMasukPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200">
-            <Filter size={14} /> Filter Lanjutan
-          </Button>
+
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Rentang Waktu */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rentang Waktu:</span>
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value as any)}
+                className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+              >
+                <option value="ALL">Semua Waktu</option>
+                <option value="THIS_MONTH">Bulan Ini</option>
+                <option value="LAST_MONTH">Bulan Lalu</option>
+              </select>
+            </div>
+
+            {/* Urutan */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Urutan:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+              >
+                <option value="LATEST">Terbaru</option>
+                <option value="OLDEST">Terlama</option>
+                <option value="AMOUNT_DESC">Nominal Tertinggi</option>
+                <option value="AMOUNT_ASC">Nominal Terendah</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {isLoading ? (
@@ -8097,72 +8404,108 @@ const KasMasukPage = () => {
           </div>
         ) : (
           <AdaptiveList
-            data={filteredData}
+            data={paginatedData}
+            isLoading={isLoading}
+            pagination={{
+              currentPage,
+              totalPages,
+              totalItems: sortedData.length,
+              itemsPerPage,
+              onPageChange: setCurrentPage,
+            }}
             desktopHeaders={[
-              'No. Transaksi',
               'Tanggal',
-              'Pos Dana / Jenis',
-              'Keterangan / Sumber',
-              'Jumlah (IDR)',
+              'Deskripsi Pemasukan',
+              'Pos Dana & Jenis',
+              'Nominal (IDR)',
               'Status',
-              'Aksi'
+              'Aksi' // Header kosong untuk kolom aksi
             ]}
             renderDesktopRow={(item) => (
-              <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="px-5 py-3 text-xs font-semibold text-blue-600 border-r">{item.transactionNo}</td>
-                <td className="px-5 py-3 text-xs text-slate-500 font-medium border-r">
-                  {new Date(item.transactionDate).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+              <tr key={item.id} className="hover:bg-slate-50/70 transition-colors group">
+                {/* 1. Tanggal - Rata Kiri, Format Human Readable */}
+                <td className="px-5 py-4 text-xs font-medium text-slate-500 border-r border-slate-100">
+                  {new Date(item.transactionDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
                 </td>
-                <td className="px-5 py-3 border-r">
-                  <div className="flex flex-col gap-0.5 items-start">
-                    <span className="text-[9px] font-semibold px-1.5 py-0.5 text-blue-600 rounded-none tracking-tight">
+
+                {/* 2. Deskripsi Utama - Hierarki Tertinggi (Bold, Gelap) */}
+                <td className="px-5 py-4 border-r border-slate-100 max-w-[300px]">
+                  <p className="text-xs font-semibold text-slate-800 truncate" title={item.description}>
+                    {item.description}
+                  </p>
+                  {/* Tampilkan No Transaksi sebagai subtitel sangat kecil (opsional/alternatif jika bendahara butuh) */}
+                  <p className="text-[9.5px] font-mono text-slate-400 mt-1 tracking-tighter">
+                    Ref: {item.transactionNo}
+                  </p>
+                </td>
+
+                {/* 3. Pos Dana & Jenis - Dibuat Minimalis dan Flat */}
+                <td className="px-5 py-4 border-r border-slate-100">
+                  <div className="flex flex-col items-start gap-1">
+                    <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-none tracking-tight">
                       {item.fundCategory?.name}
                     </span>
                     {item.incomeType?.name && (
-                      <span className="text-[10px] font-semibold text-slate-600 tracking-tight mt-0.5">
+                      <span className="text-[10px] font-medium text-slate-500 tracking-tight">
                         {item.incomeType.name}
                       </span>
                     )}
                   </div>
                 </td>
-                <td className="px-5 py-3 text-xs font-medium text-slate-700 border-r">{item.description}</td>
-                <td className="px-5 py-3 text-xs font-semibold text-right text-emerald-600 border-r">{formatIDR(Number(item.amount))}</td>
-                <td className="px-5 py-3 border-r">
-                  <Badge variant="success">
+
+                {/* 4. Nominal - WAJIB Rata Kanan, Warna Hijau Emerald, Font Angka Lebih Besar */}
+                <td className="px-5 py-4 text-right border-r border-slate-100">
+                  <span className="text-sm font-bold text-emerald-600 tracking-tight">
+                    {formatIDR(Number(item.amount))}
+                  </span>
+                </td>
+
+                {/* 5. Status - Rata Tengah */}
+                <td className="px-5 py-4 text-center border-r border-slate-100">
+                  <Badge variant="success" className="px-2.5 py-1 text-[10px]">
                     Selesai
                   </Badge>
                 </td>
-                <td className="px-5 py-3 text-center">
-                  <button className="p-1 hover:bg-slate-50 border border-transparent hover: rounded-none shadow-sm text-gray-400 hover:text-blue-600 transition-all">
-                    <MoreVertical size={14} />
+
+                {/* 6. Aksi - Ghost Button (Tanpa box, tanpa shadow, hover merespons) */}
+                <td className="px-3 py-4 text-center">
+                  <button
+                    className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors rounded-none outline-none cursor-pointer"
+                    title="Opsi Lanjutan"
+                  >
+                    <MoreVertical size={16} />
                   </button>
                 </td>
               </tr>
             )}
+
+            // Penyesuaian untuk tampilan Mobile agar sejalan dengan perombakan Desktop
             renderMobileCard={(item) => (
-              <div className="flex flex-col gap-2.5">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-semibold text-blue-600">{item.transactionNo}</span>
-                  <Badge variant="success">
-                    Selesai
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-baseline">
-                  <span className="text-xs font-medium text-slate-700">{item.description}</span>
-                  <span className="text-sm font-semibold text-emerald-600">{formatIDR(Number(item.amount))}</span>
-                </div>
-                <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium">
-                  <span>{new Date(item.transactionDate).toLocaleDateString('id-ID')}</span>
-                  <div className="flex gap-1.5">
-                    <span className="px-2 py-0.5 text-blue-600 rounded-none font-medium tracking-tight">
-                      {item.fundCategory?.name}
+              <div className="flex flex-col gap-3">
+                <div className="flex justify-between items-start">
+                  <div className="max-w-[70%]">
+                    <span className="text-xs font-semibold text-slate-800 leading-tight block">
+                      {item.description}
                     </span>
-                    {item.incomeType?.name && (
-                      <span className="px-2 py-0.5 bg-slate-100 rounded-none text-slate-600 font-medium tracking-tight">
-                        {item.incomeType.name}
-                      </span>
-                    )}
+                    <span className="text-[9.5px] font-mono text-slate-400 tracking-tighter mt-0.5 block">
+                      {item.transactionNo}
+                    </span>
                   </div>
+                  <Badge variant="success" className="text-[9px]">Selesai</Badge>
+                </div>
+
+                <div className="flex justify-between items-end">
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-slate-500 font-medium">
+                      {new Date(item.transactionDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </p>
+                    <div className="flex gap-1.5">
+                      <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded-none font-semibold tracking-tight text-[9px]">
+                        {item.fundCategory?.name}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-emerald-600">{formatIDR(Number(item.amount))}</span>
                 </div>
               </div>
             )}
@@ -9454,13 +9797,14 @@ import { Badge } from '../../../shared/components/ui/Badge';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { ChartCard } from '../../../shared/components/ui/ChartCard';
 import { MiniLedger, type LedgerItem } from '../../../shared/components/ui/MiniLedger';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
 import { useFundBalancesQuery, useTransferBalanceMutation } from '../../kas-masuk/hooks/useKasMasukQuery';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { useAuthStore } from '../../../app/store/useAuthStore';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 
 /**
  * SaldoPosDanaPage Component
@@ -9494,6 +9838,7 @@ const SaldoPosDanaPage = () => {
     handleSubmit,
     watch,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<TransferFormData>({
     resolver: zodResolver(transferSchema),
@@ -9678,7 +10023,7 @@ const SaldoPosDanaPage = () => {
 
       {/* Metrics Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4 border-l-4 border-l-blue-600 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Total Saldo' : 'Saldo Dana Khusus'}
           </p>
@@ -9691,7 +10036,7 @@ const SaldoPosDanaPage = () => {
           </div>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">Total Pemasukan</p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(metrics.totalIncome)}
@@ -9702,7 +10047,7 @@ const SaldoPosDanaPage = () => {
           </div>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-rose-500 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">Total Pengeluaran</p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(metrics.totalExpense)}
@@ -9713,7 +10058,7 @@ const SaldoPosDanaPage = () => {
           </div>
         </Card>
 
-        <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200">
+        <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Pos Dana Aktif' : 'Program Dana Khusus Aktif'}
           </p>
@@ -9997,11 +10342,17 @@ const SaldoPosDanaPage = () => {
           {/* Nominal */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-slate-500">Nominal Transfer (Rp)</label>
-            <input
-              type="number"
-              placeholder="0"
-              {...register('amount', { valueAsNumber: true })}
-              className="w-full px-3 py-2 bg-slate-50 rounded-none text-sm font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            <Controller
+              name="amount"
+              control={control}
+              render={({ field }) => (
+                <CurrencyInput
+                  value={field.value ?? undefined}
+                  onChange={field.onChange}
+                  placeholder="0"
+                  className="bg-slate-50 text-sm font-medium text-slate-800"
+                />
+              )}
             />
             {errors.amount && <p className="text-[10px] text-rose-500 font-medium">{errors.amount.message}</p>}
           </div>
@@ -10188,12 +10539,13 @@ export const SPJCard: React.FC<SPJCardProps> = ({ doc, onPreview }) => {
 
 --- FILE: src\modules\spj\components\SPJUploadModal.tsx ---
 import React, { useState, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Upload, X, CheckCircle2, FileText, Image, AlertCircle } from 'lucide-react';
 import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
+import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 import { Select } from '../../../shared/components/ui/Select';
 import { useKasKeluarQuery } from '../../kas-keluar/hooks/useKasKeluarQuery';
 import { useUploadSpjMutation } from '../hooks/useSpjQuery';
@@ -10233,7 +10585,7 @@ export const SPJUploadModal = ({ onSuccess, onCancel, defaultCashTransactionId }
     return filtered;
   }, [kasKeluar, defaultCashTransactionId]);
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, watch, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       cash_transaction_id: defaultCashTransactionId || '',
@@ -10340,13 +10692,21 @@ export const SPJUploadModal = ({ onSuccess, onCancel, defaultCashTransactionId }
         </Select>
       </div>
 
-      <Input
-        label="NILAI TRANSAKSI (RP)"
-        type="number"
-        placeholder="0"
-        error={errors.amount?.message}
-        {...register('amount', { valueAsNumber: true })}
-      />
+      <div className="space-y-1.5">
+        <label className="text-[11px] font-semibold text-slate-500">NILAI TRANSAKSI (RP)</label>
+        <Controller
+          name="amount"
+          control={control}
+          render={({ field }) => (
+            <CurrencyInput
+              value={field.value ?? undefined}
+              onChange={field.onChange}
+              placeholder="0"
+            />
+          )}
+        />
+        {errors.amount && <p className="text-[10px] text-rose-500 font-medium mt-1">{errors.amount.message}</p>}
+      </div>
 
       <div>
         <label className="block text-[11px] font-semibold text-slate-500 mb-2">
@@ -10528,8 +10888,8 @@ export const useVerifySpjMutation = () => {
 };
 
 --- FILE: src\modules\spj\pages\SPJPage.tsx ---
-import { useState, useMemo } from 'react';
-import { Search, Filter, UploadCloud, FolderOpen, ShieldCheck, Clock } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Search, UploadCloud, FolderOpen, ShieldCheck, Clock } from 'lucide-react';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Modal } from '../../../shared/components/ui/Modal';
@@ -10540,6 +10900,7 @@ import { useAuthStore } from '../../../app/store/useAuthStore';
 import { useSpjsQuery, useVerifySpjMutation } from '../hooks/useSpjQuery';
 import type { SpjDocument } from '../hooks/useSpjQuery';
 import { formatIDR } from '../../../shared/utils/formatter';
+import { Pagination } from '../../../shared/components/ui/Pagination';
 
 /**
  * Optimised SPJ Document management page integrated with backend.
@@ -10555,6 +10916,10 @@ const SPJPage = () => {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [timeRange, setTimeRange] = useState<'ALL' | 'THIS_MONTH' | 'LAST_MONTH'>('ALL');
+  const [sortBy, setSortBy] = useState<'LATEST' | 'OLDEST' | 'AMOUNT_DESC' | 'AMOUNT_ASC'>('LATEST');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   // Memoize static metrics calculations from SPJ query state
   const { totalArsip, totalVerified, totalPending } = useMemo(() => {
@@ -10565,18 +10930,80 @@ const SPJPage = () => {
     };
   }, [spjDocuments]);
 
-  // Memoize search and status query filtering
-  const filteredDocs = useMemo(() => {
+  // Cascading data processing engine:
+  // 1. Filter by status and time range
+  const filteredByTimeAndStatus = useMemo(() => {
     return spjDocuments.filter(doc => {
-      const category = doc.cashTransaction?.expenseType?.name || doc.kegiatan?.namaKegiatan || 'Umum';
-      const matchesSearch = doc.title.toLowerCase().includes(search.toLowerCase()) ||
-        category.toLowerCase().includes(search.toLowerCase());
+      // Status Filter
+      if (statusFilter !== 'ALL' && doc.status !== statusFilter) return false;
 
-      const matchesStatus = statusFilter === 'ALL' || doc.status === statusFilter;
+      // Time Range Filter
+      if (timeRange !== 'ALL') {
+        const d = new Date(doc.createdAt);
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
 
-      return matchesSearch && matchesStatus;
+        if (timeRange === 'THIS_MONTH') {
+          if (d.getMonth() !== currentMonth || d.getFullYear() !== currentYear) {
+            return false;
+          }
+        } else if (timeRange === 'LAST_MONTH') {
+          const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+          const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+          if (d.getMonth() !== lastMonth || d.getFullYear() !== lastMonthYear) {
+            return false;
+          }
+        }
+      }
+      return true;
     });
-  }, [spjDocuments, search, statusFilter]);
+  }, [spjDocuments, statusFilter, timeRange]);
+
+  // 2. Filter by search term
+  const searchedData = useMemo(() => {
+    if (!search) return filteredByTimeAndStatus;
+    const term = search.toLowerCase();
+    return filteredByTimeAndStatus.filter(doc => {
+      const category = doc.cashTransaction?.expenseType?.name || doc.kegiatan?.namaKegiatan || 'Umum';
+      return doc.title.toLowerCase().includes(term) || category.toLowerCase().includes(term);
+    });
+  }, [filteredByTimeAndStatus, search]);
+
+  // 3. Sort data
+  const sortedData = useMemo(() => {
+    const dataCopy = [...searchedData];
+    return dataCopy.sort((a, b) => {
+      if (sortBy === 'LATEST') {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+      if (sortBy === 'OLDEST') {
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+      if (sortBy === 'AMOUNT_DESC') {
+        return Number(b.amount) - Number(a.amount);
+      }
+      if (sortBy === 'AMOUNT_ASC') {
+        return Number(a.amount) - Number(b.amount);
+      }
+      return 0;
+    });
+  }, [searchedData, sortBy]);
+
+  // 4. Paginate data
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return sortedData.slice(startIndex, startIndex + itemsPerPage);
+  }, [sortedData, currentPage, itemsPerPage]);
+
+  const totalPages = useMemo(() => {
+    return Math.ceil(sortedData.length / itemsPerPage);
+  }, [sortedData, itemsPerPage]);
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, timeRange, sortBy]);
 
   // Extract preview file info for the selected document
   const previewInfo = useMemo(() => {
@@ -10610,21 +11037,21 @@ const SPJPage = () => {
 
       {/* Stats Mini Cards - Seamless border flat layouts */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 flex items-center gap-3.5 border-b-4 border-b-blue-600 border-x-slate-200 border-t-slate-200 shadow-none rounded-none">
+        <Card className="p-4 flex items-center gap-3.5 border border-slate-200 shadow-none rounded-none">
           <div className="text-blue-600"><FolderOpen size={20} /></div>
           <div>
             <p className="text-[10px] text-slate-400 font-semibold">Total Arsip</p>
             <h4 className="text-lg font-semibold text-slate-800 tracking-tight mt-0.5">{totalArsip} <span className="text-[11px] font-medium text-slate-400">File</span></h4>
           </div>
         </Card>
-        <Card className="p-4 flex items-center gap-3.5 border-b-4 border-b-emerald-600 border-x-slate-200 border-t-slate-200 shadow-none rounded-none">
+        <Card className="p-4 flex items-center gap-3.5 border border-slate-200 shadow-none rounded-none">
           <div className="text-emerald-600"><ShieldCheck size={20} /></div>
           <div>
             <p className="text-[10px] text-slate-400 font-semibold">Terverifikasi</p>
             <h4 className="text-lg font-semibold text-slate-800 tracking-tight mt-0.5">{totalVerified} <span className="text-[11px] font-medium text-slate-400">File</span></h4>
           </div>
         </Card>
-        <Card className="p-4 flex items-center gap-3.5 border-b-4 border-b-amber-500 border-x-slate-200 border-t-slate-200 shadow-none rounded-none">
+        <Card className="p-4 flex items-center gap-3.5 border border-slate-200 shadow-none rounded-none">
           <div className="text-amber-600"><Clock size={20} /></div>
           <div>
             <p className="text-[10px] text-slate-400 font-semibold">Menunggu</p>
@@ -10634,9 +11061,9 @@ const SPJPage = () => {
       </div>
 
       {/* Toolbar */}
-      <Card className="p-3.5 bg-slate-50 flex flex-col md:flex-row gap-4 items-center rounded-none shadow-none">
-        <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-slate-200 rounded-none w-full md:w-96">
-          <Search size={16} className="text-slate-400" />
+      <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col lg:flex-row gap-3 justify-between items-stretch lg:items-center">
+        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-none w-full lg:w-96">
+          <Search size={14} className="text-slate-400 shrink-0" />
           <input
             type="text"
             placeholder="Cari nama dokumen atau komisi..."
@@ -10645,22 +11072,53 @@ const SPJPage = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2 ml-auto w-full md:w-auto">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-white border border-slate-200 rounded-none px-3 py-1.5 text-xs font-medium outline-none text-slate-600 cursor-pointer"
-          >
-            <option value="ALL">Semua Kategori Status</option>
-            <option value="PENDING">Menunggu Verifikasi</option>
-            <option value="VERIFIED">Terverifikasi</option>
-            <option value="REJECTED">Ditolak</option>
-          </select>
-          <Button variant="outline" className="flex items-center gap-1.5 text-xs border-slate-200 bg-white" disabled>
-            <Filter size={14} /> Filter
-          </Button>
+
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Rentang Waktu */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rentang Waktu:</span>
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value as any)}
+              className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+            >
+              <option value="ALL">Semua Waktu</option>
+              <option value="THIS_MONTH">Bulan Ini</option>
+              <option value="LAST_MONTH">Bulan Lalu</option>
+            </select>
+          </div>
+
+          {/* Status */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+            >
+              <option value="ALL">Semua Status</option>
+              <option value="PENDING">Menunggu Verifikasi</option>
+              <option value="VERIFIED">Terverifikasi</option>
+              <option value="REJECTED">Ditolak</option>
+            </select>
+          </div>
+
+          {/* Urutan */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Urutan:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+            >
+              <option value="LATEST">Terbaru</option>
+              <option value="OLDEST">Terlama</option>
+              <option value="AMOUNT_DESC">Nominal Tertinggi</option>
+              <option value="AMOUNT_ASC">Nominal Terendah</option>
+            </select>
+          </div>
         </div>
-      </Card>
+      </div>
 
       {/* Loading & Grid View */}
       {isLoading ? (
@@ -10668,15 +11126,26 @@ const SPJPage = () => {
           <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-none animate-spin"></div>
           Loading dokumen SPJ...
         </div>
-      ) : filteredDocs.length === 0 ? (
+      ) : paginatedData.length === 0 ? (
         <div className="p-12 text-center text-slate-400 bg-white border border-slate-200 rounded-none shadow-sm font-semibold text-xs">
           Tidak ada dokumen SPJ ditemukan
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredDocs.map(doc => (
-            <SPJCard key={doc.id} doc={doc} onPreview={setSelectedDoc} />
-          ))}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {paginatedData.map(doc => (
+              <SPJCard key={doc.id} doc={doc} onPreview={setSelectedDoc} />
+            ))}
+          </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={sortedData.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            className="border border-slate-200 bg-white shadow-sm"
+          />
         </div>
       )}
 
@@ -10770,20 +11239,255 @@ const SPJPage = () => {
 
 export default SPJPage;
 
+--- FILE: src\modules\users\hooks\useUsersQuery.ts ---
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import axiosInstance from '../../../app/api/axios.config';
+import type { UserRole } from '../../../shared/types/auth';
+
+export interface BackendUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  isActive: boolean;
+  parokiId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClientUser {
+  id: string;
+  name: string;
+  role: UserRole;
+  email: string;
+  status: 'Aktif' | 'Non-Aktif';
+  isActive: boolean;
+}
+
+export interface CreateUserPayload {
+  name: string;
+  email: string;
+  role: UserRole;
+  password?: string;
+  isActive?: boolean;
+}
+
+export interface ToggleUserStatusPayload {
+  id: string;
+  isActive: boolean;
+}
+
+/**
+ * Hook to fetch users from backend with optional filters and adapter mapping
+ */
+export const useUsersQuery = (filters?: { search?: string; role?: string; isActive?: boolean }) => {
+  return useQuery<ClientUser[]>({
+    queryKey: ['users', filters],
+    queryFn: async () => {
+      const params: Record<string, string> = {};
+      if (filters?.search) params.search = filters.search;
+      if (filters?.role && filters.role !== 'ALL') params.role = filters.role;
+      if (filters?.isActive !== undefined) params.isActive = String(filters.isActive);
+
+      const response = await axiosInstance.get('/v1/users', { params });
+      const users: BackendUser[] = response.data.data.users;
+
+      return users.map((u) => ({
+        id: u.id,
+        name: u.name,
+        role: u.role,
+        email: u.email,
+        isActive: u.isActive,
+        status: u.isActive ? 'Aktif' : 'Non-Aktif',
+      }));
+    },
+  });
+};
+
+/**
+ * Mutation hook to create a new user
+ */
+export const useCreateUserMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: CreateUserPayload) => {
+      // If password is not provided, use default
+      const data = {
+        ...payload,
+        password: payload.password || 'password123',
+        isActive: payload.isActive !== undefined ? payload.isActive : true,
+      };
+      const response = await axiosInstance.post('/v1/users', data);
+      return response.data.data.user;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+};
+
+/**
+ * Mutation hook to toggle user active status
+ */
+export const useToggleUserStatusMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, isActive }: ToggleUserStatusPayload) => {
+      const response = await axiosInstance.patch(`/v1/users/${id}/status`, { isActive });
+      return response.data.data.user;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+};
+
 --- FILE: src\modules\users\pages\UserManagementPage.tsx ---
-import { UserPlus, Shield, Mail, MoreHorizontal, CheckCircle, XCircle } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { UserPlus, Shield, Mail, CheckCircle, XCircle, Search, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
-import { MOCK_USERS } from '../../../shared/mock/userData';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
+import { Modal } from '../../../shared/components/ui/Modal';
+import { useAuthStore } from '../../../app/store/useAuthStore';
+import {
+  useUsersQuery,
+  useCreateUserMutation,
+  useToggleUserStatusMutation,
+  type ClientUser
+} from '../hooks/useUsersQuery';
+import type { UserRole } from '../../../shared/types/auth';
 
 /**
  * Standardized high-contrast, high-density User Management page.
  * Implements AdaptiveList for responsive layouts on desktop and mobile.
- * Features sharp edges, zero nested boxes, and slide-fade animation.
+ * Integrated with Backend using React Query.
  */
 const UserManagementPage = () => {
+    const currentUser = useAuthStore((state) => state.user);
+
+    const [searchTerm, setSearchTerm] = useState('');
+    const [roleFilter, setRoleFilter] = useState('ALL');
+    const [statusFilter, setStatusFilter] = useState('ALL');
+    const [sortBy, setSortBy] = useState<'NAME_ASC' | 'NAME_DESC' | 'ID_ASC' | 'ID_DESC'>('NAME_ASC');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+
+    // React Query Hooks
+    const { data: users = [], isLoading, error } = useUsersQuery({
+        search: searchTerm || undefined,
+        role: roleFilter !== 'ALL' ? roleFilter : undefined,
+        isActive: statusFilter === 'ALL' ? undefined : (statusFilter === 'Aktif')
+    });
+
+    const createUserMutation = useCreateUserMutation();
+    const toggleStatusMutation = useToggleUserStatusMutation();
+
+    // Modal state
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+    // Form fields
+    const [newUserName, setNewUserName] = useState('');
+    const [newUserEmail, setNewUserEmail] = useState('');
+    const [newUserRole, setNewUserRole] = useState<UserRole>('KETUA_KOMISI');
+    const [newUserPassword, setNewUserPassword] = useState('');
+    const [formError, setFormError] = useState('');
+
+    // Reset page to 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, roleFilter, statusFilter, sortBy]);
+
+    // Client-side sort data
+    const sortedData = useMemo(() => {
+        const dataCopy = [...users];
+        return dataCopy.sort((a, b) => {
+            if (sortBy === 'NAME_ASC') {
+                return a.name.localeCompare(b.name);
+            }
+            if (sortBy === 'NAME_DESC') {
+                return b.name.localeCompare(a.name);
+            }
+            if (sortBy === 'ID_ASC') {
+                return a.id.localeCompare(b.id);
+            }
+            if (sortBy === 'ID_DESC') {
+                return b.id.localeCompare(a.id);
+            }
+            return 0;
+        });
+    }, [users, sortBy]);
+
+    // Client-side paginate data
+    const paginatedData = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return sortedData.slice(startIndex, startIndex + itemsPerPage);
+    }, [sortedData, currentPage, itemsPerPage]);
+
+    const totalPages = useMemo(() => {
+        return Math.ceil(sortedData.length / itemsPerPage);
+    }, [sortedData, itemsPerPage]);
+
+    // Quick stats calculations
+    const stats = useMemo(() => {
+        return {
+            total: users.length,
+            active: users.filter(u => u.isActive).length,
+            inactive: users.filter(u => !u.isActive).length,
+            rolesCount: new Set(users.map(u => u.role)).size
+        };
+    }, [users]);
+
+    const handleCreateUser = (e: React.FormEvent) => {
+        e.preventDefault();
+        setFormError('');
+
+        if (!newUserName || !newUserEmail || !newUserRole) {
+            setFormError('Nama, Email, dan Role wajib diisi.');
+            return;
+        }
+
+        createUserMutation.mutate({
+            name: newUserName,
+            email: newUserEmail,
+            role: newUserRole,
+            password: newUserPassword || undefined
+        }, {
+            onSuccess: () => {
+                setIsAddModalOpen(false);
+                setNewUserName('');
+                setNewUserEmail('');
+                setNewUserRole('KETUA_KOMISI');
+                setNewUserPassword('');
+            },
+            onError: (err: any) => {
+                const message = err.response?.data?.message || 'Gagal menambahkan user baru.';
+                setFormError(message);
+            }
+        });
+    };
+
+    const handleToggleStatus = (u: ClientUser) => {
+        if (currentUser?.id === u.id) {
+            alert('Anda tidak dapat menonaktifkan status akun Anda sendiri.');
+            return;
+        }
+
+        const confirmMsg = `Apakah Anda yakin ingin ${u.isActive ? 'menonaktifkan' : 'mengaktifkan'} user "${u.name}"?`;
+        if (window.confirm(confirmMsg)) {
+            toggleStatusMutation.mutate({
+                id: u.id,
+                isActive: !u.isActive
+            }, {
+                onError: (err: any) => {
+                    const message = err.response?.data?.message || 'Gagal mengubah status user.';
+                    alert(message);
+                }
+            });
+        }
+    };
+
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
             {/* Header section */}
@@ -10792,115 +11496,326 @@ const UserManagementPage = () => {
                     <h2 className="text-2xl font-medium text-slate-800 tracking-tight">Manajemen Pengguna</h2>
                     <p className="text-sm text-gray-500 mt-0.5 font-medium">Kelola hak akses dan peranan anggota organisasi.</p>
                 </div>
-                <Button className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 shadow-sm rounded-none w-full sm:w-auto justify-center">
-                    <UserPlus size={16} /> Tambah User Baru
-                </Button>
+                {currentUser?.role === 'SUPER_ADMIN' && (
+                    <Button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 shadow-sm rounded-none w-full sm:w-auto justify-center"
+                    >
+                        <UserPlus size={16} /> Tambah User Baru
+                    </Button>
+                )}
             </div>
 
-            {/* Quick stats grid - Flat design, Slate Accent, No Neon Colors */}
+            {/* Quick stats grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="p-4 border-l-4 border-l-blue-600 border-y-slate-200 border-r-slate-200 rounded-none shadow-sm">
+                <Card className="p-4 border border-slate-200 rounded-none shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">Total User</p>
-                    <h3 className="text-xl font-semibold mt-1 text-slate-800 tracking-tight">24</h3>
+                    <h3 className="text-xl font-semibold mt-1 text-slate-800 tracking-tight">{isLoading ? '...' : stats.total}</h3>
                 </Card>
-                <Card className="p-4 border-l-4 border-l-emerald-600 border-y-slate-200 border-r-slate-200 rounded-none shadow-sm">
+                <Card className="p-4 border border-slate-200 rounded-none shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">User Aktif</p>
-                    <h3 className="text-xl font-semibold mt-1 text-slate-800 tracking-tight">22</h3>
+                    <h3 className="text-xl font-semibold mt-1 text-slate-800 tracking-tight">{isLoading ? '...' : stats.active}</h3>
                 </Card>
-                <Card className="p-4 border-l-4 border-l-amber-500 border-y-slate-200 border-r-slate-200 rounded-none shadow-sm">
-                    <p className="text-[10px] text-slate-400 font-semibold">Menunggu Verifikasi</p>
-                    <h3 className="text-xl font-semibold mt-1 text-slate-800 tracking-tight">2</h3>
+                <Card className="p-4 border border-slate-200 rounded-none shadow-sm">
+                    <p className="text-[10px] text-slate-400 font-semibold">User Non-Aktif</p>
+                    <h3 className="text-xl font-semibold mt-1 text-slate-800 tracking-tight">{isLoading ? '...' : stats.inactive}</h3>
                 </Card>
-                <Card className="p-4 border-l-4 border-l-slate-800 border-y-slate-200 border-r-slate-200 rounded-none shadow-sm">
+                <Card className="p-4 border border-slate-200 rounded-none shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">Role Terdaftar</p>
-                    <h3 className="text-xl font-semibold mt-1 text-slate-800 tracking-tight">7</h3>
+                    <h3 className="text-xl font-semibold mt-1 text-slate-800 tracking-tight">{isLoading ? '...' : stats.rolesCount}</h3>
                 </Card>
             </div>
 
-            {/* User List using AdaptiveList - Flat Borders */}
+            {/* Toolbar */}
+            <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col lg:flex-row gap-3 justify-between items-stretch lg:items-center">
+                <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-none w-full lg:w-96">
+                    <Search size={14} className="text-slate-400 shrink-0" />
+                    <input
+                        type="text"
+                        placeholder="Cari nama atau email..."
+                        className="bg-transparent text-xs outline-none w-full font-semibold text-slate-750"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                    {/* Role Filter */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Role:</span>
+                        <select
+                            value={roleFilter}
+                            onChange={(e) => setRoleFilter(e.target.value)}
+                            className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+                        >
+                            <option value="ALL">Semua Role</option>
+                            <option value="SUPER_ADMIN">Super Admin</option>
+                            <option value="PASTOR">Pastor</option>
+                            <option value="BENDAHARA">Bendahara</option>
+                            <option value="DEWAN_KEUANGAN">Dewan Keuangan</option>
+                            <option value="KETUA_KOMISI">Ketua Komisi</option>
+                            <option value="TIM_PEMBANGUNAN">Tim Pembangunan</option>
+                            <option value="SEKRETARIAT">Sekretariat</option>
+                        </select>
+                    </div>
+
+                    {/* Status Filter */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status:</span>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+                        >
+                            <option value="ALL">Semua Status</option>
+                            <option value="Aktif">Aktif</option>
+                            <option value="Non-Aktif">Non-Aktif</option>
+                        </select>
+                    </div>
+
+                    {/* Urutan */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Urutan:</span>
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as any)}
+                            className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+                        >
+                            <option value="NAME_ASC">Nama (A-Z)</option>
+                            <option value="NAME_DESC">Nama (Z-A)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {/* User List */}
             <div className="space-y-4">
-                <AdaptiveList
-                    data={MOCK_USERS}
-                    desktopHeaders={[
-                        'Pengguna',
-                        'Role / Hak Akses',
-                        'Email',
-                        'Status',
-                        'Aksi'
-                    ]}
-                    renderDesktopRow={(u) => (
-                        <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-5 py-3 border-r">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-slate-100 border border-slate-200 rounded-none flex items-center justify-center font-medium text-xs text-slate-600">
-                                        {u.name.charAt(0)}
+                {isLoading ? (
+                    <div className="p-8 text-center text-slate-500 bg-white border border-slate-200 rounded-none shadow-sm flex items-center justify-center gap-2.5 font-semibold text-xs">
+                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-none animate-spin"></div>
+                        Memuat data pengguna dari server...
+                    </div>
+                ) : error ? (
+                    <div className="p-8 text-center text-rose-500 bg-white border border-rose-250 rounded-none shadow-sm font-semibold text-xs">
+                        Gagal memuat data pengguna dari server. Pastikan koneksi dan database siap.
+                    </div>
+                ) : paginatedData.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-none shadow-sm font-semibold text-xs">
+                        Tidak ada pengguna ditemukan.
+                    </div>
+                ) : (
+                    <AdaptiveList
+                        data={paginatedData}
+                        pagination={{
+                            currentPage,
+                            totalPages,
+                            totalItems: sortedData.length,
+                            itemsPerPage,
+                            onPageChange: setCurrentPage,
+                        }}
+                        desktopHeaders={[
+                            'Pengguna',
+                            'Role / Hak Akses',
+                            'Email',
+                            'Status',
+                            'Aksi'
+                        ]}
+                        renderDesktopRow={(u) => (
+                            <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
+                                <td className="px-5 py-3 border-r">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-slate-100 border border-slate-200 rounded-none flex items-center justify-center font-medium text-xs text-slate-600">
+                                            {u.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-slate-800 tracking-tight">{u.name}</p>
+                                            <p className="text-[10px] text-slate-400 font-mono tracking-tighter mt-0.5">{u.id}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-xs font-medium text-slate-800 tracking-tight">{u.name}</p>
-                                        <p className="text-[10px] text-slate-400 font-mono tracking-tighter mt-0.5">{u.id}</p>
+                                </td>
+                                <td className="px-5 py-3 border-r">
+                                    <div className="flex items-center gap-2">
+                                        <Shield size={14} className="text-slate-400" />
+                                        <span className="text-xs font-medium text-slate-600 tracking-tight">{u.role.replace(/_/g, ' ')}</span>
                                     </div>
+                                </td>
+                                <td className="px-5 py-3 border-r">
+                                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                                        <Mail size={14} className="text-slate-400" />
+                                        {u.email}
+                                    </div>
+                                </td>
+                                <td className="px-5 py-3 border-r">
+                                    <Badge variant={u.isActive ? 'success' : 'default'} className="rounded-none">
+                                        <div className="flex items-center gap-1.5">
+                                            {u.isActive ? <CheckCircle size={10} /> : <XCircle size={10} />}
+                                            {u.status}
+                                        </div>
+                                    </Badge>
+                                </td>
+                                <td className="px-5 py-3 text-center">
+                                    {currentUser?.role === 'SUPER_ADMIN' && currentUser.id !== u.id ? (
+                                        <button
+                                            onClick={() => handleToggleStatus(u)}
+                                            className="p-1 hover:bg-slate-50 border border-transparent rounded-none text-slate-400 hover:text-blue-600 transition-all cursor-pointer inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider h-7 px-2 border-slate-200"
+                                            title={u.isActive ? 'Non-aktifkan User' : 'Aktifkan User'}
+                                        >
+                                            {u.isActive ? <ToggleRight size={18} className="text-emerald-500" /> : <ToggleLeft size={18} className="text-slate-450" />}
+                                            <span className="text-[9px]">{u.isActive ? 'Nonaktifkan' : 'Aktifkan'}</span>
+                                        </button>
+                                    ) : (
+                                        <span className="text-[10px] text-slate-400 font-medium font-mono">No Actions</span>
+                                    )}
+                                </td>
+                            </tr>
+                        )}
+                        renderMobileCard={(u) => (
+                            <div className="flex flex-col gap-3">
+                                <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-8 h-8 bg-slate-100 border border-slate-200 rounded-none flex items-center justify-center font-medium text-xs text-slate-600">
+                                            {u.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-slate-800 tracking-tight">{u.name}</p>
+                                            <p className="text-[9px] text-slate-400 font-mono tracking-tighter mt-0.5">{u.id}</p>
+                                        </div>
+                                    </div>
+                                    <Badge variant={u.isActive ? 'success' : 'default'} className="rounded-none">
+                                        <div className="flex items-center gap-1">
+                                            {u.isActive ? <CheckCircle size={10} /> : <XCircle size={10} />}
+                                            {u.status}
+                                        </div>
+                                    </Badge>
                                 </div>
-                            </td>
-                            <td className="px-5 py-3 border-r">
-                                <div className="flex items-center gap-2">
-                                    <Shield size={14} className="text-slate-400" />
-                                    <span className="text-xs font-medium text-slate-600 tracking-tight">{u.role.replace(/_/g, ' ')}</span>
-                                </div>
-                            </td>
-                            <td className="px-5 py-3 border-r">
-                                <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                                    <Mail size={14} className="text-slate-400" />
-                                    {u.email}
-                                </div>
-                            </td>
-                            <td className="px-5 py-3 border-r">
-                                <Badge variant={u.status === 'Aktif' ? 'success' : 'default'} className="rounded-none">
+                                <div className="flex justify-between items-center text-[10px] text-slate-500 font-medium pt-2 border-t">
                                     <div className="flex items-center gap-1.5">
-                                        {u.status === 'Aktif' ? <CheckCircle size={10} /> : <XCircle size={10} />}
-                                        {u.status}
+                                        <Shield size={12} className="text-slate-400" />
+                                        <span>{u.role.replace(/_/g, ' ')}</span>
                                     </div>
-                                </Badge>
-                            </td>
-                            <td className="px-5 py-3 text-center">
-                                <button className="p-1 hover:bg-slate-50 border border-transparent hover: rounded-none text-slate-400 hover:text-blue-600 transition-all cursor-pointer">
-                                    <MoreHorizontal size={14} />
-                                </button>
-                            </td>
-                        </tr>
-                    )}
-                    renderMobileCard={(u) => (
-                        <div className="flex flex-col gap-3">
-                            <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-2.5">
-                                    <div className="w-8 h-8 bg-slate-100 border border-slate-200 rounded-none flex items-center justify-center font-medium text-xs text-slate-600">
-                                        {u.name.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-medium text-slate-800 tracking-tight">{u.name}</p>
-                                        <p className="text-[9px] text-slate-400 font-mono tracking-tighter mt-0.5">{u.id}</p>
+                                    <div className="flex items-center gap-1.5">
+                                        <Mail size={12} className="text-slate-400" />
+                                        <span>{u.email}</span>
                                     </div>
                                 </div>
-                                <Badge variant={u.status === 'Aktif' ? 'success' : 'default'} className="rounded-none">
-                                    <div className="flex items-center gap-1">
-                                        {u.status === 'Aktif' ? <CheckCircle size={10} /> : <XCircle size={10} />}
-                                        {u.status}
+                                {currentUser?.role === 'SUPER_ADMIN' && currentUser.id !== u.id && (
+                                    <div className="pt-2 border-t flex justify-end">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleToggleStatus(u)}
+                                            className="text-[9px] font-bold py-1 h-7 rounded-none flex items-center gap-1"
+                                        >
+                                            {u.isActive ? <ToggleRight size={14} className="text-emerald-500" /> : <ToggleLeft size={14} className="text-slate-400" />}
+                                            {u.isActive ? 'Non-aktifkan' : 'Aktifkan'}
+                                        </Button>
                                     </div>
-                                </Badge>
+                                )}
                             </div>
-                            <div className="flex justify-between items-center text-[10px] text-slate-500 font-medium pt-2 border-t">
-                                <div className="flex items-center gap-1.5">
-                                    <Shield size={12} className="text-slate-400" />
-                                    <span>{u.role.replace(/_/g, ' ')}</span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <Mail size={12} className="text-slate-400" />
-                                    <span>{u.email}</span>
-                                </div>
-                            </div>
+                        )}
+                    />
+                )}
+            </div>
+
+            {/* Create User Modal */}
+            <Modal
+                isOpen={isAddModalOpen}
+                onClose={() => {
+                    setIsAddModalOpen(false);
+                    setFormError('');
+                }}
+                title="Tambah Pengguna Baru"
+            >
+                <form onSubmit={handleCreateUser} className="space-y-4">
+                    {formError && (
+                        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold rounded-none">
+                            {formError}
                         </div>
                     )}
-                />
-            </div>
+
+                    <div className="space-y-1">
+                        <label className="block text-[10px] font-semibold text-slate-700 uppercase tracking-wider">
+                            Nama Lengkap *
+                        </label>
+                        <input
+                            type="text"
+                            required
+                            value={newUserName}
+                            onChange={(e) => setNewUserName(e.target.value)}
+                            placeholder="Contoh: RP. Johannes Surono"
+                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-none outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 transition-all font-medium text-slate-700"
+                        />
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="block text-[10px] font-semibold text-slate-700 uppercase tracking-wider">
+                            Alamat Email *
+                        </label>
+                        <input
+                            type="email"
+                            required
+                            value={newUserEmail}
+                            onChange={(e) => setNewUserEmail(e.target.value)}
+                            placeholder="Contoh: pastor@paroki.com"
+                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-none outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 transition-all font-medium text-slate-700"
+                        />
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="block text-[10px] font-semibold text-slate-700 uppercase tracking-wider">
+                            Role / Peranan *
+                        </label>
+                        <select
+                            value={newUserRole}
+                            onChange={(e) => setNewUserRole(e.target.value as UserRole)}
+                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-none outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 transition-all font-medium text-slate-700 cursor-pointer"
+                        >
+                            <option value="SUPER_ADMIN">Super Admin</option>
+                            <option value="PASTOR">Pastor</option>
+                            <option value="BENDAHARA">Bendahara</option>
+                            <option value="DEWAN_KEUANGAN">Dewan Keuangan</option>
+                            <option value="KETUA_KOMISI">Ketua Komisi</option>
+                            <option value="TIM_PEMBANGUNAN">Tim Pembangunan</option>
+                            <option value="SEKRETARIAT">Sekretariat</option>
+                        </select>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="block text-[10px] font-semibold text-slate-700 uppercase tracking-wider">
+                            Password (Opsional)
+                        </label>
+                        <input
+                            type="password"
+                            value={newUserPassword}
+                            onChange={(e) => setNewUserPassword(e.target.value)}
+                            placeholder="Biarkan kosong untuk default: password123"
+                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-none outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 transition-all font-medium text-slate-700"
+                        />
+                    </div>
+
+                    <div className="flex gap-3 pt-4 border-t">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                setIsAddModalOpen(false);
+                                setFormError('');
+                            }}
+                            className="flex-1 py-3 text-xs font-medium rounded-none"
+                            disabled={createUserMutation.isPending}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="submit"
+                            className="flex-1 py-3 text-xs font-medium rounded-none bg-blue-600 hover:bg-blue-700 text-white"
+                            disabled={createUserMutation.isPending}
+                        >
+                            {createUserMutation.isPending ? 'Menyimpan...' : 'Simpan User'}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 };
@@ -10983,9 +11898,11 @@ export const RouteGuard = ({ allowableRoles, children }: RouteGuardProps) => {
 };
 
 --- FILE: src\shared\components\ui\AdaptiveList.tsx ---
+// --- FILE: src\shared\components\ui\AdaptiveList.tsx-- -
 import React from 'react';
 import { cn } from '../../utils/cn';
 import { Inbox } from 'lucide-react';
+import { Pagination } from './Pagination';
 
 interface AdaptiveListProps<T> {
   data: T[];
@@ -11005,25 +11922,18 @@ interface AdaptiveListProps<T> {
    * @default 5
    */
   skeletonRows?: number;
+  /**
+   * Konfigurasi pagination (opsional).
+   */
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    onPageChange: (page: number) => void;
+  };
 }
 
-/**
- * GRASP: Pure Fabrication + Polymorphism
- * AdaptiveList adalah Pure Fabrication: tidak ada entitas bisnis "AdaptiveList"
- * dalam domain paroki. Ia ada untuk memenuhi kebutuhan teknis polimorfisme layout:
- * satu data source, dua representasi berbeda berdasarkan breakpoint.
- *
- * GRASP: Polymorphism
- * Alih-alih `if (isMobile) renderMobile() else renderDesktop()`,
- * kita menggunakan CSS class switching (block md:hidden / hidden md:block) —
- * ini adalah Polymorphism berbasis CSS yang lebih performant karena
- * zero JS re-render untuk perubahan viewport.
- *
- * DESIGN SYSTEM GUARD:
- * - rounded-none: MUTLAK pada container outer dan semua elemen internal.
- * - border satu sisi (divide-y divide-slate-100) untuk pemisah baris — no box-inside-box.
- * - Skeleton loading state ditambahkan untuk UX yang tidak melompat (layout stability).
- */
 export const AdaptiveList = <T,>({
   data,
   desktopHeaders,
@@ -11033,13 +11943,13 @@ export const AdaptiveList = <T,>({
   className,
   isLoading = false,
   skeletonRows = 5,
+  pagination,
 }: AdaptiveListProps<T>) => {
   const hasData = data && data.length > 0;
 
   // ── SKELETON LOADING STATE ──
   if (isLoading) {
     return (
-      // DESIGN SYSTEM GUARD: rounded-none pada container
       <div className={cn('overflow-hidden border border-slate-200 rounded-none bg-white shadow-sm', className)}>
         {/* Mobile skeleton */}
         <div className="block md:hidden divide-y divide-slate-100">
@@ -11080,11 +11990,10 @@ export const AdaptiveList = <T,>({
   }
 
   return (
-    // DESIGN SYSTEM GUARD: rounded-none pada container outer
     <div className={cn('overflow-hidden border border-slate-200 rounded-none bg-white shadow-sm', className)}>
       {hasData ? (
         <>
-          {/* MOBILE VIEW: high-density flat card rows, no nested border cards */}
+          {/* MOBILE VIEW */}
           <div className="block md:hidden divide-y divide-slate-100 bg-white">
             {data.map((item, index) => (
               <div
@@ -11096,23 +12005,29 @@ export const AdaptiveList = <T,>({
             ))}
           </div>
 
-          {/* DESKTOP VIEW: standardized data table */}
+          {/* DESKTOP VIEW: Standardized Data Table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="text-slate-500 text-[10px] font-semibold border-b">
+                <tr className="text-slate-600 text-xs font-semibold border-b border-slate-200 bg-slate-50/80">
                   {desktopHeaders.map((header, idx) => (
                     <th
                       key={idx}
                       className={cn(
-                        'px-5 py-3 border-r  last:border-r-0 whitespace-nowrap',
-                        // Alignment otomatis untuk kolom numerik
+                        'px-5 py-3.5 border-r border-slate-200 last:border-r-0 whitespace-nowrap',
+                        // Alignment otomatis untuk kolom numerik (Rata Kanan)
                         typeof header === 'string' &&
-                          (header.toLowerCase().includes('jumlah') ||
-                            header.toLowerCase().includes('nominal') ||
-                            header.toLowerCase().includes('saldo') ||
-                            header.toLowerCase().includes('total')) &&
-                          'text-right'
+                        (header.toLowerCase().includes('jumlah') ||
+                          header.toLowerCase().includes('nominal') ||
+                          header.toLowerCase().includes('saldo') ||
+                          header.toLowerCase().includes('total')) &&
+                        'text-right',
+                        // Alignment otomatis untuk Status dan Aksi (Rata Tengah)
+                        typeof header === 'string' &&
+                        (header.toLowerCase() === 'aksi' ||
+                          header.toLowerCase() === 'status' || // 👈 TAMBAHKAN INI
+                          header === '') &&
+                        'text-center'
                       )}
                     >
                       {header}
@@ -11125,6 +12040,17 @@ export const AdaptiveList = <T,>({
               </tbody>
             </table>
           </div>
+
+          {/* PAGINATION CONTROLS */}
+          {pagination && (
+            <Pagination
+              currentPage={pagination.currentPage}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.totalItems}
+              itemsPerPage={pagination.itemsPerPage}
+              onPageChange={pagination.onPageChange}
+            />
+          )}
         </>
       ) : (
         /* EMPTY STATE */
@@ -11535,6 +12461,128 @@ export const ChartCard = ({
     );
 };
 
+--- FILE: src\shared\components\ui\CurrencyInput.tsx ---
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { Input } from './Input'; // Menggunakan primitif Input yang sudah ada untuk konsistensi desain
+
+export interface CurrencyInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'type'> {
+    /** Nilai murni berupa angka absolut (raw number) */
+    value?: number | null;
+    /** Callback yang memancarkan angka murni (bukan string bertitik) ke parent */
+    onChange?: (value: number | undefined) => void;
+    label?: string;
+    error?: string;
+    hint?: string;
+    icon?: React.ReactNode;
+    rightElement?: React.ReactNode;
+}
+
+/**
+ * GRASP: Pure Fabrication + Information Expert
+ * CurrencyInput bertanggung jawab HANYA pada satu tugas (High Cohesion):
+ * Memanipulasi visualisasi angka menjadi format IDR (dengan titik) di layar,
+ * sekaligus mengembalikan tipe data `number` murni ke state parent/backend.
+ *
+ * CORE FEATURE: Caret Preservation Algorithm
+ * Mencegah kursor melompat ke ujung kanan saat mengedit angka di tengah string.
+ */
+export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
+    ({ value, onChange, placeholder = '0', ...props }, ref) => {
+        // Local ref untuk memanipulasi posisi kursor secara langsung ke DOM
+        const localInputRef = useRef<HTMLInputElement>(null);
+
+        // Gabungkan forwardRef dari parent (React Hook Form) dengan localRef
+        useImperativeHandle(ref, () => localInputRef.current as HTMLInputElement);
+
+        // State untuk representasi visual di layar (contoh: "1.500.000")
+        const [displayValue, setDisplayValue] = useState<string>('');
+
+        // Sinkronisasi data dari parent (backend/RHF) ke visual layar
+        useEffect(() => {
+            if (value !== undefined && value !== null && !isNaN(value)) {
+                // Format angka murni ke format titik ribuan tanpa "Rp"
+                const formatted = new Intl.NumberFormat('id-ID').format(value);
+                setDisplayValue(formatted);
+            } else {
+                setDisplayValue('');
+            }
+        }, [value]);
+
+        const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const inputElement = e.target;
+            const originalSelection = inputElement.selectionStart || 0;
+            const rawKeystroke = inputElement.value;
+
+            // 1. STRICT STRIPPING: Buang semua karakter selain angka 0-9 (Anti minus, abjad, dll)
+            const numericString = rawKeystroke.replace(/\D/g, '');
+
+            // Jika input dikosongkan secara total
+            if (!numericString) {
+                setDisplayValue('');
+                if (onChange) onChange(undefined);
+                return;
+            }
+
+            // 2. PARSING & FORMATTING
+            const numericValue = parseInt(numericString, 10);
+            const newFormattedString = new Intl.NumberFormat('id-ID').format(numericValue);
+
+            // 3. CARET PRESERVATION ALGORITHM (Mencegah kursor lompat ke ujung)
+            // Hitung berapa banyak DIGIT (bukan titik) di sebelah kiri kursor SEBELUM diformat
+            const stringBeforeCaret = rawKeystroke.substring(0, originalSelection);
+            const digitCountBeforeCaret = stringBeforeCaret.replace(/\D/g, '').length;
+
+            // Cari posisi di string BARU (yang sudah diformat) yang memiliki jumlah digit yang sama
+            let newCaretPosition = 0;
+            let digitsFound = 0;
+
+            for (let i = 0; i < newFormattedString.length; i++) {
+                if (/\d/.test(newFormattedString[i])) {
+                    digitsFound++;
+                }
+                if (digitsFound === digitCountBeforeCaret) {
+                    newCaretPosition = i + 1; // Posisi kursor tepat setelah digit terakhir yang ditemukan
+                    break;
+                }
+            }
+
+            // Fallback jika menghapus karakter di posisi paling depan
+            if (digitCountBeforeCaret === 0) {
+                newCaretPosition = 0;
+            }
+
+            // 4. UPDATE STATES
+            setDisplayValue(newFormattedString);
+
+            // Pancarkan data angka absolut ke parent (misal: 1500000)
+            if (onChange) onChange(numericValue);
+
+            // 5. RESTORE CARET POSITION (Menunggu siklus render React selesai)
+            window.requestAnimationFrame(() => {
+                if (localInputRef.current) {
+                    localInputRef.current.setSelectionRange(newCaretPosition, newCaretPosition);
+                }
+            });
+        };
+
+        return (
+            <Input
+                ref={localInputRef}
+                type="text" // Wajib text agar bisa dimanipulasi dengan titik dan mencegah scroll-wheel
+                inputMode="numeric" // Memaksa keyboard numerik muncul di PWA/Mobile
+                value={displayValue}
+                onChange={handleChange}
+                placeholder={placeholder}
+                {...props}
+                // Tambahan visual indicator IDR di kiri
+                icon={<span className="text-sm font-medium text-slate-400 select-none">Rp</span>}
+            />
+        );
+    }
+);
+
+CurrencyInput.displayName = 'CurrencyInput';
+
 --- FILE: src\shared\components\ui\Input.tsx ---
 import React, { forwardRef } from 'react';
 import { cn } from '../../utils/cn';
@@ -11943,6 +12991,112 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
       </Dialog>
     </Transition>
+  );
+};
+
+--- FILE: src\shared\components\ui\Pagination.tsx ---
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '../../utils/cn';
+import { Button } from './Button';
+
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void;
+  className?: string;
+}
+
+export const Pagination = ({
+  currentPage,
+  totalPages,
+  totalItems,
+  itemsPerPage,
+  onPageChange,
+  className,
+}: PaginationProps) => {
+  if (totalItems === 0) {
+    return null;
+  }
+
+  const from = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const to = Math.min(currentPage * itemsPerPage, totalItems);
+
+  return (
+    <div
+      className={cn(
+        'flex flex-col sm:flex-row items-center justify-between gap-4 px-5 py-4 border-t border-slate-200 bg-slate-50/50',
+        className
+      )}
+    >
+      {/* Total info */}
+      <div className="text-[11px] font-medium text-slate-500">
+        Menampilkan <span className="font-semibold text-slate-700">{from}</span>–
+        <span className="font-semibold text-slate-700">{to}</span> dari{' '}
+        <span className="font-semibold text-slate-700">{totalItems}</span> data
+      </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex items-center gap-1">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          leftIcon={<ChevronLeft size={14} />}
+          className="h-8 py-0 px-2.5 font-medium border-slate-200 hover:bg-white text-slate-600 disabled:opacity-30"
+        >
+          Sebelumnya
+        </Button>
+
+        <div className="flex items-center gap-1 px-2">
+          {Array.from({ length: totalPages }).map((_, idx) => {
+            const pageNum = idx + 1;
+            // Simple pagination strategy: show current, first, last, and pages around current if totalPages is large
+            const isNear = Math.abs(currentPage - pageNum) <= 1;
+            const isFirstOrLast = pageNum === 1 || pageNum === totalPages;
+
+            if (!isNear && !isFirstOrLast) {
+              if (pageNum === 2 || pageNum === totalPages - 1) {
+                return (
+                  <span key={pageNum} className="text-slate-400 text-xs px-1 select-none">
+                    ...
+                  </span>
+                );
+              }
+              return null;
+            }
+
+            return (
+              <button
+                key={pageNum}
+                onClick={() => onPageChange(pageNum)}
+                className={cn(
+                  'h-8 w-8 text-xs font-semibold rounded-none border transition-all duration-150',
+                  currentPage === pageNum
+                    ? 'bg-slate-800 border-slate-800 text-white'
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 active:bg-slate-100'
+                )}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          rightIcon={<ChevronRight size={14} />}
+          className="h-8 py-0 px-2.5 font-medium border-slate-200 hover:bg-white text-slate-600 disabled:opacity-30"
+        >
+          Berikutnya
+        </Button>
+      </div>
+    </div>
   );
 };
 

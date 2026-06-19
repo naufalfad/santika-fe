@@ -1,9 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '../../../app/api/axios.config';
-import { useKasStore } from '../../../app/store/useKasStore';
-import type { KasKeluar } from '../../../shared/mock/kasKeluarData';
-
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export interface FundCategory {
   id: string;
@@ -146,36 +142,6 @@ export const useAddKasMasukMutation = () => {
   });
 };
 
-/**
- * Hook to retrieve Kas Keluar asynchronously with simulated delay (legacy mock).
- */
-export const useKasKeluarQuery = () => {
-  const kasKeluar = useKasStore((state) => state.kasKeluar);
-  return useQuery<KasKeluar[]>({
-    queryKey: ['kasKeluar'],
-    queryFn: async () => {
-      await delay(800); // Simulate network latency
-      return kasKeluar;
-    },
-  });
-};
-
-/**
- * Mutation hook to add a new Kas Keluar entry (legacy mock).
- */
-export const useAddKasKeluarMutation = () => {
-  const queryClient = useQueryClient();
-  const addKasKeluar = useKasStore((state) => state.addKasKeluar);
-  return useMutation({
-    mutationFn: async (data: Omit<KasKeluar, 'id' | 'status'> & { buktiUrl?: string }) => {
-      await delay(600); // Simulate network latency
-      addKasKeluar(data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kasKeluar'] });
-    },
-  });
-};
 
 export interface TransferBalancePayload {
   source_fund_category_id: string;

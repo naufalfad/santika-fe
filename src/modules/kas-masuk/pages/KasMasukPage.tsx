@@ -17,25 +17,32 @@ import { MiniLedger, type LedgerItem } from '../../../shared/components/ui/MiniL
 import { KasMasukForm } from '../components/KasMasukForm';
 import type { KasMasukInput } from '../types/kas-masuk';
 import { useActivityStore } from '../../../app/store/useActivityStore';
+import { useNotificationStore } from '../../../app/store/useNotificationStore';
 import { formatIDR } from '../../../shared/utils/formatter';
+import { downloadCSV, downloadExcel } from '../../../shared/utils/export';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
+import churchLogo from '../../../assets/church.png';
 import { useKasMasukQuery, useAddKasMasukMutation, useFundBalancesQuery } from '../hooks/useKasMasukQuery';
 
 /**
  * Standardized high-contrast, high-density Kas Masuk Management page.
  * Implements optimized useMemo selectors to prevent rendering lags.
  * Integrates React Query for async Server State and AdaptiveList for responsive layouts.
+ * Uses Single Source of Truth for Filtered Data cascading data engine.
  */
 const KasMasukPage = () => {
   const { data: kasMasuk = [], isLoading } = useKasMasukQuery();
-  const { data: fundBalances = [] } = useFundBalancesQuery();
+  useFundBalancesQuery();
   const addMutation = useAddKasMasukMutation();
   const addLog = useActivityStore((state) => state.addLog);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'PERMANENT' | 'SPECIAL_FUND'>('PERMANENT');
-  const [timeRange, setTimeRange] = useState<'ALL' | 'THIS_MONTH' | 'LAST_MONTH'>('ALL');
+  const [timeRange, setTimeRange] = useState<'ALL' | 'THIS_MONTH' | 'LAST_MONTH' | 'THIS_YEAR'>('ALL');
+  const [selectedFundCategoryId, setSelectedFundCategoryId] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<'LATEST' | 'OLDEST' | 'AMOUNT_DESC' | 'AMOUNT_ASC'>('LATEST');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -59,6 +66,11 @@ const KasMasukPage = () => {
           data.amount,
           'in'
         );
+        addNotification(
+          'Transaksi Pemasukan Baru',
+          `Penerimaan kas sebesar ${formatIDR(data.amount)} untuk "${data.description}" berhasil dicatat.`,
+          'success'
+        );
         handleCloseModal();
       }
     });
@@ -78,15 +90,39 @@ const KasMasukPage = () => {
     return activeTab === 'PERMANENT' ? kasMasukPermanent : kasMasukSpecial;
   }, [activeTab, kasMasukPermanent, kasMasukSpecial]);
 
+  // Extract Pos Dana options dynamically based on current transactions
+  const fundCategoryOptions = useMemo(() => {
+    const categories = new Map<string, string>(); // id -> name
+    currentTransactions.forEach(item => {
+      if (item.fundCategory) {
+        categories.set(item.fundCategory.id, item.fundCategory.name);
+      }
+    });
+    return Array.from(categories.entries()).map(([id, name]) => ({ id, name }));
+  }, [currentTransactions]);
+
+  // Reset selected fund category when switching tabs
+  useEffect(() => {
+    setSelectedFundCategoryId('ALL');
+  }, [activeTab]);
+
   // Cascading data processing engine:
-  // 1. Filter by time
-  const filteredByTime = useMemo(() => {
-    if (timeRange === 'ALL') return currentTransactions;
+  // 1. Filter by time and fund category
+  const filteredByTimeAndFund = useMemo(() => {
+    let result = currentTransactions;
+
+    // Filter by Pos Dana if not 'ALL'
+    if (selectedFundCategoryId !== 'ALL') {
+      result = result.filter(item => item.fundCategoryId === selectedFundCategoryId);
+    }
+
+    // Filter by time range
+    if (timeRange === 'ALL') return result;
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    return currentTransactions.filter(item => {
+    return result.filter(item => {
       const d = new Date(item.transactionDate);
       if (timeRange === 'THIS_MONTH') {
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
@@ -96,21 +132,24 @@ const KasMasukPage = () => {
         const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
         return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
       }
+      if (timeRange === 'THIS_YEAR') {
+        return d.getFullYear() === currentYear;
+      }
       return true;
     });
-  }, [currentTransactions, timeRange]);
+  }, [currentTransactions, timeRange, selectedFundCategoryId]);
 
   // 2. Filter by search term
   const searchedData = useMemo(() => {
-    if (!searchTerm) return filteredByTime;
+    if (!searchTerm) return filteredByTimeAndFund;
     const term = searchTerm.toLowerCase();
-    return filteredByTime.filter(item =>
+    return filteredByTimeAndFund.filter(item =>
       item.description.toLowerCase().includes(term) ||
       item.transactionNo.toLowerCase().includes(term) ||
       (item.fundCategory?.name || '').toLowerCase().includes(term) ||
       (item.incomeType?.name || '').toLowerCase().includes(term)
     );
-  }, [filteredByTime, searchTerm]);
+  }, [filteredByTimeAndFund, searchTerm]);
 
   // 3. Sort data
   const sortedData = useMemo(() => {
@@ -145,118 +184,278 @@ const KasMasukPage = () => {
   // Reset page to 1 when filters or active tab change
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, searchTerm, timeRange, sortBy]);
+  }, [activeTab, searchTerm, timeRange, sortBy, selectedFundCategoryId]);
 
-  // Memoize analytical calculations
-  const totalBulanIni = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    return currentTransactions.reduce((sum, item) => {
-      const d = new Date(item.transactionDate);
-      if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
-        return sum + Number(item.amount);
-      }
-      return sum;
-    }, 0);
-  }, [currentTransactions]);
+  // Memoize analytical calculations BERSUMBER DARI searchedData (Single Source of Truth)
+  const totalNominal = useMemo(() => {
+    return searchedData.reduce((sum, item) => sum + Number(item.amount), 0);
+  }, [searchedData]);
 
   // Target Penerimaan (bulanan): Rp 50.000.000
   const targetBulanan = 50000000;
   const progressTarget = useMemo(() => {
-    return Math.min(Math.round((totalBulanIni / targetBulanan) * 100), 100);
-  }, [totalBulanIni]);
+    return Math.min(Math.round((totalNominal / targetBulanan) * 100), 100);
+  }, [totalNominal]);
 
   // Rata-rata special fund income
   const avgSpecialIncome = useMemo(() => {
-    const specialTxsThisMonth = kasMasukSpecial.filter(item => {
-      const d = new Date(item.transactionDate);
-      return d.getMonth() === new Date().getMonth() && d.getFullYear() === new Date().getFullYear();
-    });
-    if (specialTxsThisMonth.length === 0) return 0;
-    const sum = specialTxsThisMonth.reduce((acc, curr) => acc + Number(curr.amount), 0);
-    return Math.round(sum / specialTxsThisMonth.length);
-  }, [kasMasukSpecial]);
+    if (searchedData.length === 0) return 0;
+    const sum = searchedData.reduce((acc, curr) => acc + Number(curr.amount), 0);
+    return Math.round(sum / searchedData.length);
+  }, [searchedData]);
 
   // Sumber Terbesar
   const sumberTerbesar = useMemo(() => {
-    if (currentTransactions.length === 0) {
+    if (searchedData.length === 0) {
       return { description: 'Belum ada data', amount: 0, percentage: 0 };
     }
-    const maxTx = currentTransactions.reduce((prev, current) => {
+    const maxTx = searchedData.reduce((prev, current) => {
       return (Number(prev.amount) > Number(current.amount)) ? prev : current;
-    });
-    const total = currentTransactions.reduce((sum, item) => sum + Number(item.amount), 0);
-    const percentage = total > 0 ? Math.round((Number(maxTx.amount) / total) * 100) : 0;
+    }, searchedData[0]);
+    const percentage = totalNominal > 0 ? Math.round((Number(maxTx.amount) / totalNominal) * 100) : 0;
     return {
       description: maxTx.description,
       amount: Number(maxTx.amount),
       percentage,
     };
-  }, [currentTransactions]);
+  }, [searchedData, totalNominal]);
 
   // Transaksi hari ini
   const totalHariIni = useMemo(() => {
     const todayStr = new Date().toDateString();
-    return currentTransactions.reduce((sum, item) => {
+    return searchedData.reduce((sum, item) => {
       const txStr = new Date(item.transactionDate).toDateString();
       if (txStr === todayStr) {
         return sum + Number(item.amount);
       }
       return sum;
     }, 0);
-  }, [currentTransactions]);
+  }, [searchedData]);
 
   const countHariIni = useMemo(() => {
     const todayStr = new Date().toDateString();
-    return currentTransactions.filter(item => {
+    return searchedData.filter(item => {
       return new Date(item.transactionDate).toDateString() === todayStr;
     }).length;
-  }, [currentTransactions]);
+  }, [searchedData]);
 
-  // Tren 30 hari
+  // Tren harian/bulanan BERSUMBER DARI searchedData
   const trendData = useMemo(() => {
     const dataMap = new Map<string, number>();
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const key = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
-      dataMap.set(key, 0);
-    }
-    currentTransactions.forEach((item) => {
-      const d = new Date(item.transactionDate);
-      const key = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
-      if (dataMap.has(key)) {
-        dataMap.set(key, dataMap.get(key)! + Number(item.amount));
-      }
-    });
-    return Array.from(dataMap.entries()).map(([date, jumlah]) => ({
-      date,
-      jumlah,
-    }));
-  }, [currentTransactions]);
+    const isLongRange = timeRange === 'THIS_YEAR' || timeRange === 'ALL';
 
-  // Dataset Komposisi Dana untuk MiniLedger
+    if (isLongRange) {
+      // Group by months of the year
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      months.forEach(m => dataMap.set(m, 0));
+
+      searchedData.forEach((item) => {
+        const d = new Date(item.transactionDate);
+        const monthIndex = d.getMonth();
+        const key = months[monthIndex];
+        if (dataMap.has(key)) {
+          dataMap.set(key, dataMap.get(key)! + Number(item.amount));
+        }
+      });
+
+      return Array.from(dataMap.entries()).map(([date, jumlah]) => ({
+        date,
+        jumlah,
+      }));
+    } else {
+      // Daily grouping based on timeRange
+      if (timeRange === 'LAST_MONTH') {
+        const now = new Date();
+        const lm = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+        const ly = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+        const numDays = new Date(ly, lm + 1, 0).getDate();
+
+        for (let i = 0; i < numDays; i++) {
+          const d = new Date(ly, lm, i + 1);
+          const key = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+          dataMap.set(key, 0);
+        }
+      } else if (timeRange === 'THIS_MONTH') {
+        const now = new Date();
+        const tm = now.getMonth();
+        const ty = now.getFullYear();
+        const numDays = new Date(ty, tm + 1, 0).getDate();
+
+        for (let i = 0; i < numDays; i++) {
+          const d = new Date(ty, tm, i + 1);
+          const key = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+          dataMap.set(key, 0);
+        }
+      } else {
+        // Last 30 days rolling
+        for (let i = 29; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const key = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+          dataMap.set(key, 0);
+        }
+      }
+
+      searchedData.forEach((item) => {
+        const d = new Date(item.transactionDate);
+        const key = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+        if (dataMap.has(key)) {
+          dataMap.set(key, dataMap.get(key)! + Number(item.amount));
+        }
+      });
+
+      return Array.from(dataMap.entries()).map(([date, jumlah]) => ({
+        date,
+        jumlah,
+      }));
+    }
+  }, [searchedData, timeRange]);
+
+  // Dataset Komposisi Dana untuk MiniLedger & PieChart BERSUMBER DARI searchedData
   const categoryDataset = useMemo<LedgerItem[]>(() => {
     const colors = ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#3b82f6', '#14b8a6', '#f43f5e'];
-    const filteredBalances = fundBalances.filter(item => {
-      const isSpecial = item.fund.startsWith('Dana Khusus:');
-      return activeTab === 'PERMANENT' ? !isSpecial : isSpecial;
-    });
-    const activeBalances = filteredBalances.filter(item => item.income > 0);
-    const totalIncome = activeBalances.reduce((sum, item) => sum + Number(item.income), 0);
 
-    if (activeBalances.length === 0) {
+    // Group sum by fundCategory name
+    const sums = new Map<string, number>();
+    let totalIncome = 0;
+
+    searchedData.forEach(item => {
+      const name = item.fundCategory?.name || 'Lain-lain';
+      const amount = Number(item.amount);
+      sums.set(name, (sums.get(name) || 0) + amount);
+      totalIncome += amount;
+    });
+
+    if (sums.size === 0) {
       return [];
     }
 
-    return activeBalances.map((item, index) => ({
-      name: activeTab === 'PERMANENT' ? item.fund : item.fund.replace('Dana Khusus: ', ''),
-      value: Number(item.income),
-      percentage: totalIncome > 0 ? (Number(item.income) / totalIncome) * 100 : 0,
+    return Array.from(sums.entries()).map(([name, value], index) => ({
+      name,
+      value,
+      percentage: totalIncome > 0 ? (value / totalIncome) * 100 : 0,
       color: colors[index % colors.length],
     }));
-  }, [fundBalances, activeTab]);
+  }, [searchedData]);
+
+  const handleExportCSV = () => {
+    const filename = `laporan_kas_masuk_${activeTab.toLowerCase()}_${new Date().toISOString().slice(0, 10)}.csv`;
+    const headers = ['Tanggal', 'Nomor Transaksi (Ref)', 'Deskripsi Pemasukan', 'Pos Dana', 'Jenis Penerimaan', 'Nominal (IDR)', 'Status'];
+    const rows = searchedData.map(item => [
+      new Date(item.transactionDate).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' }),
+      item.transactionNo,
+      item.description,
+      item.fundCategory?.name || '',
+      item.incomeType?.name || '',
+      String(item.amount),
+      'Selesai'
+    ]);
+    downloadCSV(filename, headers, rows);
+  };
+
+  const getBase64ImageFromUrl = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (e) {
+      console.error(e);
+      return '';
+    }
+  };
+
+  const handleExportExcel = async () => {
+    const logoBase64 = await getBase64ImageFromUrl(churchLogo);
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const filename = `laporan_kas_masuk_${activeTab.toLowerCase()}_${timestamp}.xls`;
+    const todayFormatted = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    const timeRangeLabels: Record<string, string> = {
+      ALL: 'Semua Waktu',
+      THIS_MONTH: 'Bulan Ini',
+      LAST_MONTH: 'Bulan Lalu',
+      THIS_YEAR: 'Tahun Ini'
+    };
+    const timeRangeLabel = timeRangeLabels[timeRange] || timeRange;
+    const selectedFundLabel = selectedFundCategoryId === 'ALL'
+      ? 'Semua Pos Dana'
+      : fundCategoryOptions.find(f => f.id === selectedFundCategoryId)?.name || 'Terfilter';
+
+    const rowsHtml = searchedData.map((item, idx) => `
+      <tr>
+        <td style="text-align: center;">${idx + 1}</td>
+        <td style="text-align: center;">${new Date(item.transactionDate).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
+        <td style="text-align: center; font-family: monospace;">${item.transactionNo}</td>
+        <td>${item.description}</td>
+        <td>${item.fundCategory?.name || ''}</td>
+        <td>${item.incomeType?.name || ''}</td>
+        <td class="text-right mso-number text-green">${item.amount}</td>
+      </tr>
+    `).join('');
+
+    const tableHtml = `
+      <table>
+        <tr>
+          <td rowspan="4" style="border: none; text-align: center; vertical-align: middle; width: 60px;">
+            ${logoBase64 ? `<img src="${logoBase64}" width="50" height="50" />` : ''}
+          </td>
+          <td colspan="6" style="font-size: 14pt; font-weight: bold; text-align: left; border: none; padding-left: 10px;">KEUSKUPAN AGUNG MERAUKE</td>
+        </tr>
+        <tr>
+          <td colspan="6" style="font-size: 12pt; font-weight: bold; text-align: left; border: none; padding-left: 10px;">Paroki St. Stefanus - Sempan</td>
+        </tr>
+        <tr>
+          <td colspan="6" style="font-size: 11pt; font-weight: bold; text-align: left; border: none; text-decoration: underline; padding-left: 10px;">LAPORAN TRANSAKSI KAS MASUK (${activeTab === 'PERMANENT' ? 'POS DANA PERMANEN' : 'DANA KHUSUS'})</td>
+        </tr>
+        <tr>
+          <td colspan="6" style="font-size: 9pt; text-align: left; border: none; padding-bottom: 20px; padding-left: 10px;">Rentang Waktu: ${timeRangeLabel} | Pos Dana: ${selectedFundLabel}</td>
+        </tr>
+        <tr><td colspan="7" style="border: none;">&nbsp;</td></tr>
+        <thead>
+          <tr class="bg-header">
+            <th style="width: 40px; background-color: #1e293b; color: #ffffff;">No</th>
+            <th style="width: 90px; background-color: #1e293b; color: #ffffff;">Tanggal</th>
+            <th style="width: 130px; background-color: #1e293b; color: #ffffff;">No Transaksi</th>
+            <th style="width: 250px; background-color: #1e293b; color: #ffffff;">Deskripsi Pemasukan</th>
+            <th style="width: 150px; background-color: #1e293b; color: #ffffff;">Pos Dana</th>
+            <th style="width: 150px; background-color: #1e293b; color: #ffffff;">Jenis Penerimaan</th>
+            <th style="width: 120px; background-color: #1e293b; color: #ffffff; text-align: right;">Nominal (IDR)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+          <tr class="bg-total">
+            <td colspan="6" style="text-align: right; font-weight: bold;">TOTAL PEMASUKAN</td>
+            <td class="text-right font-bold mso-number text-green">${totalNominal}</td>
+          </tr>
+        </tbody>
+        <tr><td colspan="7" style="border: none;">&nbsp;</td></tr>
+        <tr><td colspan="7" style="border: none;">&nbsp;</td></tr>
+        <tr>
+          <td colspan="2" style="text-align: center; border: none; font-weight: bold;">Mengetahui,</td>
+          <td colspan="3" style="border: none;">&nbsp;</td>
+          <td colspan="2" style="text-align: center; border: none; font-weight: bold;">Sempan, ${todayFormatted}</td>
+        </tr>
+        <tr>
+          <td colspan="2" style="text-align: center; border: none; font-weight: bold;">Pastor Paroki</td>
+          <td colspan="3" style="border: none;">&nbsp;</td>
+          <td colspan="2" style="text-align: center; border: none; font-weight: bold;">Bendahara Paroki</td>
+        </tr>
+        <tr><td colspan="7" style="height: 50px; border: none;">&nbsp;</td></tr>
+        <tr>
+          <td colspan="2" style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">RP. Johannes Surono</td>
+          <td colspan="3" style="border: none;">&nbsp;</td>
+          <td colspan="2" style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">Yuliana Shanti</td>
+        </tr>
+      </table>
+    `.trim();
+
+    downloadExcel(filename, tableHtml);
+  };
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
@@ -267,7 +466,7 @@ const KasMasukPage = () => {
           <p className="text-sm text-gray-500">Pantau dan catat seluruh penerimaan paroki.</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button variant="outline" className="flex-1 sm:flex-none flex items-center justify-center gap-2 text-xs border-slate-200">
+          <Button onClick={() => setIsExportModalOpen(true)} variant="outline" className="flex-1 sm:flex-none flex items-center justify-center gap-2 text-xs border-slate-200">
             <Download size={16} /> Export Laporan
           </Button>
           <Button onClick={handleOpenModal} className="flex-1 sm:flex-none flex items-center justify-center gap-2 shadow-sm text-xs bg-blue-600 hover:bg-blue-700 text-white">
@@ -281,7 +480,7 @@ const KasMasukPage = () => {
         <button
           onClick={() => setActiveTab('PERMANENT')}
           className={`pb-3 whitespace-nowrap transition-colors duration-200 rounded-none border-b-2 ${activeTab === 'PERMANENT'
-            ? 'border-blue-600 text-blue-600'
+            ? 'border-b-2 border-blue-600 text-blue-600'
             : 'border-transparent hover:text-slate-700 hover:border-slate-300'
             }`}
         >
@@ -290,7 +489,7 @@ const KasMasukPage = () => {
         <button
           onClick={() => setActiveTab('SPECIAL_FUND')}
           className={`pb-3 whitespace-nowrap transition-colors duration-200 rounded-none border-b-2 ${activeTab === 'SPECIAL_FUND'
-            ? 'border-blue-600 text-blue-600'
+            ? 'border-b-2 border-blue-600 text-blue-600'
             : 'border-transparent hover:text-slate-700 hover:border-slate-300'
             }`}
         >
@@ -302,9 +501,9 @@ const KasMasukPage = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 border border-slate-200">
           <p className="text-[10px] text-slate-400 font-semibold">
-            {activeTab === 'PERMANENT' ? 'Total Bulan Ini' : 'Pemasukan Dana Khusus (Bulan Ini)'}
+            {activeTab === 'PERMANENT' ? 'Total Pemasukan (Filtered)' : 'Pemasukan Dana Khusus (Filtered)'}
           </p>
-          <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(totalBulanIni)}</h4>
+          <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(totalNominal)}</h4>
           <div className="flex items-center gap-1 mt-2 text-emerald-600 font-medium text-[10px]">
             <TrendingUp size={12} />
             <span>
@@ -327,7 +526,7 @@ const KasMasukPage = () => {
             <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(avgSpecialIncome)}</h4>
             <div className="flex items-center gap-1 mt-2 text-emerald-600 font-medium text-[10px]">
               <TrendingUp size={12} />
-              <span>Rata-rata Bulan Ini</span>
+              <span>Rata-rata Pemasukan</span>
             </div>
           </Card>
         )}
@@ -336,7 +535,7 @@ const KasMasukPage = () => {
           <p className="text-[10px] text-slate-400 font-semibold">
             {activeTab === 'PERMANENT' ? 'Sumber Terbesar' : 'Sumbangan Terbesar'}
           </p>
-          <h4 className="text-sm font-semibold mt-2 text-slate-800 truncate tracking-tight text-slate-800" title={sumberTerbesar.description}>
+          <h4 className="text-sm font-semibold mt-2 text-slate-800 truncate tracking-tight" title={sumberTerbesar.description}>
             {sumberTerbesar.description}
           </h4>
           <p className="text-[9px] text-slate-400 mt-2 font-medium">
@@ -345,24 +544,83 @@ const KasMasukPage = () => {
         </Card>
 
         <Card className="p-4 border border-slate-200">
-          <p className="text-[10px] text-slate-400 font-semibold">Hari Ini</p>
+          <p className="text-[10px] text-slate-400 font-semibold">Hari Ini (Dalam Filter)</p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(totalHariIni)}</h4>
           <p className="text-[9px] text-slate-400 mt-2 font-medium">{countHariIni} Transaksi masuk</p>
         </Card>
       </div>
 
-      {/* Analytics Section (Menerapkan Tinggi Penuh Sejajar Tanpa Tambahan KPI) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+      {/* Inline Toolbar (Moved above charts) */}
+      <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col lg:flex-row gap-3 justify-between items-stretch lg:items-center">
+        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-none w-full lg:w-80">
+          <Search size={14} className="text-slate-400 shrink-0" />
+          <input
+            type="text"
+            placeholder="Cari deskripsi, ref, pos dana..."
+            className="bg-transparent outline-none text-xs w-full text-slate-800 font-semibold"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
-        {/* Kolom Kiri: Card Grafik Tren yang Diperpanjang Tinggi Vertikalnya */}
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Rentang Waktu */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rentang Waktu:</span>
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value as any)}
+              className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+            >
+              <option value="ALL">Semua Waktu</option>
+              <option value="THIS_MONTH">Bulan Ini</option>
+              <option value="LAST_MONTH">Bulan Lalu</option>
+              <option value="THIS_YEAR">Tahun Ini</option>
+            </select>
+          </div>
+
+          {/* Pos Dana Dropdown */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pos Dana:</span>
+            <select
+              value={selectedFundCategoryId}
+              onChange={(e) => setSelectedFundCategoryId(e.target.value)}
+              className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+            >
+              <option value="ALL">Semua Pos Dana</option>
+              {fundCategoryOptions.map(option => (
+                <option key={option.id} value={option.id}>{option.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Urutan */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Urutan:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+            >
+              <option value="LATEST">Terbaru</option>
+              <option value="OLDEST">Terlama</option>
+              <option value="AMOUNT_DESC">Nominal Tertinggi</option>
+              <option value="AMOUNT_ASC">Nominal Terendah</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Analytics Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* Kolom Kiri: Card Grafik Tren */}
         <Card className="lg:col-span-8 p-5 border-slate-200 shadow-sm flex flex-col justify-between rounded-none">
           <div className="mb-4">
             <h3 className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
-              <Calendar size={14} className="text-blue-500" /> Tren {activeTab === 'PERMANENT' ? 'Penerimaan' : 'Pemasukan Dana Khusus'} 30 Hari Terakhir
+              <Calendar size={14} className="text-blue-500" /> Tren {activeTab === 'PERMANENT' ? 'Penerimaan' : 'Pemasukan Dana Khusus'} ({timeRange === 'ALL' ? 'Semua Waktu' : timeRange === 'THIS_MONTH' ? 'Bulan Ini' : timeRange === 'LAST_MONTH' ? 'Bulan Lalu' : 'Tahun Ini'})
             </h3>
           </div>
 
-          {/* Mengunci Tinggi Canvas Grafik h-[380px] agar Sejajar Sempurna dengan Sisi Kanan */}
           <div className="h-[380px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
@@ -413,50 +671,6 @@ const KasMasukPage = () => {
 
       {/* Main Table Section */}
       <div className="space-y-4">
-        <div className="p-4 bg-white border border-slate-200 rounded-none shadow-sm flex flex-col lg:flex-row gap-3 justify-between items-stretch lg:items-center">
-          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-none w-full lg:w-80">
-            <Search size={14} className="text-slate-400 shrink-0" />
-            <input
-              type="text"
-              placeholder="Cari transaksi..."
-              className="bg-transparent outline-none text-xs w-full text-slate-800 font-semibold"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-4">
-            {/* Rentang Waktu */}
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rentang Waktu:</span>
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value as any)}
-                className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
-              >
-                <option value="ALL">Semua Waktu</option>
-                <option value="THIS_MONTH">Bulan Ini</option>
-                <option value="LAST_MONTH">Bulan Lalu</option>
-              </select>
-            </div>
-
-            {/* Urutan */}
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Urutan:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
-              >
-                <option value="LATEST">Terbaru</option>
-                <option value="OLDEST">Terlama</option>
-                <option value="AMOUNT_DESC">Nominal Tertinggi</option>
-                <option value="AMOUNT_ASC">Nominal Terendah</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
         {isLoading ? (
           <div className="p-8 text-center text-slate-500 bg-white rounded-none shadow-sm flex items-center justify-center gap-2.5 font-semibold text-xs">
             <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-none animate-spin"></div>
@@ -479,7 +693,7 @@ const KasMasukPage = () => {
               'Pos Dana & Jenis',
               'Nominal (IDR)',
               'Status',
-              'Aksi' // Header kosong untuk kolom aksi
+              'Aksi'
             ]}
             renderDesktopRow={(item) => (
               <tr key={item.id} className="hover:bg-slate-50/70 transition-colors group">
@@ -493,7 +707,7 @@ const KasMasukPage = () => {
                   <p className="text-xs font-semibold text-slate-800 truncate" title={item.description}>
                     {item.description}
                   </p>
-                  {/* Tampilkan No Transaksi sebagai subtitel sangat kecil (opsional/alternatif jika bendahara butuh) */}
+                  {/* Tampilkan No Transaksi sebagai subtitel */}
                   <p className="text-[9.5px] font-mono text-slate-400 mt-1 tracking-tighter">
                     Ref: {item.transactionNo}
                   </p>
@@ -527,7 +741,7 @@ const KasMasukPage = () => {
                   </Badge>
                 </td>
 
-                {/* 6. Aksi - Ghost Button (Tanpa box, tanpa shadow, hover merespons) */}
+                {/* 6. Aksi - Ghost Button */}
                 <td className="px-3 py-4 text-center">
                   <button
                     className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors rounded-none outline-none cursor-pointer"
@@ -539,7 +753,6 @@ const KasMasukPage = () => {
               </tr>
             )}
 
-            // Penyesuaian untuk tampilan Mobile agar sejalan dengan perombakan Desktop
             renderMobileCard={(item) => (
               <div className="flex flex-col gap-3">
                 <div className="flex justify-between items-start">
@@ -590,6 +803,62 @@ const KasMasukPage = () => {
 
         <KasMasukForm onSubmit={onFormSubmit} onCancel={handleCloseModal} />
       </Modal>
+
+      {/* Format Selection Modal */}
+      {isExportModalOpen && (
+        <Modal
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+          title="Pilih Format Export Laporan"
+        >
+          <div className="space-y-4 py-2">
+            <p className="text-xs text-slate-500 font-semibold leading-relaxed">
+              Silakan pilih format file laporan kas masuk yang ingin Anda unduh. Laporan yang diunduh akan otomatis terfilter sesuai dengan kata kunci, rentang waktu, dan pos dana yang aktif.
+            </p>
+            
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              <button
+                onClick={() => {
+                  handleExportExcel();
+                  setIsExportModalOpen(false);
+                }}
+                className="flex flex-col items-center justify-center p-6 border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/10 rounded-none transition-all group cursor-pointer outline-none focus:border-emerald-500"
+              >
+                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-none group-hover:bg-emerald-100 transition-colors mb-3">
+                  <Download size={24} />
+                </div>
+                <span className="text-xs font-bold text-slate-800">Microsoft Excel</span>
+                <span className="text-[10px] text-slate-400 mt-1 font-semibold">Template Terformat (.xls)</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  handleExportCSV();
+                  setIsExportModalOpen(false);
+                }}
+                className="flex flex-col items-center justify-center p-6 border border-slate-200 hover:border-slate-800 hover:bg-slate-50 rounded-none transition-all group cursor-pointer outline-none focus:border-slate-800"
+              >
+                <div className="p-3 bg-slate-100 text-slate-600 rounded-none group-hover:bg-slate-200 transition-colors mb-3">
+                  <Download size={24} />
+                </div>
+                <span className="text-xs font-bold text-slate-800">Raw Data CSV</span>
+                <span className="text-[10px] text-slate-400 mt-1 font-semibold">Teks Terpisah Koma (.csv)</span>
+              </button>
+            </div>
+            
+            <div className="flex justify-end pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-none text-xs border-slate-200"
+                onClick={() => setIsExportModalOpen(false)}
+              >
+                Batal
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

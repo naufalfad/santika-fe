@@ -110,6 +110,51 @@ const AnggaranPage = () => {
         }));
     }, [budgets]);
 
+    const getCategoryBadge = (kategori: string) => {
+        const key = kategori.toLowerCase();
+        let dotColor = 'bg-slate-400';
+        let label = kategori;
+
+        if (key.includes('liturgi')) {
+            dotColor = 'bg-indigo-500';
+            label = 'Liturgi';
+        } else if (key.includes('omk') || key.includes('kepemudaan')) {
+            dotColor = 'bg-rose-500';
+            label = 'OMK';
+        } else if (key.includes('pse') || key.includes('sosial')) {
+            dotColor = 'bg-emerald-500';
+            label = 'PSE (Sosial)';
+        } else if (key.includes('operasional')) {
+            dotColor = 'bg-slate-500';
+            label = 'Operasional';
+        } else if (key.includes('pemeliharaan') || key.includes('sarpras')) {
+            dotColor = 'bg-amber-500';
+            label = 'Pemeliharaan';
+        } else if (key.includes('pendidikan') || key.includes('kateketik')) {
+            dotColor = 'bg-purple-500';
+            label = 'Pendidikan';
+        }
+
+        return (
+            <div className="flex items-center gap-2">
+                <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", dotColor)}></span>
+                <span className="text-xs font-semibold text-slate-700">{label}</span>
+            </div>
+        );
+    };
+
+    const getProgressColor = (percent: number) => {
+        if (percent > 80) return 'bg-rose-500';
+        if (percent >= 50) return 'bg-amber-500';
+        return 'bg-emerald-500';
+    };
+
+    const getSisaColorClass = (sisa: number, plafon: number) => {
+        if (sisa <= 0) return 'text-rose-600 font-bold';
+        if (sisa < plafon * 0.2) return 'text-amber-600 font-bold';
+        return 'text-emerald-600 font-bold';
+    };
+
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
             {/* Header section */}
@@ -261,26 +306,24 @@ const AnggaranPage = () => {
                             renderDesktopRow={(item) => (
                                 <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="px-5 py-2.5 border-r">
-                                        <span className="text-[9px] font-semibold px-2 py-0.5 text-slate-600 tracking-tight">
-                                            {item.kategori}
-                                        </span>
+                                        {getCategoryBadge(item.kategori)}
                                     </td>
                                     <td className="px-5 py-2.5 text-xs font-medium text-slate-700 border-r">{item.namaPos}</td>
                                     <td className="px-5 py-2.5 text-xs font-medium text-slate-500 border-r text-center">{item.tahun}</td>
-                                    <td className="px-5 py-2.5 text-xs text-right font-medium text-slate-600 border-r">{formatIDR(item.plafon)}</td>
-                                    <td className="px-5 py-2.5 text-xs text-right font-semibold text-rose-600 border-r">{formatIDR(item.terpakai)}</td>
+                                    <td className="px-5 py-2.5 text-xs text-right font-mono text-slate-600 border-r">{formatIDR(item.plafon)}</td>
+                                    <td className="px-5 py-2.5 text-xs text-right font-mono font-medium text-rose-600 border-r">{formatIDR(item.terpakai)}</td>
                                     <td className="px-5 py-2.5 border-r">
-                                        <div className="flex items-center gap-2 justify-center">
-                                            <div className="flex-1 bg-slate-100 h-1.5 rounded-none w-24 overflow-hidden">
+                                        <div className="flex items-center gap-2.5 justify-center">
+                                            <div className="flex-1 bg-slate-100 h-2 rounded-none w-24 overflow-hidden border border-slate-200/30">
                                                 <div
-                                                    className={`h-full rounded-none ${item.percentUsed > 80 ? 'bg-rose-500' : 'bg-emerald-500'}`}
-                                                    style={{ width: `${item.percentUsed}%` }}
+                                                    className={cn("h-full transition-all duration-300", getProgressColor(item.percentUsed))}
+                                                    style={{ width: `${Math.min(item.percentUsed, 100)}%` }}
                                                 ></div>
                                             </div>
-                                            <span className="text-[9px] font-medium text-slate-500 w-6 text-right">{Math.round(item.percentUsed)}%</span>
+                                            <span className="text-[10px] font-mono font-medium text-slate-500 w-8 text-right">{Math.round(item.percentUsed)}%</span>
                                         </div>
                                     </td>
-                                    <td className={cn("px-5 py-2.5 text-xs text-right font-semibold text-emerald-600", isBendahara && "border-r ")}>{formatIDR(item.sisa)}</td>
+                                    <td className={cn("px-5 py-2.5 text-xs text-right font-mono", isBendahara && "border-r", getSisaColorClass(item.sisa, item.plafon))}>{formatIDR(item.sisa)}</td>
                                     {isBendahara && (
                                         <td className="px-5 py-2.5 text-center">
                                             <button
@@ -292,9 +335,9 @@ const AnggaranPage = () => {
                                                         setIsEditModalOpen(true);
                                                     }
                                                 }}
-                                                className="p-1.5 text-slate-400 hover:text-blue-600 border border-transparent hover:border-slate-200 transition-colors rounded-none"
+                                                className="p-1 text-slate-500 hover:text-blue-600 hover:bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all duration-100 rounded-none shadow-sm"
                                             >
-                                                <Edit2 size={14} />
+                                                <Edit2 size={13} />
                                             </button>
                                         </td>
                                     )}
@@ -303,30 +346,28 @@ const AnggaranPage = () => {
                             renderMobileCard={(item) => (
                                 <div className="flex flex-col gap-2.5">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-[9px] font-semibold px-2 py-0.5 text-slate-600 tracking-tight">
-                                            {item.kategori}
-                                        </span>
-                                        <span className="text-[10px] font-medium text-slate-500">{item.tahun} - {Math.round(item.percentUsed)}% Terpakai</span>
+                                        {getCategoryBadge(item.kategori)}
+                                        <span className="text-[10px] font-mono font-medium text-slate-500">{item.tahun} - {Math.round(item.percentUsed)}% Terpakai</span>
                                     </div>
-                                    <div className="text-xs font-medium text-slate-800">{item.namaPos}</div>
-                                    <div className="w-full bg-slate-100 h-1.5 rounded-none overflow-hidden">
+                                    <div className="text-xs font-semibold text-slate-800">{item.namaPos}</div>
+                                    <div className="w-full bg-slate-100 h-2 rounded-none border border-slate-200/30 overflow-hidden">
                                         <div
-                                            className={`h-full rounded-none ${item.percentUsed > 80 ? 'bg-rose-500' : 'bg-emerald-500'}`}
-                                            style={{ width: `${item.percentUsed}%` }}
+                                            className={cn("h-full transition-all duration-300", getProgressColor(item.percentUsed))}
+                                            style={{ width: `${Math.min(item.percentUsed, 100)}%` }}
                                         ></div>
                                     </div>
                                     <div className="grid grid-cols-3 gap-2 text-[10px] pt-1">
                                         <div>
-                                            <span className="text-slate-400 font-medium block text-[8px]">Plafon</span>
-                                            <span className="font-semibold text-slate-700">{formatIDR(item.plafon)}</span>
+                                            <span className="text-slate-400 font-semibold block text-[8px]">Plafon</span>
+                                            <span className="font-mono text-slate-700">{formatIDR(item.plafon)}</span>
                                         </div>
                                         <div>
-                                            <span className="text-slate-400 font-medium block text-[8px]">Terpakai</span>
-                                            <span className="font-medium text-rose-600">{formatIDR(item.terpakai)}</span>
+                                            <span className="text-slate-400 font-semibold block text-[8px]">Terpakai</span>
+                                            <span className="font-mono font-medium text-rose-600">{formatIDR(item.terpakai)}</span>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-slate-400 font-medium block text-[8px]">Sisa</span>
-                                            <span className="font-semibold text-emerald-600">{formatIDR(item.sisa)}</span>
+                                            <span className="text-slate-400 font-semibold block text-[8px]">Sisa</span>
+                                            <span className={cn("font-mono", getSisaColorClass(item.sisa, item.plafon))}>{formatIDR(item.sisa)}</span>
                                         </div>
                                     </div>
                                     {isBendahara && (
@@ -340,9 +381,9 @@ const AnggaranPage = () => {
                                                         setIsEditModalOpen(true);
                                                     }
                                                 }}
-                                                className="p-1.5 text-slate-400 hover:text-blue-600 border border-transparent hover:border-slate-200 transition-colors rounded-none flex items-center gap-1.5 text-[10px] font-semibold"
+                                                className="px-2.5 py-1 text-slate-500 hover:text-blue-600 hover:bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all duration-100 rounded-none flex items-center gap-1 text-[10px] font-semibold"
                                             >
-                                                <Edit2 size={13} /> Edit
+                                                <Edit2 size={12} /> Edit
                                             </button>
                                         </div>
                                     )}

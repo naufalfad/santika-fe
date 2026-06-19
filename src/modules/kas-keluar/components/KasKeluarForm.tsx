@@ -6,10 +6,12 @@ import { Upload, X, CheckCircle2, AlertCircle, HelpCircle } from 'lucide-react';
 import { Button } from '../../../shared/components/ui/Button';
 import { CurrencyInput } from '../../../shared/components/ui/CurrencyInput';
 import { useActivityStore } from '../../../app/store/useActivityStore';
+import { useNotificationStore } from '../../../app/store/useNotificationStore';
 import { useFundCategoriesQuery } from '../../kas-masuk/hooks/useKasMasukQuery';
 import { useExpenseTypesQuery, useApprovalsQuery, useAddKasKeluarMutation } from '../hooks/useKasKeluarQuery';
 import { useAnggaranQuery } from '../../anggaran/hooks/useAnggaranQuery';
 import { useSpecialFundsQuery } from '../../dana-khusus/hooks/useSpecialFundQuery';
+import { formatIDR } from '../../../shared/utils/formatter';
 
 const schema = z.object({
   transaction_date: z.string().min(1, 'Tanggal wajib diisi'),
@@ -29,6 +31,7 @@ type FormData = z.infer<typeof schema>;
 export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const addMutation = useAddKasKeluarMutation();
   const addLog = useActivityStore((state) => state.addLog);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const { data: fundCategories = [] } = useFundCategoriesQuery();
   const { data: expenseTypes = [] } = useExpenseTypesQuery();
@@ -117,6 +120,11 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
           `Pengeluaran Kas - ${data.penerima}`,
           data.amount,
           'out'
+        );
+        addNotification(
+          'Transaksi Pengeluaran Baru',
+          `Pencatatan kas keluar sebesar ${formatIDR(data.amount)} untuk "${data.penerima}" berhasil ditambahkan.`,
+          'warning'
         );
         onSuccess();
       }
