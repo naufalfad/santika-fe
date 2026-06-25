@@ -21,7 +21,7 @@ import { useNotificationStore } from '../../../app/store/useNotificationStore';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { downloadCSV, downloadExcel } from '../../../shared/utils/export';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
-import churchLogo from '../../../assets/church.png';
+import churchLogo from '../../../../public/church.png';
 import { useKasMasukQuery, useAddKasMasukMutation, useFundBalancesQuery, useAuditTransactionMutation, type CashTransactionIncome } from '../hooks/useKasMasukQuery';
 import { cn } from '../../../shared/utils/cn';
 import { useAuthStore } from '../../../app/store/useAuthStore';
@@ -53,7 +53,7 @@ const KasMasukPage = () => {
   const [sortBy, setSortBy] = useState<'LATEST' | 'OLDEST' | 'AMOUNT_DESC' | 'AMOUNT_ASC'>('LATEST');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDetailTransaction, setSelectedDetailTransaction] = useState<CashTransactionIncome | null>(null);
-  
+
   const [auditStatusVal, setAuditStatusVal] = useState<'TERVERIFIKASI' | 'PERLU_KLARIFIKASI' | 'TIDAK_VALID'>('TERVERIFIKASI');
   const [auditNotesVal, setAuditNotesVal] = useState('');
   const itemsPerPage = 10;
@@ -861,12 +861,12 @@ const KasMasukPage = () => {
                 <td className="px-5 py-4 text-center border-r border-slate-100">
                   <Badge variant={
                     item.auditStatus === 'TERVERIFIKASI' ? 'success' :
-                    item.auditStatus === 'PERLU_KLARIFIKASI' ? 'warning' :
-                    item.auditStatus === 'TIDAK_VALID' ? 'danger' : 'default'
+                      item.auditStatus === 'PERLU_KLARIFIKASI' ? 'warning' :
+                        item.auditStatus === 'TIDAK_VALID' ? 'danger' : 'default'
                   } className="px-2.5 py-1 text-[10px]">
                     {item.auditStatus === 'TERVERIFIKASI' ? 'Terverifikasi' :
-                     item.auditStatus === 'PERLU_KLARIFIKASI' ? 'Klarifikasi' :
-                     item.auditStatus === 'TIDAK_VALID' ? 'Tidak Valid' : 'Belum Diaudit'}
+                      item.auditStatus === 'PERLU_KLARIFIKASI' ? 'Klarifikasi' :
+                        item.auditStatus === 'TIDAK_VALID' ? 'Tidak Valid' : 'Belum Diaudit'}
                   </Badge>
                 </td>
 
@@ -896,12 +896,12 @@ const KasMasukPage = () => {
                   </div>
                   <Badge variant={
                     item.auditStatus === 'TERVERIFIKASI' ? 'success' :
-                    item.auditStatus === 'PERLU_KLARIFIKASI' ? 'warning' :
-                    item.auditStatus === 'TIDAK_VALID' ? 'danger' : 'default'
+                      item.auditStatus === 'PERLU_KLARIFIKASI' ? 'warning' :
+                        item.auditStatus === 'TIDAK_VALID' ? 'danger' : 'default'
                   } className="text-[9px]">
                     {item.auditStatus === 'TERVERIFIKASI' ? 'Terverifikasi' :
-                     item.auditStatus === 'PERLU_KLARIFIKASI' ? 'Klarifikasi' :
-                     item.auditStatus === 'TIDAK_VALID' ? 'Tidak Valid' : 'Belum Diaudit'}
+                      item.auditStatus === 'PERLU_KLARIFIKASI' ? 'Klarifikasi' :
+                        item.auditStatus === 'TIDAK_VALID' ? 'Tidak Valid' : 'Belum Diaudit'}
                   </Badge>
                 </div>
 
@@ -959,7 +959,7 @@ const KasMasukPage = () => {
             <p className="text-xs text-slate-500 font-semibold leading-relaxed">
               Silakan pilih format file laporan kas masuk yang ingin Anda unduh. Laporan yang diunduh akan otomatis terfilter sesuai dengan kata kunci, rentang waktu, dan pos dana yang aktif.
             </p>
-            
+
             <div className="grid grid-cols-2 gap-4 pt-2">
               <button
                 onClick={() => {
@@ -989,7 +989,7 @@ const KasMasukPage = () => {
                 <span className="text-[10px] text-slate-400 mt-1 font-semibold">Teks Terpisah Koma (.csv)</span>
               </button>
             </div>
-            
+
             <div className="flex justify-end pt-2">
               <Button
                 variant="outline"
@@ -1051,12 +1051,12 @@ const KasMasukPage = () => {
                 <div className="text-slate-800 font-semibold">
                   <Badge variant={
                     selectedDetailTransaction.auditStatus === 'TERVERIFIKASI' ? 'success' :
-                    selectedDetailTransaction.auditStatus === 'PERLU_KLARIFIKASI' ? 'warning' :
-                    selectedDetailTransaction.auditStatus === 'TIDAK_VALID' ? 'danger' : 'default'
+                      selectedDetailTransaction.auditStatus === 'PERLU_KLARIFIKASI' ? 'warning' :
+                        selectedDetailTransaction.auditStatus === 'TIDAK_VALID' ? 'danger' : 'default'
                   } className="px-2 py-0.5 text-[10px]">
                     {selectedDetailTransaction.auditStatus === 'TERVERIFIKASI' ? 'Terverifikasi' :
-                     selectedDetailTransaction.auditStatus === 'PERLU_KLARIFIKASI' ? 'Klarifikasi' :
-                     selectedDetailTransaction.auditStatus === 'TIDAK_VALID' ? 'Tidak Valid' : 'Belum Diaudit'}
+                      selectedDetailTransaction.auditStatus === 'PERLU_KLARIFIKASI' ? 'Klarifikasi' :
+                        selectedDetailTransaction.auditStatus === 'TIDAK_VALID' ? 'Tidak Valid' : 'Belum Diaudit'}
                   </Badge>
                 </div>
 
@@ -1107,7 +1107,7 @@ const KasMasukPage = () => {
                 <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Panel Verifikasi Audit
                 </h4>
-                
+
                 <div className="space-y-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                     Pilih Status Verifikasi:

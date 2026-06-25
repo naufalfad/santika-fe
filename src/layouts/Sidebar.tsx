@@ -193,7 +193,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           {/* border-t satu sisi: no box-inside-box rule */}
           <div className="px-5 py-4 border-t border-slate-800">
             <img
-              src="src/assets/church.png"
+              src="/church.png"
               alt="Paroki St. Stefanus Sempan"
               className="w-28 mx-auto mb-3 opacity-75"
             />

@@ -11,7 +11,7 @@ import { LaporanRealisasi } from '../components/LaporanRealisasi';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatIDR } from '../../../shared/utils/formatter';
-import churchLogo from '../../../assets/church.png';
+import churchLogo from '../../../../public/church.png';
 
 type ReportType = 'BKU' | 'ARUS_KAS' | 'REALISASI';
 
@@ -47,7 +47,7 @@ const LaporanPage = () => {
         const list = [];
         const now = new Date();
         const currentYear = now.getFullYear();
-        
+
         for (let y = currentYear; y >= currentYear - 1; y--) {
             const startMonth = y === currentYear ? now.getMonth() + 1 : 12;
             for (let m = startMonth; m >= 1; m--) {
@@ -396,12 +396,12 @@ const LaporanPage = () => {
                         `${Math.round(item.persen)}%`,
                         String(item.sisa)
                     ]);
-                    
+
                     const totalAnggaran = realisasiSummary.reduce((sum: number, item: any) => sum + item.anggaran, 0);
                     const totalRealisasi = realisasiSummary.reduce((sum: number, item: any) => sum + item.realisasi, 0);
                     const totalSisa = realisasiSummary.reduce((sum: number, item: any) => sum + item.sisa, 0);
                     const totalPersen = totalAnggaran > 0 ? (totalRealisasi / totalAnggaran) * 100 : 0;
-                    
+
                     rows.push([
                         'Total Pagu Anggaran Paroki',
                         String(totalAnggaran),
@@ -451,19 +451,19 @@ const LaporanPage = () => {
         if (logoBase64) {
             doc.addImage(logoBase64, 'PNG', 15, 10, 20, 20);
         }
-        
+
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(14);
         doc.text('KEUSKUPAN AGUNG MERAUKE', 40, 15);
-        
+
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(11);
         doc.text('Paroki St. Stefanus - Sempan', 40, 21);
-        
+
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(12);
         doc.text('LAPORAN BUKU KAS UMUM (BKU)', 40, 28);
-        
+
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(9);
         doc.text(`Periode Laporan: ${selectedPeriodLabel} | Sempan, Papua Selatan`, 40, 34);
@@ -530,7 +530,7 @@ const LaporanPage = () => {
         doc.setFontSize(10);
         doc.text('Mengetahui,', 40, sigY);
         doc.text(`Sempan, ${todayFormatted}`, 200, sigY);
-        
+
         doc.text('Pastor Paroki,', 40, sigY + 6);
         doc.text('Bendahara Paroki,', 200, sigY + 6);
 
@@ -551,19 +551,19 @@ const LaporanPage = () => {
         if (logoBase64) {
             doc.addImage(logoBase64, 'PNG', 15, 10, 20, 20);
         }
-        
+
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(14);
         doc.text('KEUSKUPAN AGUNG MERAUKE', 40, 15);
-        
+
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(11);
         doc.text('Paroki St. Stefanus - Sempan', 40, 21);
-        
+
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(12);
         doc.text('LAPORAN ARUS KAS', 40, 28);
-        
+
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(9);
         doc.text(`Periode Laporan: ${selectedPeriodLabel}`, 40, 34);
@@ -602,7 +602,7 @@ const LaporanPage = () => {
                 const label = String(data.cell.raw || '');
                 const isHeader = label === 'Arus Kas Masuk (Penerimaan)' || label === 'Arus Kas Keluar (Pengeluaran)';
                 const isTotal = label === 'Total Penerimaan Kas' || label === 'Total Pengeluaran Kas' || label === 'KENAIKAN / (PENURUNAN) BERSIH KAS';
-                
+
                 if (isHeader) {
                     data.cell.styles.fontStyle = 'bold';
                     data.cell.styles.fillColor = [241, 245, 249];
@@ -629,7 +629,7 @@ const LaporanPage = () => {
         doc.setFontSize(10);
         doc.text('Mengetahui,', 30, sigY);
         doc.text(`Sempan, ${todayFormatted}`, 130, sigY);
-        
+
         doc.text('Pastor Paroki,', 30, sigY + 6);
         doc.text('Bendahara Paroki,', 130, sigY + 6);
 
@@ -650,19 +650,19 @@ const LaporanPage = () => {
         if (logoBase64) {
             doc.addImage(logoBase64, 'PNG', 15, 10, 20, 20);
         }
-        
+
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(14);
         doc.text('KEUSKUPAN AGUNG MERAUKE', 40, 15);
-        
+
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(11);
         doc.text('Paroki St. Stefanus - Sempan', 40, 21);
-        
+
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(12);
         doc.text('LAPORAN REALISASI ANGGARAN PAROKI', 40, 28);
-        
+
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(9);
         doc.text(`Tahun Anggaran: ${selectedYear}`, 40, 34);
@@ -727,7 +727,7 @@ const LaporanPage = () => {
         doc.setFontSize(10);
         doc.text('Mengetahui,', 30, sigY);
         doc.text(`Sempan, ${todayFormatted}`, 130, sigY);
-        
+
         doc.text('Pastor Paroki,', 30, sigY + 6);
         doc.text('Bendahara Paroki,', 130, sigY + 6);
 
@@ -934,7 +934,7 @@ const LaporanPage = () => {
                         <p className="text-xs text-slate-500 font-semibold leading-relaxed">
                             Silakan pilih format file untuk laporan keuangan {activeTab === 'BKU' ? 'Buku Kas Umum' : activeTab === 'ARUS_KAS' ? 'Arus Kas' : 'Realisasi Anggaran'} yang ingin Anda unduh.
                         </p>
-                        
+
                         <div className="grid grid-cols-2 gap-4 pt-2">
                             <button
                                 onClick={() => {
@@ -964,7 +964,7 @@ const LaporanPage = () => {
                                 <span className="text-[10px] text-slate-400 mt-1 font-semibold">Teks Terpisah Koma (.csv)</span>
                             </button>
                         </div>
-                        
+
                         <div className="flex justify-end pt-2">
                             <Button
                                 variant="outline"

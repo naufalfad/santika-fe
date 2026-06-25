@@ -56,15 +56,15 @@ const LoginPage = () => {
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden select-none">
       {/* Background Image with Dark Overlay Gradient */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 scale-105"
-        style={{ backgroundImage: `url('src/assets/church-bg.png')` }}
+        style={{ backgroundImage: `url('public/church-bg.png')` }}
       />
       <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-900/90 to-slate-800/70" />
 
       {/* Login Card Wrapper */}
       <div className="relative w-full max-w-[420px] bg-slate-900/75 border border-slate-700/50 backdrop-blur-md p-8 shadow-2xl rounded-none flex flex-col gap-6 z-10">
-        
+
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center gap-2">
           <div className="w-12 h-12 bg-blue-600/90 text-white flex items-center justify-center border border-blue-500/30 shadow-lg shadow-blue-500/10">

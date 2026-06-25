@@ -142,7 +142,7 @@ const DashboardPage = () => {
         {/* Background Image (Absolute Right) */}
         <div className="absolute right-0 top-0 h-full w-[35%] hidden md:block opacity-60 pointer-events-none">
           <img
-            src="src/assets/church-bg.png"
+            src="/church-bg.png"
             alt="Church BG"
             className="w-full h-full object-cover"
             style={{

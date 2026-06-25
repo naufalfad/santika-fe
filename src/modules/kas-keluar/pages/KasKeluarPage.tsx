@@ -19,7 +19,7 @@ import { SPJUploadModal } from '../../spj/components/SPJUploadModal';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { downloadCSV, downloadExcel } from '../../../shared/utils/export';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
-import churchLogo from '../../../assets/church.png';
+import churchLogo from '../../../../public/church.png';
 import { useKasKeluarQuery, type CashTransactionExpense } from '../hooks/useKasKeluarQuery';
 import { useFundBalancesQuery, useAuditTransactionMutation } from '../../kas-masuk/hooks/useKasMasukQuery';
 import { useAnggaranQuery } from '../../anggaran/hooks/useAnggaranQuery';
@@ -58,7 +58,7 @@ const KasKeluarPage = () => {
   const [sortBy, setSortBy] = useState<'LATEST' | 'OLDEST' | 'AMOUNT_DESC' | 'AMOUNT_ASC'>('LATEST');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDetailTransaction, setSelectedDetailTransaction] = useState<CashTransactionExpense | null>(null);
-  
+
   const [auditStatusVal, setAuditStatusVal] = useState<'TERVERIFIKASI' | 'PERLU_KLARIFIKASI' | 'TIDAK_VALID'>('TERVERIFIKASI');
   const [auditNotesVal, setAuditNotesVal] = useState('');
   const itemsPerPage = 10;
@@ -832,12 +832,12 @@ const KasKeluarPage = () => {
                 <td className="px-5 py-3.5 border-r text-center">
                   <Badge variant={
                     item.auditStatus === 'TERVERIFIKASI' ? 'success' :
-                    item.auditStatus === 'PERLU_KLARIFIKASI' ? 'warning' :
-                    item.auditStatus === 'TIDAK_VALID' ? 'danger' : 'default'
+                      item.auditStatus === 'PERLU_KLARIFIKASI' ? 'warning' :
+                        item.auditStatus === 'TIDAK_VALID' ? 'danger' : 'default'
                   } className="px-2.5 py-1 text-[10px]">
                     {item.auditStatus === 'TERVERIFIKASI' ? 'Terverifikasi' :
-                     item.auditStatus === 'PERLU_KLARIFIKASI' ? 'Klarifikasi' :
-                     item.auditStatus === 'TIDAK_VALID' ? 'Tidak Valid' : 'Belum Diaudit'}
+                      item.auditStatus === 'PERLU_KLARIFIKASI' ? 'Klarifikasi' :
+                        item.auditStatus === 'TIDAK_VALID' ? 'Tidak Valid' : 'Belum Diaudit'}
                   </Badge>
                 </td>
                 <td className="px-5 py-3.5 border-r text-center">
@@ -909,12 +909,12 @@ const KasKeluarPage = () => {
                 <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100">
                   <Badge variant={
                     item.auditStatus === 'TERVERIFIKASI' ? 'success' :
-                    item.auditStatus === 'PERLU_KLARIFIKASI' ? 'warning' :
-                    item.auditStatus === 'TIDAK_VALID' ? 'danger' : 'default'
+                      item.auditStatus === 'PERLU_KLARIFIKASI' ? 'warning' :
+                        item.auditStatus === 'TIDAK_VALID' ? 'danger' : 'default'
                   } className="text-[9px]">
                     {item.auditStatus === 'TERVERIFIKASI' ? 'Terverifikasi' :
-                     item.auditStatus === 'PERLU_KLARIFIKASI' ? 'Klarifikasi' :
-                     item.auditStatus === 'TIDAK_VALID' ? 'Tidak Valid' : 'Belum Diaudit'}
+                      item.auditStatus === 'PERLU_KLARIFIKASI' ? 'Klarifikasi' :
+                        item.auditStatus === 'TIDAK_VALID' ? 'Tidak Valid' : 'Belum Diaudit'}
                   </Badge>
                   <div className="flex items-center gap-3">
                     {item.attachment?.fileUrl && (
@@ -1107,12 +1107,12 @@ const KasKeluarPage = () => {
                 <div className="text-slate-800 font-semibold">
                   <Badge variant={
                     selectedDetailTransaction.auditStatus === 'TERVERIFIKASI' ? 'success' :
-                    selectedDetailTransaction.auditStatus === 'PERLU_KLARIFIKASI' ? 'warning' :
-                    selectedDetailTransaction.auditStatus === 'TIDAK_VALID' ? 'danger' : 'default'
+                      selectedDetailTransaction.auditStatus === 'PERLU_KLARIFIKASI' ? 'warning' :
+                        selectedDetailTransaction.auditStatus === 'TIDAK_VALID' ? 'danger' : 'default'
                   } className="px-2 py-0.5 text-[10px]">
                     {selectedDetailTransaction.auditStatus === 'TERVERIFIKASI' ? 'Terverifikasi' :
-                     selectedDetailTransaction.auditStatus === 'PERLU_KLARIFIKASI' ? 'Klarifikasi' :
-                     selectedDetailTransaction.auditStatus === 'TIDAK_VALID' ? 'Tidak Valid' : 'Belum Diaudit'}
+                      selectedDetailTransaction.auditStatus === 'PERLU_KLARIFIKASI' ? 'Klarifikasi' :
+                        selectedDetailTransaction.auditStatus === 'TIDAK_VALID' ? 'Tidak Valid' : 'Belum Diaudit'}
                   </Badge>
                 </div>
 
@@ -1178,7 +1178,7 @@ const KasKeluarPage = () => {
                 <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Panel Verifikasi Audit
                 </h4>
-                
+
                 <div className="space-y-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                     Pilih Status Verifikasi:
