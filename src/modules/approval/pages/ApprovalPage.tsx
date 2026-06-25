@@ -264,9 +264,9 @@ const ApprovalPage = () => {
                   <Card
                     key={item.id}
                     className={cn(
-                      "p-4 cursor-pointer transition-all duration-200 border-l-4",
+                      "p-4 cursor-pointer transition-all duration-200 border-l",
                       isSelected
-                        ? "border-l-blue-600 bg-blue-50/20 shadow-md ring-1 ring-blue-100"
+                        ? "border-l-transparent hover:bg-white hover:shadow-sm"
                         : "border-l-transparent hover:bg-white hover:shadow-sm"
                     )}
                     onClick={() => {
