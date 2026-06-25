@@ -32,6 +32,15 @@ export interface CashTransactionIncome {
   updatedAt: string;
   specialFundId?: string | null;
   specialFund?: any;
+  auditStatus?: string;
+  auditNotes?: string | null;
+  auditedById?: string | null;
+  auditedAt?: string | null;
+  auditedBy?: {
+    id: string;
+    name: string;
+    role: string;
+  } | null;
 }
 
 export interface CreateIncomePayload {
@@ -164,6 +173,31 @@ export const useTransferBalanceMutation = () => {
       queryClient.invalidateQueries({ queryKey: ['fundBalances'] });
       queryClient.invalidateQueries({ queryKey: ['kasMasuk'] });
       queryClient.invalidateQueries({ queryKey: ['kasKeluar'] });
+    },
+  });
+};
+
+export interface AuditTransactionPayload {
+  id: string;
+  status: 'TERVERIFIKASI' | 'PERLU_KLARIFIKASI' | 'TIDAK_VALID';
+  notes?: string;
+}
+
+/**
+ * Mutation hook to audit/verify cash transactions (both incomes & expenses).
+ */
+export const useAuditTransactionMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status, notes }: AuditTransactionPayload) => {
+      const response = await axiosInstance.put(`/v1/cash/transactions/${id}/audit`, { status, notes });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kasMasuk'] });
+      queryClient.invalidateQueries({ queryKey: ['kasKeluar'] });
+      queryClient.invalidateQueries({ queryKey: ['fundBalances'] });
+      queryClient.invalidateQueries({ queryKey: ['audit-logs'] });
     },
   });
 };

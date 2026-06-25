@@ -22,8 +22,9 @@ import { formatIDR } from '../../../shared/utils/formatter';
 import { downloadCSV, downloadExcel } from '../../../shared/utils/export';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
 import churchLogo from '../../../assets/church.png';
-import { useKasMasukQuery, useAddKasMasukMutation, useFundBalancesQuery, type CashTransactionIncome } from '../hooks/useKasMasukQuery';
+import { useKasMasukQuery, useAddKasMasukMutation, useFundBalancesQuery, useAuditTransactionMutation, type CashTransactionIncome } from '../hooks/useKasMasukQuery';
 import { cn } from '../../../shared/utils/cn';
+import { useAuthStore } from '../../../app/store/useAuthStore';
 
 /**
  * Standardized high-contrast, high-density Kas Masuk Management page.
@@ -35,6 +36,10 @@ const KasMasukPage = () => {
   const { data: kasMasuk = [], isLoading } = useKasMasukQuery();
   useFundBalancesQuery();
   const addMutation = useAddKasMasukMutation();
+  const auditMutation = useAuditTransactionMutation();
+  const { user } = useAuthStore();
+  const isAuditor = user?.role === 'SUPER_ADMIN' || user?.role === 'PASTOR' || user?.role === 'BENDAHARA';
+
   const addLog = useActivityStore((state) => state.addLog);
   const addNotification = useNotificationStore((state) => state.addNotification);
 
@@ -44,9 +49,13 @@ const KasMasukPage = () => {
   const [activeTab, setActiveTab] = useState<'PERMANENT' | 'SPECIAL_FUND'>('PERMANENT');
   const [timeRange, setTimeRange] = useState<'ALL' | 'THIS_MONTH' | 'LAST_MONTH' | 'THIS_YEAR'>('ALL');
   const [selectedFundCategoryId, setSelectedFundCategoryId] = useState<string>('ALL');
+  const [auditFilter, setAuditFilter] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<'LATEST' | 'OLDEST' | 'AMOUNT_DESC' | 'AMOUNT_ASC'>('LATEST');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDetailTransaction, setSelectedDetailTransaction] = useState<CashTransactionIncome | null>(null);
+  
+  const [auditStatusVal, setAuditStatusVal] = useState<'TERVERIFIKASI' | 'PERLU_KLARIFIKASI' | 'TIDAK_VALID'>('TERVERIFIKASI');
+  const [auditNotesVal, setAuditNotesVal] = useState('');
   const itemsPerPage = 10;
 
   const handleOpenModal = () => setIsModalOpen(true);
@@ -76,6 +85,51 @@ const KasMasukPage = () => {
         handleCloseModal();
       }
     });
+  };
+
+  useEffect(() => {
+    if (selectedDetailTransaction) {
+      const status = selectedDetailTransaction.auditStatus;
+      if (status && status !== 'BELUM_DIAUDIT') {
+        setAuditStatusVal(status as any);
+      } else {
+        setAuditStatusVal('TERVERIFIKASI');
+      }
+      setAuditNotesVal(selectedDetailTransaction.auditNotes || '');
+    }
+  }, [selectedDetailTransaction]);
+
+  const handleAuditSubmit = () => {
+    if (!selectedDetailTransaction) return;
+    auditMutation.mutate(
+      {
+        id: selectedDetailTransaction.id,
+        status: auditStatusVal,
+        notes: auditNotesVal,
+      },
+      {
+        onSuccess: () => {
+          addLog(
+            `Audit Transaksi - ${selectedDetailTransaction.transactionNo}`,
+            Number(selectedDetailTransaction.amount),
+            'in'
+          );
+          addNotification(
+            'Audit Berhasil Disimpan',
+            `Transaksi ${selectedDetailTransaction.transactionNo} berhasil diubah statusnya menjadi ${auditStatusVal}.`,
+            'success'
+          );
+          setSelectedDetailTransaction(null);
+        },
+        onError: (err: any) => {
+          addNotification(
+            'Gagal Menyimpan Audit',
+            err?.response?.data?.message || 'Terjadi kesalahan saat mengaudit transaksi.',
+            'error'
+          );
+        }
+      }
+    );
   };
 
   // Split transactions
@@ -109,13 +163,21 @@ const KasMasukPage = () => {
   }, [activeTab]);
 
   // Cascading data processing engine:
-  // 1. Filter by time and fund category
+  // 1. Filter by time, fund category and audit status
   const filteredByTimeAndFund = useMemo(() => {
     let result = currentTransactions;
 
     // Filter by Pos Dana if not 'ALL'
     if (selectedFundCategoryId !== 'ALL') {
       result = result.filter(item => item.fundCategoryId === selectedFundCategoryId);
+    }
+
+    // Filter by Audit Status if not 'ALL'
+    if (auditFilter !== 'ALL') {
+      result = result.filter(item => {
+        const status = item.auditStatus || 'BELUM_DIAUDIT';
+        return status === auditFilter;
+      });
     }
 
     // Filter by time range
@@ -139,7 +201,7 @@ const KasMasukPage = () => {
       }
       return true;
     });
-  }, [currentTransactions, timeRange, selectedFundCategoryId]);
+  }, [currentTransactions, timeRange, selectedFundCategoryId, auditFilter]);
 
   // 2. Filter by search term
   const searchedData = useMemo(() => {
@@ -186,7 +248,7 @@ const KasMasukPage = () => {
   // Reset page to 1 when filters or active tab change
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, searchTerm, timeRange, sortBy, selectedFundCategoryId]);
+  }, [activeTab, searchTerm, timeRange, sortBy, selectedFundCategoryId, auditFilter]);
 
   // Memoize analytical calculations BERSUMBER DARI searchedData (Single Source of Truth)
   const totalNominal = useMemo(() => {
@@ -641,6 +703,22 @@ const KasMasukPage = () => {
             </select>
           </div>
 
+          {/* Status Audit Dropdown */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Audit:</span>
+            <select
+              value={auditFilter}
+              onChange={(e) => setAuditFilter(e.target.value)}
+              className="bg-slate-50 border border-slate-200 px-2 py-1 text-xs font-semibold rounded-none outline-none focus:border-slate-400 text-slate-700 cursor-pointer h-8"
+            >
+              <option value="ALL">Semua</option>
+              <option value="BELUM_DIAUDIT">Belum Diaudit</option>
+              <option value="TERVERIFIKASI">Terverifikasi</option>
+              <option value="PERLU_KLARIFIKASI">Perlu Klarifikasi</option>
+              <option value="TIDAK_VALID">Tidak Valid</option>
+            </select>
+          </div>
+
           {/* Urutan */}
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Urutan:</span>
@@ -739,7 +817,7 @@ const KasMasukPage = () => {
               'Deskripsi Pemasukan',
               'Pos Dana & Jenis',
               'Nominal (IDR)',
-              'Status',
+              'Status Audit',
               'Aksi'
             ]}
             renderDesktopRow={(item) => (
@@ -779,10 +857,16 @@ const KasMasukPage = () => {
                   </span>
                 </td>
 
-                {/* 5. Status - Rata Tengah */}
+                {/* 5. Status Audit - Rata Tengah */}
                 <td className="px-5 py-4 text-center border-r border-slate-100">
-                  <Badge variant="success" className="px-2.5 py-1 text-[10px]">
-                    Selesai
+                  <Badge variant={
+                    item.auditStatus === 'TERVERIFIKASI' ? 'success' :
+                    item.auditStatus === 'PERLU_KLARIFIKASI' ? 'warning' :
+                    item.auditStatus === 'TIDAK_VALID' ? 'danger' : 'default'
+                  } className="px-2.5 py-1 text-[10px]">
+                    {item.auditStatus === 'TERVERIFIKASI' ? 'Terverifikasi' :
+                     item.auditStatus === 'PERLU_KLARIFIKASI' ? 'Klarifikasi' :
+                     item.auditStatus === 'TIDAK_VALID' ? 'Tidak Valid' : 'Belum Diaudit'}
                   </Badge>
                 </td>
 
@@ -810,7 +894,15 @@ const KasMasukPage = () => {
                       {item.transactionNo}
                     </span>
                   </div>
-                  <Badge variant="success" className="text-[9px]">Selesai</Badge>
+                  <Badge variant={
+                    item.auditStatus === 'TERVERIFIKASI' ? 'success' :
+                    item.auditStatus === 'PERLU_KLARIFIKASI' ? 'warning' :
+                    item.auditStatus === 'TIDAK_VALID' ? 'danger' : 'default'
+                  } className="text-[9px]">
+                    {item.auditStatus === 'TERVERIFIKASI' ? 'Terverifikasi' :
+                     item.auditStatus === 'PERLU_KLARIFIKASI' ? 'Klarifikasi' :
+                     item.auditStatus === 'TIDAK_VALID' ? 'Tidak Valid' : 'Belum Diaudit'}
+                  </Badge>
                 </div>
 
                 <div className="flex justify-between items-end">
@@ -954,6 +1046,52 @@ const KasMasukPage = () => {
 
                 <div className="text-slate-400 font-medium">Keterangan</div>
                 <div className="text-slate-800 font-medium whitespace-pre-wrap">{selectedDetailTransaction.description}</div>
+
+                <div className="text-slate-400 font-medium">Status Audit</div>
+                <div className="text-slate-800 font-semibold">
+                  <Badge variant={
+                    selectedDetailTransaction.auditStatus === 'TERVERIFIKASI' ? 'success' :
+                    selectedDetailTransaction.auditStatus === 'PERLU_KLARIFIKASI' ? 'warning' :
+                    selectedDetailTransaction.auditStatus === 'TIDAK_VALID' ? 'danger' : 'default'
+                  } className="px-2 py-0.5 text-[10px]">
+                    {selectedDetailTransaction.auditStatus === 'TERVERIFIKASI' ? 'Terverifikasi' :
+                     selectedDetailTransaction.auditStatus === 'PERLU_KLARIFIKASI' ? 'Klarifikasi' :
+                     selectedDetailTransaction.auditStatus === 'TIDAK_VALID' ? 'Tidak Valid' : 'Belum Diaudit'}
+                  </Badge>
+                </div>
+
+                {selectedDetailTransaction.auditedBy && (
+                  <>
+                    <div className="text-slate-400 font-medium">Auditor</div>
+                    <div className="text-slate-800 font-semibold">
+                      {selectedDetailTransaction.auditedBy.name} ({selectedDetailTransaction.auditedBy.role})
+                    </div>
+                  </>
+                )}
+
+                {selectedDetailTransaction.auditedAt && (
+                  <>
+                    <div className="text-slate-400 font-medium">Waktu Audit</div>
+                    <div className="text-slate-800 font-semibold">
+                      {new Date(selectedDetailTransaction.auditedAt).toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </div>
+                  </>
+                )}
+
+                {selectedDetailTransaction.auditNotes && (
+                  <>
+                    <div className="text-slate-400 font-medium">Catatan Audit</div>
+                    <div className="text-slate-800 font-medium italic whitespace-pre-wrap">
+                      "{selectedDetailTransaction.auditNotes}"
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -963,6 +1101,80 @@ const KasMasukPage = () => {
                 {formatIDR(Number(selectedDetailTransaction.amount))}
               </span>
             </div>
+
+            {isAuditor && (
+              <div className="border border-slate-200 p-4 space-y-4 rounded-none">
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Panel Verifikasi Audit
+                </h4>
+                
+                <div className="space-y-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Pilih Status Verifikasi:
+                  </span>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setAuditStatusVal('TERVERIFIKASI')}
+                      className={cn(
+                        "py-2 px-3 text-xs font-semibold border text-center transition-colors cursor-pointer rounded-none outline-none",
+                        auditStatusVal === 'TERVERIFIKASI'
+                          ? "bg-emerald-50 border-emerald-500 text-emerald-700"
+                          : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                      )}
+                    >
+                      Terverifikasi
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAuditStatusVal('PERLU_KLARIFIKASI')}
+                      className={cn(
+                        "py-2 px-3 text-xs font-semibold border text-center transition-colors cursor-pointer rounded-none outline-none",
+                        auditStatusVal === 'PERLU_KLARIFIKASI'
+                          ? "bg-amber-50 border-amber-500 text-amber-700"
+                          : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                      )}
+                    >
+                      Klarifikasi
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAuditStatusVal('TIDAK_VALID')}
+                      className={cn(
+                        "py-2 px-3 text-xs font-semibold border text-center transition-colors cursor-pointer rounded-none outline-none",
+                        auditStatusVal === 'TIDAK_VALID'
+                          ? "bg-red-50 border-red-500 text-red-700"
+                          : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                      )}
+                    >
+                      Tidak Valid
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="auditNotes" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Catatan Audit (Opsional):
+                  </label>
+                  <textarea
+                    id="auditNotes"
+                    placeholder="Masukkan alasan jika perlu klarifikasi atau tidak valid..."
+                    value={auditNotesVal}
+                    onChange={(e) => setAuditNotesVal(e.target.value)}
+                    className="w-full text-xs border border-slate-200 p-2.5 outline-none focus:border-slate-800 rounded-none bg-slate-50/50 min-h-[60px]"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAuditSubmit}
+                  disabled={auditMutation.isPending}
+                  className="w-full py-2 px-4 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white text-xs font-bold transition-colors cursor-pointer rounded-none outline-none"
+                >
+                  {auditMutation.isPending ? 'Menyimpan...' : 'Simpan Hasil Verifikasi'}
+                </button>
+              </div>
+            )}
 
             <div className="flex justify-end pt-2 border-t">
               <Button

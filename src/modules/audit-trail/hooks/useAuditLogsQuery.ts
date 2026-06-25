@@ -54,3 +54,19 @@ export const useAuditLogsQuery = (filters?: {
     },
   });
 };
+
+/**
+ * Hook to retrieve a single cash transaction (either INCOME or EXPENSE) by ID
+ */
+export const useSingleTransactionQuery = (id?: string, type?: 'INCOME' | 'EXPENSE') => {
+  return useQuery<any>({
+    queryKey: ['single-transaction', id, type],
+    queryFn: async () => {
+      if (!id || !type) return null;
+      const endpoint = type === 'INCOME' ? `/v1/cash/incomes/${id}` : `/v1/cash/expenses/${id}`;
+      const response = await axiosInstance.get(endpoint);
+      return type === 'INCOME' ? response.data.data.income : response.data.data.expense;
+    },
+    enabled: !!id && !!type,
+  });
+};

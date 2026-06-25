@@ -54,6 +54,15 @@ export interface CashTransactionExpense {
   updatedAt: string;
   specialFundId?: string | null;
   specialFund?: any;
+  auditStatus?: string;
+  auditNotes?: string | null;
+  auditedById?: string | null;
+  auditedAt?: string | null;
+  auditedBy?: {
+    id: string;
+    name: string;
+    role: string;
+  } | null;
 }
 
 export interface ApprovedPermohonan {

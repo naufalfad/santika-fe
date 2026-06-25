@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../app/store/useAuthStore';
-import { useKasStore } from '../../../app/store/useKasStore';
 import { Card } from '../../../shared/components/ui/Card';
 import { FinancialChart } from '../components/FinancialChart';
 import { PendingApprovals } from '../components/PendingApprovals';
@@ -14,11 +13,11 @@ import { BalancePosition } from '../components/BalancePosition';
 import { RecentActivity } from '../components/RecentActivity';
 import { DASHBOARD_HERO } from '../../../shared/mock/dashboardData';
 import { formatIDR } from '../../../shared/utils/formatter';
+import { useFundBalancesQuery, useKasMasukQuery } from '../../kas-masuk/hooks/useKasMasukQuery';
+import { useKasKeluarQuery } from '../../kas-keluar/hooks/useKasKeluarQuery';
 
 const DashboardPage = () => {
   const { user } = useAuthStore();
-  const kasMasuk = useKasStore((state) => state.kasMasuk);
-  const kasKeluar = useKasStore((state) => state.kasKeluar);
   const navigate = useNavigate();
 
   // Live Clock State
@@ -29,30 +28,98 @@ const DashboardPage = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Memoized aggregation to prevent unnecessary computational renders
-  const totalIn = useMemo(() => {
-    return kasMasuk.reduce((sum, item) => sum + item.jumlah, 0);
-  }, [kasMasuk]);
+  // Fetch real-time data from backend
+  const { data: fundBalances = [], isLoading: isBalancesLoading } = useFundBalancesQuery();
+  const { data: kasMasuk = [], isLoading: isMasukLoading } = useKasMasukQuery();
+  const { data: kasKeluar = [], isLoading: isKeluarLoading } = useKasKeluarQuery();
 
-  const totalOut = useMemo(() => {
-    return kasKeluar.reduce((sum, item) => sum + item.jumlah, 0);
-  }, [kasKeluar]);
+  const isLoading = isBalancesLoading || isMasukLoading || isKeluarLoading;
 
-  const currentSaldo = useMemo(() => {
-    return 245000000 + totalIn - totalOut - 19400000;
-  }, [totalIn, totalOut]);
+  // Split fund balances
+  const { totalPermanentBalance, totalSpecialBalance, totalConsolidatedBalance } = useMemo(() => {
+    let perm = 0;
+    let spec = 0;
 
-  // Memoized statistics tailored based on the authenticated user role
+    fundBalances.forEach((f) => {
+      const balance = Number(f.balance || 0);
+      if (f.fund.startsWith('Dana Khusus:')) {
+        spec += balance;
+      } else {
+        perm += balance;
+      }
+    });
+
+    return {
+      totalPermanentBalance: perm,
+      totalSpecialBalance: spec,
+      totalConsolidatedBalance: perm + spec,
+    };
+  }, [fundBalances]);
+
+  // Aggregate current month transactions
+  const currentMonth = useMemo(() => new Date().getMonth(), []);
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
+
+  const totalInThisMonth = useMemo(() => {
+    return kasMasuk.reduce((sum, item) => {
+      const d = new Date(item.transactionDate);
+      if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+        return sum + Number(item.amount || 0);
+      }
+      return sum;
+    }, 0);
+  }, [kasMasuk, currentMonth, currentYear]);
+
+  const totalOutThisMonth = useMemo(() => {
+    return kasKeluar.reduce((sum, item) => {
+      const d = new Date(item.transactionDate);
+      if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+        return sum + Number(item.amount || 0);
+      }
+      return sum;
+    }, 0);
+  }, [kasKeluar, currentMonth, currentYear]);
+
+  // Consolidated financial stats card data
   const stats = useMemo(() => {
-    const dynamicStats = [
-      { label: 'DANA OPERASIONAL', val: currentSaldo, sub: 'Dana Operasional', color: 'text-blue-600', icon: 'wallet', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'SUPER_ADMIN'] },
-      { label: 'DANA PEMBANGUNAN', val: 785000000, sub: 'Dana Pembangunan', color: 'text-emerald-600', icon: 'building', visible: ['PASTOR', 'BENDAHARA', 'TIM_PEMBANGUNAN', 'SUPER_ADMIN'] },
-      { label: 'DANA SOSIAL (PSE)', val: 58000000, sub: 'Dana Sosial', color: 'text-purple-600', icon: 'heart', visible: ['PASTOR', 'BENDAHARA', 'KETUA_KOMISI', 'SUPER_ADMIN'] },
-      { label: 'PENDAPATAN BULAN INI', val: totalIn, sub: 'Bulan Berjalan', color: 'text-orange-600', icon: 'trending-up', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'SEKRETARIAT', 'SUPER_ADMIN'] },
-      { label: 'PENGELUARAN BULAN INI', val: totalOut, sub: 'Bulan Berjalan', color: 'text-cyan-600', icon: 'trending-down', visible: ['PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'KETUA_KOMISI', 'SUPER_ADMIN'] },
+    return [
+      {
+        label: 'SALDO POS DANA PERMANEN',
+        val: totalPermanentBalance,
+        sub: 'Total Dana Rutin Paroki',
+        color: 'text-blue-600',
+        icon: 'wallet',
+      },
+      {
+        label: 'SALDO DANA KHUSUS',
+        val: totalSpecialBalance,
+        sub: 'Total Dana Khusus Temporer',
+        color: 'text-emerald-600',
+        icon: 'building',
+      },
+      {
+        label: 'TOTAL SALDO (KONSOLIDASI)',
+        val: totalConsolidatedBalance,
+        sub: 'Kas & Rekening Gabungan',
+        color: 'text-purple-600',
+        icon: 'heart',
+      },
+      {
+        label: 'PENDAPATAN BULAN INI',
+        val: totalInThisMonth,
+        sub: 'Seluruh Pemasukan Paroki',
+        color: 'text-orange-600',
+        icon: 'trending-up',
+      },
+      {
+        label: 'PENGELUARAN BULAN INI',
+        val: totalOutThisMonth,
+        sub: 'Seluruh Pengeluaran Paroki',
+        color: 'text-cyan-600',
+        icon: 'trending-down',
+      },
     ];
-    return dynamicStats.filter(s => s.visible.includes(user?.role || ''));
-  }, [currentSaldo, totalIn, totalOut, user?.role]);
+  }, [totalPermanentBalance, totalSpecialBalance, totalConsolidatedBalance, totalInThisMonth, totalOutThisMonth]);
 
   const getIcon = (iconName: string, colorClass: string) => {
     const props = { size: 18, className: colorClass, strokeWidth: 2 };
@@ -141,7 +208,7 @@ const DashboardPage = () => {
 
               <div>
                 <h3 className="text-lg font-semibold text-slate-800 tracking-tight leading-none group-hover:text-blue-600 transition-colors">
-                  {formatIDR(item.val)}
+                  {isLoading ? '...' : formatIDR(item.val)}
                 </h3>
                 <p className="text-[9px] text-slate-400 font-medium mt-1.5">{item.sub}</p>
               </div>
@@ -149,11 +216,11 @@ const DashboardPage = () => {
 
             <button
               onClick={() => {
-                if (item.label === 'DANA OPERASIONAL') navigate('/kas-keluar');
+                if (item.label === 'SALDO POS DANA PERMANEN') navigate('/saldo-pos-dana');
+                else if (item.label === 'SALDO DANA KHUSUS') navigate('/saldo-pos-dana');
+                else if (item.label === 'TOTAL SALDO (KONSOLIDASI)') navigate('/saldo-pos-dana');
                 else if (item.label === 'PENDAPATAN BULAN INI') navigate('/kas-masuk');
                 else if (item.label === 'PENGELUARAN BULAN INI') navigate('/kas-keluar');
-                else if (item.label === 'DANA PEMBANGUNAN') navigate('/dana-khusus');
-                else if (item.label === 'DANA SOSIAL (PSE)') navigate('/dana-khusus');
               }}
               className="px-4 py-2 text-[10px] font-medium text-slate-500 border-t border-slate-100 flex items-center justify-between hover:bg-slate-50 hover:text-blue-600 transition-colors cursor-pointer rounded-none text-left"
             >
