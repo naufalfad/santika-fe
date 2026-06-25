@@ -15,6 +15,7 @@ import { DASHBOARD_HERO } from '../../../shared/mock/dashboardData';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { useFundBalancesQuery, useKasMasukQuery } from '../../kas-masuk/hooks/useKasMasukQuery';
 import { useKasKeluarQuery } from '../../kas-keluar/hooks/useKasKeluarQuery';
+import churchBg from '../../../assets/church-bg.png';
 
 const DashboardPage = () => {
   const { user } = useAuthStore();
@@ -142,7 +143,7 @@ const DashboardPage = () => {
         {/* Background Image (Absolute Right) */}
         <div className="absolute right-0 top-0 h-full w-[35%] hidden md:block opacity-60 pointer-events-none">
           <img
-            src="/church-bg.png"
+            src={churchBg}
             alt="Church BG"
             className="w-full h-full object-cover"
             style={{

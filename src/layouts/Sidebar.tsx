@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { MENU_ITEMS } from '../shared/constants/menu';
 import { useAuthStore } from '../app/store/useAuthStore';
 import { cn } from '../shared/utils/cn';
+import churchLogo from '../assets/church.png';
 
 /**
  * Sidebar Props Contract.
@@ -193,7 +194,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           {/* border-t satu sisi: no box-inside-box rule */}
           <div className="px-5 py-4 border-t border-slate-800">
             <img
-              src="/church.png"
+              src={churchLogo}
               alt="Paroki St. Stefanus Sempan"
               className="w-28 mx-auto mb-3 opacity-75"
             />

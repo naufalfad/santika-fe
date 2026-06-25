@@ -11,7 +11,7 @@ import { LaporanRealisasi } from '../components/LaporanRealisasi';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatIDR } from '../../../shared/utils/formatter';
-import churchLogo from '../../../../public/church.png';
+import churchLogo from '../../../assets/church.png';
 
 type ReportType = 'BKU' | 'ARUS_KAS' | 'REALISASI';
 

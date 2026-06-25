@@ -21,7 +21,7 @@ import { useNotificationStore } from '../../../app/store/useNotificationStore';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { downloadCSV, downloadExcel } from '../../../shared/utils/export';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
-import churchLogo from '../../../../public/church.png';
+import churchLogo from '../../../assets/church.png';
 import { useKasMasukQuery, useAddKasMasukMutation, useFundBalancesQuery, useAuditTransactionMutation, type CashTransactionIncome } from '../hooks/useKasMasukQuery';
 import { cn } from '../../../shared/utils/cn';
 import { useAuthStore } from '../../../app/store/useAuthStore';

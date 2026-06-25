@@ -19,7 +19,7 @@ import { SPJUploadModal } from '../../spj/components/SPJUploadModal';
 import { formatIDR } from '../../../shared/utils/formatter';
 import { downloadCSV, downloadExcel } from '../../../shared/utils/export';
 import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
-import churchLogo from '../../../../public/church.png';
+import churchLogo from '../../../assets/church.png';
 import { useKasKeluarQuery, type CashTransactionExpense } from '../hooks/useKasKeluarQuery';
 import { useFundBalancesQuery, useAuditTransactionMutation } from '../../kas-masuk/hooks/useKasMasukQuery';
 import { useAnggaranQuery } from '../../anggaran/hooks/useAnggaranQuery';

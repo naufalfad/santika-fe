@@ -6,6 +6,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../../app/store/useAuthStore';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Church, Loader2 } from 'lucide-react';
 import { Button } from '../../../shared/components/ui/Button';
+import churchBg from '../../../assets/church-bg.png';
 
 const LoginSchema = z.object({
   email: z.string().min(1, 'Email wajib diisi').email('Format email tidak valid'),
@@ -58,7 +59,7 @@ const LoginPage = () => {
       {/* Background Image with Dark Overlay Gradient */}
       <div
         className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 scale-105"
-        style={{ backgroundImage: `url('public/church-bg.png')` }}
+        style={{ backgroundImage: `url(${churchBg})` }}
       />
       <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-900/90 to-slate-800/70" />
 
