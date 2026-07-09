@@ -1,8 +1,9 @@
 import {
   LayoutDashboard, ArrowDownCircle, ArrowUpCircle,
   FileText, PieChart, Users, ClipboardCheck, Wallet, History, UserCircle,
-  Coins
+  Coins, HelpCircle
 } from 'lucide-react';
+
 import type { UserRole } from '../types/auth';
 
 export interface MenuItem {
@@ -24,7 +25,9 @@ export const MENU_ITEMS: MenuItem[] = [
   { title: 'Pengajuan', path: '/pengajuan', icon: ClipboardCheck, roles: ['SUPER_ADMIN', 'KETUA_KOMISI'] },
   { title: 'Laporan', path: '/laporan', icon: FileText, roles: ['SUPER_ADMIN', 'PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN'] },
   { title: 'Audit Trail', path: '/audit-trail', icon: History, roles: ['SUPER_ADMIN', 'PASTOR', 'BENDAHARA'] },
+  { title: 'FAQ & Panduan', path: '/faq', icon: HelpCircle, roles: ['SUPER_ADMIN', 'PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'KETUA_KOMISI', 'TIM_PEMBANGUNAN', 'SEKRETARIAT'] },
   // Profil Saya: dapat diakses oleh semua role — menu personal, bukan operasional
   { title: 'Profil Saya', path: '/profile', icon: UserCircle, roles: ['SUPER_ADMIN', 'PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'KETUA_KOMISI', 'TIM_PEMBANGUNAN', 'SEKRETARIAT'] },
+
   { title: 'Manajemen User', path: '/users', icon: Users, roles: ['SUPER_ADMIN'] },
 ];

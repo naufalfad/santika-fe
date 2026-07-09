@@ -15,7 +15,8 @@ export const LaporanArusKas: React.FC<LaporanArusKasProps> = ({ summary }) => {
         <div className="overflow-x-auto border border-slate-200 rounded-none shadow-none">
             <table className="w-full text-left border-collapse">
                 <thead>
-                    <tr className="text-slate-800 text-[12px] font-semibold border-b border-slate-200">
+                    <tr className="text-slate-800 text-sm font-semibold border-b border-slate-200">
+
                         <th className="p-4 border-r border-slate-200">Aktivitas Arus Kas</th>
                         <th className="p-4 text-right w-64">Jumlah (IDR)</th>
                     </tr>
@@ -32,7 +33,7 @@ export const LaporanArusKas: React.FC<LaporanArusKasProps> = ({ summary }) => {
                         <td className="p-3 pl-8 text-slate-600 font-semibold border-r">
                             Penerimaan Kolekte
                         </td>
-                        <td className="p-3 text-right text-emerald-600 font-semibold">
+                        <td className="p-3 text-right text-sky-600 font-semibold">
                             {formatIDR(summary.inboundKolekte)}
                         </td>
                     </tr>
@@ -40,7 +41,7 @@ export const LaporanArusKas: React.FC<LaporanArusKasProps> = ({ summary }) => {
                         <td className="p-3 pl-8 text-slate-600 font-semibold border-r">
                             Penerimaan Donasi / Aksi Sosial
                         </td>
-                        <td className="p-3 text-right text-emerald-600 font-semibold">
+                        <td className="p-3 text-right text-sky-600 font-semibold">
                             {formatIDR(summary.inboundDonasi)}
                         </td>
                     </tr>
@@ -48,7 +49,7 @@ export const LaporanArusKas: React.FC<LaporanArusKasProps> = ({ summary }) => {
                         <td className="p-3 pl-8 text-slate-600 font-semibold border-r">
                             Dana Pembangunan Altar / Gedung
                         </td>
-                        <td className="p-3 text-right text-emerald-600 font-semibold">
+                        <td className="p-3 text-right text-sky-600 font-semibold">
                             {formatIDR(summary.inboundPembangunan)}
                         </td>
                     </tr>
@@ -56,11 +57,11 @@ export const LaporanArusKas: React.FC<LaporanArusKasProps> = ({ summary }) => {
                         <td className="p-3 pl-8 text-slate-600 font-semibold border-r">
                             Persembahan & Pendapatan Lain-lain
                         </td>
-                        <td className="p-3 text-right text-emerald-600 font-semibold">
+                        <td className="p-3 text-right text-sky-600 font-semibold">
                             {formatIDR(summary.inboundLainnya)}
                         </td>
                     </tr>
-                    <tr className="text-emerald-600 font-medium border-b">
+                    <tr className="text-sky-600 font-medium border-b">
                         <td className="p-3 pl-6 border-r text-[11px]">
                             Total Penerimaan Kas
                         </td>
@@ -68,6 +69,7 @@ export const LaporanArusKas: React.FC<LaporanArusKasProps> = ({ summary }) => {
                             {formatIDR(summary.totalPenerimaanKas)}
                         </td>
                     </tr>
+
 
                     {/* ARUS KAS KELUAR */}
                     <tr className="bg-slate-50/50 font-semibold text-slate-800">
@@ -114,10 +116,11 @@ export const LaporanArusKas: React.FC<LaporanArusKasProps> = ({ summary }) => {
                         <td className="p-4 pl-4 border-r border-slate-200 text-xs">
                             Kenaikan / (Penurunan) Bersih Kas
                         </td>
-                        <td className="p-4 text-right font-semibold bg-slate-100/80 text-slate-900 underline decoration-double underline-offset-4">
+                        <td className="p-4 text-right font-semibold bg-slate-100/80 text-slate-900">
                             {formatIDR(summary.kenaikanBersihKas)}
                         </td>
                     </tr>
+
                 </tfoot>
             </table>
         </div>

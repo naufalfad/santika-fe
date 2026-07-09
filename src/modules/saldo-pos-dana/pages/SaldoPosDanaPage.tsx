@@ -256,10 +256,11 @@ const SaldoPosDanaPage = () => {
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">
             {isLoading ? '...' : formatIDR(metrics.totalIncome)}
           </h4>
-          <div className="flex items-center gap-1 mt-2 text-emerald-600 font-medium text-[10px]">
+          <div className="flex items-center gap-1 mt-2 text-sky-600 font-medium text-[10px]">
             <TrendingUp size={12} />
             <span>Akumulasi Penerimaan</span>
           </div>
+
         </Card>
 
         <Card className="p-4 border border-slate-200">
@@ -314,7 +315,7 @@ const SaldoPosDanaPage = () => {
                     type="number"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }}
+                    tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
                     tickFormatter={(val) => formatIDR(val, { notation: 'compact' })}
                   />
 
@@ -324,9 +325,10 @@ const SaldoPosDanaPage = () => {
                     dataKey="name"
                     axisLine={false}
                     tickLine={false}
-                    width={110}
-                    tick={{ fontSize: 8, fill: '#64748b', fontWeight: 600 }}
+                    width={150}
+                    tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }}
                   />
+
 
                   {/* Tooltip */}
                   <Tooltip
@@ -337,8 +339,9 @@ const SaldoPosDanaPage = () => {
                   <Legend verticalAlign="top" height={36} iconType="rect" wrapperStyle={{ fontSize: '10px', fontWeight: 700 }} />
 
                   {/* DESIGN SYSTEM GUARD: radius={0} murni tajam */}
-                  <Bar dataKey="Pemasukan" name="Penerimaan" fill="#10b981" barSize={10} radius={0} />
+                  <Bar dataKey="Pemasukan" name="Penerimaan" fill="#0284c7" barSize={10} radius={0} />
                   <Bar dataKey="Pengeluaran" name="Pengeluaran" fill="#f43f5e" barSize={10} radius={0} />
+
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -438,9 +441,10 @@ const SaldoPosDanaPage = () => {
               <td className="px-5 py-3 text-xs font-medium text-slate-700 border-r">
                 {activeTab === 'PERMANENT' ? item.fund : item.fund.replace('Dana Khusus: ', '')}
               </td>
-              <td className="px-5 py-3 text-xs font-semibold text-right text-emerald-600 border-r">
+              <td className="px-5 py-3 text-xs font-semibold text-right text-sky-600 border-r">
                 {formatIDR(Number(item.income))}
               </td>
+
               <td className="px-5 py-3 text-xs font-semibold text-right text-rose-500 border-r">
                 {formatIDR(Number(item.expense))}
               </td>
@@ -471,7 +475,8 @@ const SaldoPosDanaPage = () => {
               <div className="grid grid-cols-3 gap-1 pt-2 border-t mt-1">
                 <div>
                   <p className="text-[8px] text-slate-400 font-medium">Pemasukan</p>
-                  <p className="text-[10px] font-semibold text-emerald-600 mt-0.5">{formatIDR(Number(item.income))}</p>
+                  <p className="text-[10px] font-semibold text-sky-600 mt-0.5">{formatIDR(Number(item.income))}</p>
+
                 </div>
                 <div>
                   <p className="text-[8px] text-slate-400 font-medium">Pengeluaran</p>

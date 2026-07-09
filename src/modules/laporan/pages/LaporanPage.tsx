@@ -88,7 +88,8 @@ const LaporanPage = () => {
 
         const rowsHtml = bkuData.map((item: any, idx: number) => `
             <tr>
-                <td style="text-align: center;">${idx + 1}</td>
+                <td style="text-align: center;">${item.id === 'STARTING_BALANCE' ? '-' : idx}</td>
+
                 <td style="text-align: center;">${new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
                 <td>${item.keterangan}</td>
                 <td style="text-align: center; font-family: monospace;">${item.ref}</td>
@@ -350,7 +351,8 @@ const LaporanPage = () => {
                     const filename = `laporan_bku_${selectedPeriod}_${timestamp}.csv`;
                     const headers = ['No', 'Tanggal', 'Keterangan', 'Referensi', 'Masuk (Dr)', 'Keluar (Cr)', 'Saldo (IDR)'];
                     const rows = bkuData.map((item: any, idx: number) => [
-                        String(idx + 1),
+                        item.id === 'STARTING_BALANCE' ? '-' : String(idx),
+
                         new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' }),
                         item.keterangan,
                         item.ref,
@@ -473,7 +475,8 @@ const LaporanPage = () => {
 
         // Compile rows
         const rows = bkuData.map((item: any, idx: number) => [
-            String(idx + 1),
+            item.id === 'STARTING_BALANCE' ? '-' : String(idx),
+
             new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }),
             item.keterangan,
             item.ref,
@@ -774,8 +777,9 @@ const LaporanPage = () => {
                         onClick={() => setIsExportModalOpen(true)}
                         disabled={isExporting}
                     >
-                        {isExporting ? <Loader2 className="animate-spin" size={16} /> : <FileSpreadsheet size={16} className="text-emerald-600" />}
+                        {isExporting ? <Loader2 className="animate-spin" size={16} /> : <FileSpreadsheet size={16} className="text-sky-600" />}
                         Export Laporan
+
                     </Button>
                     <Button
                         variant="outline"
@@ -858,8 +862,9 @@ const LaporanPage = () => {
                     </div>
                 )}
                 <div className="ml-auto flex items-center gap-1.5 text-[10px] font-semibold text-slate-400">
-                    Status: <span className="text-emerald-600 font-semibold">Data Final</span>
+                    Status: <span className="text-sky-600 font-semibold">Data Final</span>
                 </div>
+
             </Card>
 
             {/* Report Table Area - Print Optimized */}
@@ -941,11 +946,12 @@ const LaporanPage = () => {
                                     handleExportExcel();
                                     setIsExportModalOpen(false);
                                 }}
-                                className="flex flex-col items-center justify-center p-6 border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/10 rounded-none transition-all group cursor-pointer outline-none focus:border-emerald-500"
+                                className="flex flex-col items-center justify-center p-6 border border-slate-200 hover:border-sky-500 hover:bg-sky-50/10 rounded-none transition-all group cursor-pointer outline-none focus:border-sky-500"
                             >
-                                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-none group-hover:bg-emerald-100 transition-colors mb-3">
+                                <div className="p-3 bg-sky-50 text-sky-600 rounded-none group-hover:bg-sky-100 transition-colors mb-3">
                                     <FileSpreadsheet size={24} />
                                 </div>
+
                                 <span className="text-xs font-bold text-slate-800">Microsoft Excel</span>
                                 <span className="text-[10px] text-slate-400 mt-1 font-semibold">Template Terformat (.xls)</span>
                             </button>

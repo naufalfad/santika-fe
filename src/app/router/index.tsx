@@ -14,6 +14,8 @@ import UserManagementPage from '../../modules/users/pages/UserManagementPage';
 import AuditTrailPage from '../../modules/audit-trail/pages/AuditTrailPage';
 import ProfilePage from '../../modules/profile/pages/ProfilePage';
 import LoginPage from '../../modules/auth/pages/LoginPage';
+import FaqPage from '../../modules/faq/pages/FaqPage';
+
 import { RouteGuard } from '../../shared/components/RouteGuard';
 
 export const router = createBrowserRouter([
@@ -119,6 +121,14 @@ export const router = createBrowserRouter([
         )
       },
       {
+        path: "/faq",
+        element: (
+          <RouteGuard allowableRoles={['SUPER_ADMIN', 'PASTOR', 'BENDAHARA', 'DEWAN_KEUANGAN', 'KETUA_KOMISI', 'TIM_PEMBANGUNAN', 'SEKRETARIAT']}>
+            <FaqPage />
+          </RouteGuard>
+        )
+      },
+      {
         // Semua role berhak mengakses halaman profil diri sendiri.
         // Tidak ada pembatasan RBAC pada rute ini — RouteGuard tetap dipakai
         // untuk memastikan user sudah login (user !== null).
@@ -129,6 +139,7 @@ export const router = createBrowserRouter([
           </RouteGuard>
         ),
       },
+
     ],
   },
 ]);

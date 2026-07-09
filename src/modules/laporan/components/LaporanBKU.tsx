@@ -23,7 +23,8 @@ export const LaporanBKU: React.FC<LaporanBKUProps> = ({
         <div className="overflow-x-auto border border-slate-200 rounded-none shadow-none">
             <table className="w-full text-left border-collapse">
                 <thead>
-                    <tr className="text-slate-800 text-[11px] font-semibold border-b border-slate-200">
+                    <tr className="text-slate-800 text-sm font-semibold border-b border-slate-200">
+
                         <th className="p-3 text-center w-12 border-r border-slate-200">No</th>
                         <th className="p-3 w-32 border-r border-slate-200">Tanggal</th>
                         <th className="p-3 border-r border-slate-200">Keterangan</th>
@@ -38,8 +39,9 @@ export const LaporanBKU: React.FC<LaporanBKUProps> = ({
                         records.map((item, idx) => (
                             <tr key={item.id} className="text-sm hover:bg-slate-50/50 transition-colors">
                                 <td className="p-3 text-center text-gray-500 font-medium border-r">
-                                    {idx + 1}
+                                    {item.id === 'STARTING_BALANCE' ? '-' : idx}
                                 </td>
+
                                 <td className="p-3 text-slate-600 font-medium whitespace-nowrap border-r">
                                     {formatDate(item.tanggal)}
                                 </td>
@@ -49,9 +51,10 @@ export const LaporanBKU: React.FC<LaporanBKUProps> = ({
                                 <td className="p-3 text-center font-mono text-xs text-slate-800 font-semibold border-r">
                                     {item.ref}
                                 </td>
-                                <td className="p-3 text-right text-emerald-600 font-semibold border-r">
+                                <td className="p-3 text-right text-sky-600 font-semibold border-r">
                                     {item.masuk > 0 ? formatIDR(item.masuk) : '-'}
                                 </td>
+
                                 <td className="p-3 text-right text-rose-600 font-semibold border-r">
                                     {item.keluar > 0 ? formatIDR(item.keluar) : '-'}
                                 </td>
@@ -73,15 +76,16 @@ export const LaporanBKU: React.FC<LaporanBKUProps> = ({
                         <td colSpan={4} className="p-4 text-right text-xs border-r border-slate-200">
                             Total Mutasi Periode Ini
                         </td>
-                        <td className="p-4 text-right text-emerald-600 font-semibold border-r border-slate-200">
+                        <td className="p-4 text-right text-sky-600 font-semibold border-r border-slate-200">
                             {formatIDR(totalMasuk)}
                         </td>
                         <td className="p-4 text-right text-rose-600 font-semibold border-r border-slate-200">
                             {formatIDR(totalKeluar)}
                         </td>
-                        <td className="p-4 text-right bg-slate-100/80 text-slate-900 font-semibold underline decoration-double underline-offset-4">
+                        <td className="p-4 text-right bg-slate-100/80 text-slate-900 font-semibold">
                             {formatIDR(endingSaldo)}
                         </td>
+
                     </tr>
                 </tfoot>
             </table>

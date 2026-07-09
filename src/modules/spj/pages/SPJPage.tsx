@@ -155,8 +155,9 @@ const SPJPage = () => {
           </div>
         </Card>
         <Card className="p-4 flex items-center gap-3.5 border border-slate-200 shadow-none rounded-none">
-          <div className="text-emerald-600"><ShieldCheck size={20} /></div>
+          <div className="text-sky-600"><ShieldCheck size={20} /></div>
           <div>
+
             <p className="text-[10px] text-slate-400 font-semibold">Terverifikasi</p>
             <h4 className="text-lg font-semibold text-slate-800 tracking-tight mt-0.5">{totalVerified} <span className="text-[11px] font-medium text-slate-400">File</span></h4>
           </div>
@@ -294,11 +295,12 @@ const SPJPage = () => {
                 <span className="text-slate-400">Kategori</span>
                 <span className="font-medium text-slate-700 text-right">{previewInfo.category}</span>
                 <span className="text-slate-400">Nilai Transaksi</span>
-                <span className="font-semibold text-emerald-600 text-right">{formatIDR(selectedDoc.amount)}</span>
+                <span className="font-semibold text-sky-600 text-right">{formatIDR(selectedDoc.amount)}</span>
                 <span className="text-slate-400">Status</span>
-                <span className={`font-semibold text-right  tracking-tight text-[11px] ${selectedDoc.status === 'VERIFIED' ? 'text-emerald-600' : selectedDoc.status === 'PENDING' ? 'text-amber-500' : 'text-rose-500'}`}>
+                <span className={`font-semibold text-right  tracking-tight text-[11px] ${selectedDoc.status === 'VERIFIED' ? 'text-sky-600' : selectedDoc.status === 'PENDING' ? 'text-amber-500' : 'text-rose-500'}`}>
                   {selectedDoc.status}
                 </span>
+
               </div>
             </div>
 
@@ -317,9 +319,10 @@ const SPJPage = () => {
                     });
                   }}
                   disabled={verifyMutation.isPending}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-none shadow-md flex justify-center items-center gap-1.5"
+                  className="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-medium py-3 rounded-none shadow-md flex justify-center items-center gap-1.5"
                 >
                   {verifyMutation.isPending ? 'Memproses...' : 'Verifikasi Sekarang'}
+
                 </Button>
                 <Button
                   onClick={() => {

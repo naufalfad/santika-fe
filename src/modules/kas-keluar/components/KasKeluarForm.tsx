@@ -233,9 +233,10 @@ export const KasKeluarForm = ({ onSuccess }: { onSuccess: () => void }) => {
           {selectedPermohonanId || selectedSpecialFundId ? (
             <>
               <input type="hidden" {...register('fund_category_id')} />
-              <div className="w-full p-2 bg-slate-100 rounded-none text-sm font-medium text-slate-600 flex items-center h-10 border-l-4 border-l-emerald-500">
+              <div className="w-full p-2 bg-slate-100 rounded-none text-sm font-medium text-slate-600 flex items-center h-10 border-l-4 border-l-sky-500">
                 {selectedCategoryName}
               </div>
+
             </>
           ) : (
             <select

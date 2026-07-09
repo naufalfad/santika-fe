@@ -315,8 +315,9 @@ const UserManagementPage = () => {
                                             className="p-1 hover:bg-slate-50 border border-transparent rounded-none text-slate-400 hover:text-blue-600 transition-all cursor-pointer inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider h-7 px-2 border-slate-200"
                                             title={u.isActive ? 'Non-aktifkan User' : 'Aktifkan User'}
                                         >
-                                            {u.isActive ? <ToggleRight size={18} className="text-emerald-500" /> : <ToggleLeft size={18} className="text-slate-450" />}
+                                            {u.isActive ? <ToggleRight size={18} className="text-sky-500" /> : <ToggleLeft size={18} className="text-slate-450" />}
                                             <span className="text-[9px]">{u.isActive ? 'Nonaktifkan' : 'Aktifkan'}</span>
+
                                         </button>
                                     ) : (
                                         <span className="text-[10px] text-slate-400 font-medium font-mono">No Actions</span>
@@ -361,8 +362,9 @@ const UserManagementPage = () => {
                                             onClick={() => handleToggleStatus(u)}
                                             className="text-[9px] font-bold py-1 h-7 rounded-none flex items-center gap-1"
                                         >
-                                            {u.isActive ? <ToggleRight size={14} className="text-emerald-500" /> : <ToggleLeft size={14} className="text-slate-400" />}
+                                            {u.isActive ? <ToggleRight size={14} className="text-sky-500" /> : <ToggleLeft size={14} className="text-slate-400" />}
                                             {u.isActive ? 'Non-aktifkan' : 'Aktifkan'}
+
                                         </Button>
                                     </div>
                                 )}

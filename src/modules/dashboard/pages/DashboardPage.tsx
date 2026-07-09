@@ -95,7 +95,8 @@ const DashboardPage = () => {
         label: 'SALDO DANA KHUSUS',
         val: totalSpecialBalance,
         sub: 'Total Dana Khusus Temporer',
-        color: 'text-emerald-600',
+        color: 'text-sky-600',
+
         icon: 'building',
       },
       {

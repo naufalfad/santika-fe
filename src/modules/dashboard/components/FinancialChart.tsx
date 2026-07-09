@@ -105,11 +105,12 @@ export const FinancialChart = () => {
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                             <defs>
-                                {/* Gradien Linear untuk Area Penerimaan (Emerald-500) */}
+                                {/* Gradien Linear untuk Area Penerimaan (Sky-600) */}
                                 <linearGradient id="colorMasuk" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.08} />
-                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                    <stop offset="5%" stopColor="#0284c7" stopOpacity={0.08} />
+                                    <stop offset="95%" stopColor="#0284c7" stopOpacity={0} />
                                 </linearGradient>
+
                                 {/* Gradien Linear untuk Area Pengeluaran (Rose-500) */}
                                 <linearGradient id="colorKeluar" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.08} />
@@ -151,12 +152,13 @@ export const FinancialChart = () => {
                                 type="monotone"
                                 dataKey="masuk"
                                 name="Penerimaan"
-                                stroke="#10b981"
+                                stroke="#0284c7"
                                 strokeWidth={2}
                                 fillOpacity={1}
                                 fill="url(#colorMasuk)"
-                                dot={{ r: 3, fill: '#10b981' }}
+                                dot={{ r: 3, fill: '#0284c7' }}
                             />
+
                             <Area
                                 type="monotone"
                                 dataKey="keluar"
@@ -176,10 +178,11 @@ export const FinancialChart = () => {
             <div className="flex flex-col justify-center gap-4 lg:border-l lg:border-slate-100 lg:pl-6">
                 <div className="pb-2 border-b border-slate-100 lg:border-0 lg:pb-0">
                     <p className="text-[9px] font-semibold text-slate-400">Total Penerimaan</p>
-                    <p className="text-base font-bold text-emerald-600 tracking-tight leading-snug">
+                    <p className="text-base font-bold text-sky-600 tracking-tight leading-snug">
                         {isLoading ? '...' : formatIDR(totals.penerimaan)}
                     </p>
                 </div>
+
                 <div className="pb-2 border-b border-slate-100 lg:border-0 lg:pb-0">
                     <p className="text-[9px] font-semibold text-slate-400">Total Pengeluaran</p>
                     <p className="text-base font-bold text-rose-600 tracking-tight leading-snug">

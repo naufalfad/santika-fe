@@ -378,12 +378,13 @@ const ProfilePage = () => {
               />
 
               {passwordSuccessMsg && (
-                <div className="flex items-center gap-2 bg-emerald-50 px-4 py-3 rounded-none">
-                  <CheckCircle size={14} className="text-emerald-600 shrink-0" />
-                  <p className="text-xs font-medium text-emerald-700 tracking-tight">
+                <div className="flex items-center gap-2 bg-sky-50 px-4 py-3 rounded-none">
+                  <CheckCircle size={14} className="text-sky-600 shrink-0" />
+                  <p className="text-xs font-medium text-sky-700 tracking-tight">
                     {passwordSuccessMsg}
                   </p>
                 </div>
+
               )}
 
               {updatePasswordMutation.isError && (

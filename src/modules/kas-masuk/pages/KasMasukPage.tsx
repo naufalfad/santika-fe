@@ -613,12 +613,13 @@ const KasMasukPage = () => {
             {activeTab === 'PERMANENT' ? 'Total Pemasukan (Filtered)' : 'Pemasukan Dana Khusus (Filtered)'}
           </p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(totalNominal)}</h4>
-          <div className="flex items-center gap-1 mt-2 text-emerald-600 font-medium text-[10px]">
+          <div className="flex items-center gap-1 mt-2 text-sky-600 font-medium text-[10px]">
             <TrendingUp size={12} />
             <span>
               {activeTab === 'PERMANENT' ? `Target: ${formatIDR(targetBulanan, { notation: 'compact' })}` : 'Program Dana Khusus'}
             </span>
           </div>
+
         </Card>
 
         {activeTab === 'PERMANENT' ? (
@@ -626,17 +627,19 @@ const KasMasukPage = () => {
             <p className="text-[10px] text-slate-400 font-semibold">Pencapaian Target</p>
             <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{progressTarget}%</h4>
             <div className="w-full bg-slate-100 h-1 rounded-none mt-3 overflow-hidden">
-              <div className="bg-emerald-500 h-full transition-all duration-500" style={{ width: `${progressTarget}%` }}></div>
+              <div className="bg-sky-500 h-full transition-all duration-500" style={{ width: `${progressTarget}%` }}></div>
             </div>
+
           </Card>
         ) : (
           <Card className="p-4 border border-slate-200">
             <p className="text-[10px] text-slate-400 font-semibold">Rata-rata Sumbangan</p>
             <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(avgSpecialIncome)}</h4>
-            <div className="flex items-center gap-1 mt-2 text-emerald-600 font-medium text-[10px]">
+            <div className="flex items-center gap-1 mt-2 text-sky-600 font-medium text-[10px]">
               <TrendingUp size={12} />
               <span>Rata-rata Pemasukan</span>
             </div>
+
           </Card>
         )}
 
@@ -852,10 +855,11 @@ const KasMasukPage = () => {
 
                 {/* 4. Nominal - WAJIB Rata Kanan, Warna Hijau Emerald, Font Angka Lebih Besar */}
                 <td className="px-5 py-4 text-right border-r border-slate-100">
-                  <span className="text-sm font-bold text-emerald-600 tracking-tight">
+                  <span className="text-sm font-bold text-sky-600 tracking-tight">
                     {formatIDR(Number(item.amount))}
                   </span>
                 </td>
+
 
                 {/* 5. Status Audit - Rata Tengah */}
                 <td className="px-5 py-4 text-center border-r border-slate-100">
@@ -915,7 +919,8 @@ const KasMasukPage = () => {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <span className="text-sm font-bold text-emerald-600">{formatIDR(Number(item.amount))}</span>
+                    <span className="text-sm font-bold text-sky-600">{formatIDR(Number(item.amount))}</span>
+
                     <button
                       onClick={() => setSelectedDetailTransaction(item)}
                       className="text-[10px] text-blue-600 hover:text-blue-700 font-semibold cursor-pointer outline-none"
@@ -966,11 +971,12 @@ const KasMasukPage = () => {
                   handleExportExcel();
                   setIsExportModalOpen(false);
                 }}
-                className="flex flex-col items-center justify-center p-6 border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/10 rounded-none transition-all group cursor-pointer outline-none focus:border-emerald-500"
+                className="flex flex-col items-center justify-center p-6 border border-slate-200 hover:border-sky-500 hover:bg-sky-50/10 rounded-none transition-all group cursor-pointer outline-none focus:border-sky-500"
               >
-                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-none group-hover:bg-emerald-100 transition-colors mb-3">
+                <div className="p-3 bg-sky-50 text-sky-600 rounded-none group-hover:bg-sky-100 transition-colors mb-3">
                   <Download size={24} />
                 </div>
+
                 <span className="text-xs font-bold text-slate-800">Microsoft Excel</span>
                 <span className="text-[10px] text-slate-400 mt-1 font-semibold">Template Terformat (.xls)</span>
               </button>
@@ -1095,12 +1101,13 @@ const KasMasukPage = () => {
               </div>
             </div>
 
-            <div className="p-4 bg-emerald-50/50 border border-emerald-100 rounded-none flex justify-between items-center">
+            <div className="p-4 bg-sky-50/50 border border-sky-100 rounded-none flex justify-between items-center">
               <span className="text-xs font-semibold text-slate-500">Nominal Penerimaan</span>
-              <span className="text-lg font-bold text-emerald-600">
+              <span className="text-lg font-bold text-sky-600">
                 {formatIDR(Number(selectedDetailTransaction.amount))}
               </span>
             </div>
+
 
             {isAuditor && (
               <div className="border border-slate-200 p-4 space-y-4 rounded-none">
@@ -1119,8 +1126,9 @@ const KasMasukPage = () => {
                       className={cn(
                         "py-2 px-3 text-xs font-semibold border text-center transition-colors cursor-pointer rounded-none outline-none",
                         auditStatusVal === 'TERVERIFIKASI'
-                          ? "bg-emerald-50 border-emerald-500 text-emerald-700"
+                          ? "bg-sky-50 border-sky-500 text-sky-700"
                           : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+
                       )}
                     >
                       Terverifikasi

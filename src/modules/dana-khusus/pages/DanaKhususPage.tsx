@@ -360,8 +360,9 @@ const DanaKhususPage = () => {
                 </Badge>
               </td>
               <td className="px-5 py-3.5 text-xs font-semibold text-right text-slate-800 border-r">{formatIDR(Number(fund.balance))}</td>
-              <td className="px-5 py-3.5 text-xs font-medium text-right text-emerald-600 border-r">{formatIDR(collectedNum)}</td>
+              <td className="px-5 py-3.5 text-xs font-medium text-right text-sky-600 border-r">{formatIDR(collectedNum)}</td>
               <td className="px-5 py-3.5 text-xs font-medium text-right text-slate-500 border-r">{targetNum > 0 ? formatIDR(targetNum) : '-'}</td>
+
               <td className="px-5 py-3.5 border-r">
                 {targetNum > 0 ? (
                   <div className="flex items-center gap-1.5 min-w-[100px]">
@@ -393,11 +394,12 @@ const DanaKhususPage = () => {
                     <>
                       <button
                         onClick={() => handleActivate(fund.id)}
-                        className="p-1 text-slate-400 hover:text-emerald-600 transition-colors border border-transparent hover:border-slate-200"
+                        className="p-1 text-slate-400 hover:text-sky-600 transition-colors border border-transparent hover:border-slate-200"
                         title="Aktifkan Dana"
                       >
                         <Play size={14} />
                       </button>
+
                       <button
                         onClick={() => handleDelete(fund.id)}
                         className="p-1 text-slate-400 hover:text-rose-600 transition-colors border border-transparent hover:border-slate-200"
@@ -443,9 +445,10 @@ const DanaKhususPage = () => {
                   </button>
                   {isBendahara && fund.status === 'DRAFT' && (
                     <>
-                      <button onClick={() => handleActivate(fund.id)} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-none">
+                      <button onClick={() => handleActivate(fund.id)} className="p-1 text-sky-600 hover:bg-sky-50 rounded-none">
                         <Play size={14} />
                       </button>
+
                       <button onClick={() => handleDelete(fund.id)} className="p-1 text-rose-600 hover:bg-rose-50 rounded-none">
                         <Trash2 size={14} />
                       </button>
@@ -471,7 +474,8 @@ const DanaKhususPage = () => {
                 </div>
                 <div>
                   <p className="text-[8px] text-slate-400">Terkumpul</p>
-                  <p className="text-xs font-semibold text-emerald-600 mt-0.5">{formatIDR(collectedNum)}</p>
+                  <p className="text-xs font-semibold text-sky-600 mt-0.5">{formatIDR(collectedNum)}</p>
+
                 </div>
               </div>
 
@@ -666,7 +670,8 @@ const DanaKhususPage = () => {
             <div className="grid grid-cols-3 gap-4 border-y py-4 text-center">
               <div>
                 <p className="text-[9px] text-slate-400 font-semibold">Total Donasi Masuk</p>
-                <p className="text-sm font-semibold text-emerald-600 mt-1">{formatIDR(Number(activeDetail.income))}</p>
+                <p className="text-sm font-semibold text-sky-600 mt-1">{formatIDR(Number(activeDetail.income))}</p>
+
               </div>
               <div>
                 <p className="text-[9px] text-slate-400 font-semibold">Total Pengeluaran / Belanja</p>
@@ -728,15 +733,16 @@ const DanaKhususPage = () => {
                         </td>
                         <td className="px-4 py-2.5 font-medium text-slate-700 max-w-[300px] truncate" title={tx.description}>{tx.description}</td>
                         <td className="px-4 py-2.5 text-right font-semibold">
-                          <span className={`px-1.5 py-0.5 rounded-none text-[8px] border font-semibold ${ tx.transactionType === 'INCOME' ? 'text-emerald-600 ' : 'text-rose-500 ' }`}>
+                          <span className={`px-1.5 py-0.5 rounded-none text-[8px] border font-semibold ${ tx.transactionType === 'INCOME' ? 'text-sky-600 ' : 'text-rose-500 ' }`}>
                             {tx.transactionType === 'INCOME' ? 'MASUK' : 'KELUAR'}
                           </span>
                         </td>
                         <td className={`px-4 py-2.5 text-right font-semibold ${
-                          tx.transactionType === 'INCOME' ? 'text-emerald-600' : 'text-rose-500'
+                          tx.transactionType === 'INCOME' ? 'text-sky-600' : 'text-rose-500'
                         }`}>
                           {tx.transactionType === 'INCOME' ? '+' : '-'}{formatIDR(Number(tx.amount))}
                         </td>
+
                       </tr>
                     ))}
                   </tbody>

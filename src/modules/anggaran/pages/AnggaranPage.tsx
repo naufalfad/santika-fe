@@ -122,7 +122,7 @@ const AnggaranPage = () => {
             dotColor = 'bg-rose-500';
             label = 'OMK';
         } else if (key.includes('pse') || key.includes('sosial')) {
-            dotColor = 'bg-emerald-500';
+            dotColor = 'bg-sky-500';
             label = 'PSE (Sosial)';
         } else if (key.includes('operasional')) {
             dotColor = 'bg-slate-500';
@@ -146,14 +146,15 @@ const AnggaranPage = () => {
     const getProgressColor = (percent: number) => {
         if (percent > 80) return 'bg-rose-500';
         if (percent >= 50) return 'bg-amber-500';
-        return 'bg-emerald-500';
+        return 'bg-sky-500';
     };
 
     const getSisaColorClass = (sisa: number, plafon: number) => {
         if (sisa <= 0) return 'text-rose-600 font-bold';
         if (sisa < plafon * 0.2) return 'text-amber-600 font-bold';
-        return 'text-emerald-600 font-bold';
+        return 'text-sky-600 font-bold';
     };
+
 
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
@@ -193,9 +194,10 @@ const AnggaranPage = () => {
 
                 <Card className="p-4 border border-slate-200 shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">Sisa Anggaran Tersedia</p>
-                    <h4 className="text-lg font-semibold mt-1 text-emerald-600 tracking-tight">{formatIDR(metrics.totalSisa)}</h4>
-                    <p className="text-[9px] text-emerald-600 mt-2 font-medium">✓ Siap dialokasikan</p>
+                    <h4 className="text-lg font-semibold mt-1 text-sky-600 tracking-tight">{formatIDR(metrics.totalSisa)}</h4>
+                    <p className="text-[9px] text-sky-600 mt-2 font-medium">✓ Siap dialokasikan</p>
                 </Card>
+
 
                 <Card className="p-4 border border-slate-200 shadow-sm">
                     <p className="text-[10px] text-slate-400 font-semibold">Persentase Penyerapan</p>
@@ -278,13 +280,13 @@ const AnggaranPage = () => {
             {/* SECTION: Anggaran Tahunan Table */}
             <div>
                 <h3 className="text-xs font-semibold text-slate-400 mb-4 flex items-center gap-2">
-                    <Calculator className="text-emerald-600" size={16} /> Rincian Pos Anggaran Paroki
+                    <Calculator className="text-sky-600" size={16} /> Rincian Pos Anggaran Paroki
                 </h3>
 
                 <div className="space-y-4">
                     {isLoading ? (
                         <div className="flex justify-center items-center py-12">
-                            <div className="animate-spin rounded-none h-8 w-8 border-b-2 border-emerald-600"></div>
+                            <div className="animate-spin rounded-none h-8 w-8 border-b-2 border-sky-600"></div>
                         </div>
                     ) : processedAnggaran.length === 0 ? (
                         <div className="p-12 text-center text-slate-400 bg-white border border-slate-200 rounded-none shadow-sm font-semibold text-xs">

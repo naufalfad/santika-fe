@@ -333,7 +333,7 @@ const KasKeluarPage = () => {
       dotColor = 'bg-rose-500';
       label = 'OMK';
     } else if (key.includes('pse') || key.includes('sosial')) {
-      dotColor = 'bg-emerald-500';
+      dotColor = 'bg-sky-500';
       label = 'PSE (Sosial)';
     } else if (key.includes('operasional')) {
       dotColor = 'bg-slate-500';
@@ -351,7 +351,7 @@ const KasKeluarPage = () => {
       dotColor = 'bg-indigo-600';
       label = 'Dana Khusus Kapel';
     } else if (key.includes('ambulans')) {
-      dotColor = 'bg-emerald-600';
+      dotColor = 'bg-sky-600';
       label = 'Dana Khusus Ambulans';
     } else if (key.includes('pastoran')) {
       dotColor = 'bg-amber-600';
@@ -583,8 +583,9 @@ const KasKeluarPage = () => {
             {activeTab === 'PERMANENT' ? 'Total Keluar (Filtered)' : 'Keluar Dana Khusus (Filtered)'}
           </p>
           <h4 className="text-lg font-semibold mt-1 text-rose-600 tracking-tight">{formatIDR(totalKeluarFiltered)}</h4>
-          <p className="text-[9px] text-emerald-600 mt-2 font-medium">✓ Terkalkulasi dari pengeluaran riil</p>
+          <p className="text-[9px] text-sky-600 mt-2 font-medium">✓ Terkalkulasi dari pengeluaran riil</p>
         </Card>
+
 
         {activeTab === 'PERMANENT' ? (
           <Card className="p-4 border border-slate-200 shadow-sm">
@@ -621,8 +622,9 @@ const KasKeluarPage = () => {
             {activeTab === 'PERMANENT' ? 'Saldo Kas Saat Ini' : 'Sisa Saldo Dana Khusus'}
           </p>
           <h4 className="text-lg font-semibold mt-1 text-slate-800 tracking-tight">{formatIDR(totalSaldoKas)}</h4>
-          <p className="text-[9px] text-emerald-600 mt-2 font-medium">✓ Sinkron dengan neraca Pos Dana</p>
+          <p className="text-[9px] text-sky-600 mt-2 font-medium">✓ Sinkron dengan neraca Pos Dana</p>
         </Card>
+
       </div>
 
       {/* Inline Toolbar (Moved above charts) */}
@@ -824,8 +826,8 @@ const KasKeluarPage = () => {
                     </div>
                   ) : (
                     <div className="flex items-center gap-1.5 justify-center">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                      <span className="text-[11px] font-semibold text-emerald-700">Selesai</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
+                      <span className="text-[11px] font-semibold text-sky-700">Selesai</span>
                     </div>
                   )}
                 </td>
@@ -889,8 +891,8 @@ const KasKeluarPage = () => {
                     </div>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                      <span className="text-[10px] font-bold text-emerald-700">Selesai</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
+                      <span className="text-[10px] font-bold text-sky-700">Selesai</span>
                     </div>
                   )}
                 </div>
@@ -1015,9 +1017,10 @@ const KasKeluarPage = () => {
                   handleExportExcel();
                   setIsExportModalOpen(false);
                 }}
-                className="flex flex-col items-center justify-center p-6 border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/10 rounded-none transition-all group cursor-pointer outline-none focus:border-emerald-500"
+                className="flex flex-col items-center justify-center p-6 border border-slate-200 hover:border-sky-500 hover:bg-sky-50/10 rounded-none transition-all group cursor-pointer outline-none focus:border-sky-500"
               >
-                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-none group-hover:bg-emerald-100 transition-colors mb-3">
+                <div className="p-3 bg-sky-50 text-sky-600 rounded-none group-hover:bg-sky-100 transition-colors mb-3">
+
                   <Download size={24} />
                 </div>
                 <span className="text-xs font-bold text-slate-800">Microsoft Excel</span>
@@ -1190,8 +1193,9 @@ const KasKeluarPage = () => {
                       className={cn(
                         "py-2 px-3 text-xs font-semibold border text-center transition-colors cursor-pointer rounded-none outline-none",
                         auditStatusVal === 'TERVERIFIKASI'
-                          ? "bg-emerald-50 border-emerald-500 text-emerald-700"
+                          ? "bg-sky-50 border-sky-500 text-sky-700"
                           : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+
                       )}
                     >
                       Terverifikasi

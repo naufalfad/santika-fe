@@ -36,9 +36,10 @@ export const BalancePosition = () => {
                                 className="flex justify-between items-center text-[11px] border-b border-slate-100 pb-2 last:border-0 last:pb-0"
                             >
                                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                                    <div className={isSpecial ? "text-emerald-500 shrink-0" : "text-blue-500 shrink-0"}>
+                                    <div className={isSpecial ? "text-sky-500 shrink-0" : "text-blue-500 shrink-0"}>
                                         {isSpecial ? <Building2 size={12} /> : <Wallet size={12} />}
                                     </div>
+
                                     <span className="font-semibold text-slate-600 truncate">{displayName}</span>
                                 </div>
                                 <span className="font-semibold text-slate-800 tracking-tight shrink-0 ml-2">

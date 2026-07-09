@@ -34,7 +34,8 @@ export const Badge = ({
 }: BadgeProps) => {
   const variantMap: Record<BadgeVariant, string> = {
     default:  'text-slate-600',
-    success:  'text-emerald-600',
+    success:  'text-sky-600',
+
     warning:  'text-amber-600',
     danger:   'text-rose-600',
     info:     'text-blue-600',

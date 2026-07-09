@@ -12,7 +12,8 @@ interface SPJCardProps {
 
 export const SPJCard: React.FC<SPJCardProps> = ({ doc, onPreview }) => {
   const statusIcons = {
-    VERIFIED: <CheckCircle size={12} className="text-emerald-500" />,
+    VERIFIED: <CheckCircle size={12} className="text-sky-500" />,
+
     PENDING: <Clock size={12} className="text-amber-500" />,
     REJECTED: <AlertCircle size={12} className="text-rose-500" />,
   };

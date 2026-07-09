@@ -51,7 +51,8 @@ export const RecentActivity = () => {
                                 </div>
                                 {amountVal > 0 && (
                                     <p className={`text-[11px] font-semibold whitespace-nowrap shrink-0 ${
-                                        isIncome ? 'text-emerald-600' : isExpense ? 'text-rose-600' : 'text-slate-800'
+                                        isIncome ? 'text-sky-600' : isExpense ? 'text-rose-600' : 'text-slate-800'
+
                                     }`}>
                                         {isIncome ? '+' : isExpense ? '-' : ''} {formatIDR(amountVal)}
                                     </p>

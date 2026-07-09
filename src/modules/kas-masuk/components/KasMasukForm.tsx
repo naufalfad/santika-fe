@@ -279,24 +279,25 @@ export const KasMasukForm = ({ onSubmit, onCancel }: Props) => {
                 {/* Pos Dana */}
                 <div className="space-y-1.5">
                     <label className="text-[11px] font-semibold text-slate-500 flex items-center gap-2">
-                        <Tag size={14} className="text-emerald-500" /> Pos Dana
+                        <Tag size={14} className="text-sky-500" /> Pos Dana
                     </label>
                     {classification === 'REFUND' && selectedParent ? (
                         <>
                             <input type="hidden" {...register('fund_category_id')} />
-                            <div className="w-full px-4 py-2.5 bg-slate-100 rounded-none text-sm font-medium text-slate-600 flex items-center h-10 border-l-4 border-l-emerald-500">
+                            <div className="w-full px-4 py-2.5 bg-slate-100 rounded-none text-sm font-medium text-slate-600 flex items-center h-10 border-l-4 border-l-sky-500">
                                 {selectedParent.fundCategory?.name}
                             </div>
                         </>
                     ) : classification === 'SPECIAL_FUND' && selectedSpecialFundId ? (
                         <>
                             <input type="hidden" {...register('fund_category_id')} />
-                            <div className="w-full px-4 py-2.5 bg-slate-100 rounded-none text-sm font-medium text-slate-600 flex items-center h-10 border-l-4 border-l-emerald-500">
+                            <div className="w-full px-4 py-2.5 bg-slate-100 rounded-none text-sm font-medium text-slate-600 flex items-center h-10 border-l-4 border-l-sky-500">
                                 {specialFunds.find((f) => f.id === selectedSpecialFundId)?.name
                                     ? `Dana Khusus: ${specialFunds.find((f) => f.id === selectedSpecialFundId)?.name}`
                                     : 'Dana Khusus'}
                             </div>
                         </>
+
                     ) : (
                         <select
                             {...register('fund_category_id')}

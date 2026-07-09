@@ -78,7 +78,8 @@ export const PendingApprovals = () => {
         const k = komisi.toLowerCase();
         if (k.includes('liturgi')) return 'bg-purple-50 text-purple-600 border border-purple-100/50';
         if (k.includes('omk')) return 'bg-blue-50 text-blue-600 border border-blue-100/50';
-        if (k.includes('pse') || k.includes('sosial')) return 'bg-emerald-50 text-emerald-600 border border-emerald-100/50';
+        if (k.includes('pse') || k.includes('sosial')) return 'bg-sky-50 text-sky-600 border border-sky-100/50';
+
         return 'bg-amber-50 text-amber-600 border border-amber-100/50';
     };
 

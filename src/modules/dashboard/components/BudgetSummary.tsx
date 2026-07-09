@@ -70,7 +70,8 @@ export const BudgetSummary = () => {
                                     <td className="py-2.5 px-3">
                                         <div className="flex items-center gap-1.5">
                                             <div className="flex-1 bg-slate-100 h-1 rounded-none overflow-hidden">
-                                                <div className="bg-emerald-500 h-full rounded-none" style={{ width: `${Math.min(item.persen, 100)}%` }}></div>
+                                                <div className="bg-sky-500 h-full rounded-none" style={{ width: `${Math.min(item.persen, 100)}%` }}></div>
+
                                             </div>
                                             <span className="font-medium text-slate-500 w-5 text-right text-[10px]">{item.persen}%</span>
                                         </div>
