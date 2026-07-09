@@ -24,6 +24,8 @@ import { AdaptiveList } from '../../../shared/components/ui/AdaptiveList';
 import churchLogo from '../../../assets/church.png';
 import { useKasMasukQuery, useAddKasMasukMutation, useFundBalancesQuery, useAuditTransactionMutation, type CashTransactionIncome } from '../hooks/useKasMasukQuery';
 import { cn } from '../../../shared/utils/cn';
+import { useSignatoriesQuery } from '../../laporan/hooks/useSignatoriesQuery';
+
 import { useAuthStore } from '../../../app/store/useAuthStore';
 
 /**
@@ -39,6 +41,11 @@ const KasMasukPage = () => {
   const auditMutation = useAuditTransactionMutation();
   const { user } = useAuthStore();
   const isAuditor = user?.role === 'SUPER_ADMIN' || user?.role === 'PASTOR' || user?.role === 'BENDAHARA';
+
+  const { data: signatories } = useSignatoriesQuery();
+  const pastorName = signatories?.pastorName || 'RP. Johannes Surono';
+  const treasurerName = signatories?.treasurerName || 'Yuliana Shanti';
+
 
   const addLog = useActivityStore((state) => state.addLog);
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -556,10 +563,11 @@ const KasMasukPage = () => {
         </tr>
         <tr><td colspan="7" style="height: 50px; border: none;">&nbsp;</td></tr>
         <tr>
-          <td colspan="2" style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">RP. Johannes Surono</td>
+          <td colspan="2" style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">${pastorName}</td>
           <td colspan="3" style="border: none;">&nbsp;</td>
-          <td colspan="2" style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">Yuliana Shanti</td>
+          <td colspan="2" style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">${treasurerName}</td>
         </tr>
+
       </table>
     `.trim();
 

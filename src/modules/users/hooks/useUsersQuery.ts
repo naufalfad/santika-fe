@@ -99,3 +99,27 @@ export const useToggleUserStatusMutation = () => {
     },
   });
 };
+
+export interface UpdateUserPayload {
+  id: string;
+  name?: string;
+  password?: string;
+}
+
+/**
+ * Mutation hook to update a user's details (name and/or password)
+ */
+export const useUpdateUserMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, name, password }: UpdateUserPayload) => {
+      const response = await axiosInstance.patch(`/v1/users/${id}`, { name, password });
+      return response.data.data.user;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['reportSignatories'] });
+    },
+  });
+};
+

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { UserPlus, Shield, Mail, CheckCircle, XCircle, Search, ToggleLeft, ToggleRight } from 'lucide-react';
+import { UserPlus, Shield, Mail, CheckCircle, XCircle, Search, ToggleLeft, ToggleRight, Edit2 } from 'lucide-react';
 import { Card } from '../../../shared/components/ui/Card';
 import { Button } from '../../../shared/components/ui/Button';
 import { Badge } from '../../../shared/components/ui/Badge';
@@ -10,8 +10,10 @@ import {
   useUsersQuery,
   useCreateUserMutation,
   useToggleUserStatusMutation,
+  useUpdateUserMutation,
   type ClientUser
 } from '../hooks/useUsersQuery';
+
 import type { UserRole } from '../../../shared/types/auth';
 
 /**
@@ -38,9 +40,18 @@ const UserManagementPage = () => {
 
     const createUserMutation = useCreateUserMutation();
     const toggleStatusMutation = useToggleUserStatusMutation();
+    const updateUserMutation = useUpdateUserMutation();
 
     // Modal state
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedEditUser, setSelectedEditUser] = useState<ClientUser | null>(null);
+    
+    // Edit Form fields
+    const [editUserName, setEditUserName] = useState('');
+    const [editUserPassword, setEditUserPassword] = useState('');
+    const [editFormError, setEditFormError] = useState('');
+
     
     // Form fields
     const [newUserName, setNewUserName] = useState('');
@@ -142,6 +153,43 @@ const UserManagementPage = () => {
             });
         }
     };
+
+    const handleOpenEditModal = (u: ClientUser) => {
+        setSelectedEditUser(u);
+        setEditUserName(u.name);
+        setEditUserPassword('');
+        setEditFormError('');
+        setIsEditModalOpen(true);
+    };
+
+    const handleUpdateUser = (e: React.FormEvent) => {
+        e.preventDefault();
+        setEditFormError('');
+
+        if (!selectedEditUser) return;
+        if (!editUserName.trim()) {
+            setEditFormError('Nama lengkap wajib diisi.');
+            return;
+        }
+
+        updateUserMutation.mutate({
+            id: selectedEditUser.id,
+            name: editUserName,
+            password: editUserPassword || undefined
+        }, {
+            onSuccess: () => {
+                setIsEditModalOpen(false);
+                setSelectedEditUser(null);
+                setEditUserName('');
+                setEditUserPassword('');
+            },
+            onError: (err: any) => {
+                const message = err.response?.data?.message || 'Gagal memperbarui data user.';
+                setEditFormError(message);
+            }
+        });
+    };
+
 
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-fade-slide">
@@ -310,15 +358,24 @@ const UserManagementPage = () => {
                                 </td>
                                 <td className="px-5 py-3 text-center">
                                     {currentUser?.role === 'SUPER_ADMIN' && currentUser.id !== u.id ? (
-                                        <button 
-                                            onClick={() => handleToggleStatus(u)}
-                                            className="p-1 hover:bg-slate-50 border border-transparent rounded-none text-slate-400 hover:text-blue-600 transition-all cursor-pointer inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider h-7 px-2 border-slate-200"
-                                            title={u.isActive ? 'Non-aktifkan User' : 'Aktifkan User'}
-                                        >
-                                            {u.isActive ? <ToggleRight size={18} className="text-sky-500" /> : <ToggleLeft size={18} className="text-slate-450" />}
-                                            <span className="text-[9px]">{u.isActive ? 'Nonaktifkan' : 'Aktifkan'}</span>
-
-                                        </button>
+                                        <div className="flex items-center justify-center gap-2">
+                                            <button 
+                                                onClick={() => handleOpenEditModal(u)}
+                                                className="p-1 hover:bg-slate-50 border border-transparent rounded-none text-slate-400 hover:text-sky-600 transition-all cursor-pointer inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider h-7 px-2 border-slate-200"
+                                                title="Edit User / Reset Password"
+                                            >
+                                                <Edit2 size={14} className="text-slate-500" />
+                                                <span className="text-[9px]">Edit</span>
+                                            </button>
+                                            <button 
+                                                onClick={() => handleToggleStatus(u)}
+                                                className="p-1 hover:bg-slate-50 border border-transparent rounded-none text-slate-400 hover:text-blue-600 transition-all cursor-pointer inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider h-7 px-2 border-slate-200"
+                                                title={u.isActive ? 'Non-aktifkan User' : 'Aktifkan User'}
+                                            >
+                                                {u.isActive ? <ToggleRight size={18} className="text-sky-500" /> : <ToggleLeft size={18} className="text-slate-450" />}
+                                                <span className="text-[9px]">{u.isActive ? 'Nonaktifkan' : 'Aktifkan'}</span>
+                                            </button>
+                                        </div>
                                     ) : (
                                         <span className="text-[10px] text-slate-400 font-medium font-mono">No Actions</span>
                                     )}
@@ -355,19 +412,27 @@ const UserManagementPage = () => {
                                     </div>
                                 </div>
                                 {currentUser?.role === 'SUPER_ADMIN' && currentUser.id !== u.id && (
-                                    <div className="pt-2 border-t flex justify-end">
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm"
-                                            onClick={() => handleToggleStatus(u)}
-                                            className="text-[9px] font-bold py-1 h-7 rounded-none flex items-center gap-1"
-                                        >
-                                            {u.isActive ? <ToggleRight size={14} className="text-sky-500" /> : <ToggleLeft size={14} className="text-slate-400" />}
-                                            {u.isActive ? 'Non-aktifkan' : 'Aktifkan'}
-
-                                        </Button>
-                                    </div>
-                                )}
+                                     <div className="pt-2 border-t flex justify-end gap-2">
+                                         <Button 
+                                             variant="outline" 
+                                             size="sm"
+                                             onClick={() => handleOpenEditModal(u)}
+                                             className="text-[9px] font-bold py-1 h-7 rounded-none flex items-center gap-1 border-slate-200"
+                                         >
+                                             <Edit2 size={12} className="text-slate-550" />
+                                             Edit
+                                         </Button>
+                                         <Button 
+                                             variant="outline" 
+                                             size="sm"
+                                             onClick={() => handleToggleStatus(u)}
+                                             className="text-[9px] font-bold py-1 h-7 rounded-none flex items-center gap-1"
+                                         >
+                                             {u.isActive ? <ToggleRight size={14} className="text-sky-500" /> : <ToggleLeft size={14} className="text-slate-400" />}
+                                             {u.isActive ? 'Non-aktifkan' : 'Aktifkan'}
+                                         </Button>
+                                     </div>
+                                 )}
                             </div>
                         )}
                     />
@@ -473,8 +538,80 @@ const UserManagementPage = () => {
                     </div>
                 </form>
             </Modal>
+
+            {/* Edit User Modal */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setSelectedEditUser(null);
+                    setEditFormError('');
+                }}
+                title={`Edit Pengguna - ${selectedEditUser?.email}`}
+            >
+                <form onSubmit={handleUpdateUser} className="space-y-4">
+                    {editFormError && (
+                        <div className="bg-rose-50 border-l-2 border-rose-500 p-3 text-xs font-semibold text-rose-600">
+                            {editFormError}
+                        </div>
+                    )}
+
+                    <div className="space-y-1">
+                        <label className="block text-[10px] font-semibold text-slate-700 uppercase tracking-wider">
+                            Nama Lengkap *
+                        </label>
+                        <input
+                            type="text"
+                            value={editUserName}
+                            onChange={(e) => setEditUserName(e.target.value)}
+                            placeholder="Contoh: Budi Santoso"
+                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-none outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 transition-all font-medium text-slate-700"
+                        />
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="block text-[10px] font-semibold text-slate-700 uppercase tracking-wider">
+                            Password Baru (Opsional)
+                        </label>
+                        <input
+                            type="password"
+                            value={editUserPassword}
+                            onChange={(e) => setEditUserPassword(e.target.value)}
+                            placeholder="Kosongkan jika tidak ingin mengubah kata sandi"
+                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-none outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 transition-all font-medium text-slate-700"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1 font-semibold">
+                            Minimal 6 karakter. Jika diisi, kata sandi lama pengguna akan di-reset.
+                        </p>
+                    </div>
+
+                    <div className="flex gap-3 pt-4 border-t">
+                        <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => {
+                                setIsEditModalOpen(false);
+                                setSelectedEditUser(null);
+                                setEditFormError('');
+                            }} 
+                            className="flex-1 py-3 text-xs font-medium rounded-none"
+                            disabled={updateUserMutation.isPending}
+                        >
+                            Batal
+                        </Button>
+                        <Button 
+                            type="submit"
+                            className="flex-1 py-3 text-xs font-medium rounded-none bg-blue-600 hover:bg-blue-700 text-white"
+                            disabled={updateUserMutation.isPending}
+                        >
+                            {updateUserMutation.isPending ? 'Menyimpan...' : 'Perbarui User'}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 };
+
 
 export default UserManagementPage;

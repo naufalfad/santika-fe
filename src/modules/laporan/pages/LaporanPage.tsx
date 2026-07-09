@@ -6,6 +6,8 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { useLaporanKeuangan } from '../hooks/useLaporanKeuangan';
 import { LaporanBKU } from '../components/LaporanBKU';
+import { useSignatoriesQuery } from '../hooks/useSignatoriesQuery';
+
 import { LaporanArusKas } from '../components/LaporanArusKas';
 import { LaporanRealisasi } from '../components/LaporanRealisasi';
 import { jsPDF } from 'jspdf';
@@ -81,6 +83,11 @@ const LaporanPage = () => {
         isLoading,
     } = useLaporanKeuangan(selectedPeriod, search);
 
+    const { data: signatories } = useSignatoriesQuery();
+    const pastorName = signatories?.pastorName || 'RP. Johannes Surono';
+    const treasurerName = signatories?.treasurerName || 'Yuliana Shanti';
+
+
     const handleExportExcelBKU = (logoBase64: string) => {
         const timestamp = new Date().toISOString().slice(0, 10);
         const filename = `laporan_bku_${selectedPeriod}_${timestamp}.xls`;
@@ -151,10 +158,11 @@ const LaporanPage = () => {
                 </tr>
                 <tr><td colspan="7" style="height: 50px; border: none;">&nbsp;</td></tr>
                 <tr>
-                    <td colspan="2" style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">RP. Johannes Surono</td>
+                    <td colspan="2" style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">${pastorName}</td>
                     <td colspan="3" style="border: none;">&nbsp;</td>
-                    <td colspan="2" style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">Yuliana Shanti</td>
+                    <td colspan="2" style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">${treasurerName}</td>
                 </tr>
+
             </table>
         `.trim();
 
@@ -252,9 +260,10 @@ const LaporanPage = () => {
                 </tr>
                 <tr><td colspan="2" style="height: 50px; border: none;">&nbsp;</td></tr>
                 <tr>
-                    <td style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">RP. Johannes Surono</td>
-                    <td style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">Yuliana Shanti</td>
+                    <td style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">${pastorName}</td>
+                    <td style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">${treasurerName}</td>
                 </tr>
+
             </table>
         `.trim();
 
@@ -332,10 +341,11 @@ const LaporanPage = () => {
                 </tr>
                 <tr><td colspan="5" style="height: 50px; border: none;">&nbsp;</td></tr>
                 <tr>
-                    <td colspan="2" style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">RP. Johannes Surono</td>
+                    <td colspan="2" style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">${pastorName}</td>
                     <td>&nbsp;</td>
-                    <td colspan="2" style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">Yuliana Shanti</td>
+                    <td colspan="2" style="text-align: center; border: none; font-weight: bold; text-decoration: underline;">${treasurerName}</td>
                 </tr>
+
             </table>
         `.trim();
 
@@ -538,8 +548,9 @@ const LaporanPage = () => {
         doc.text('Bendahara Paroki,', 200, sigY + 6);
 
         doc.setFont('Helvetica', 'bold');
-        doc.text('RP. Johannes Surono', 40, sigY + 30);
-        doc.text('Yuliana Shanti', 200, sigY + 30);
+        doc.text(pastorName, 40, sigY + 30);
+        doc.text(treasurerName, 200, sigY + 30);
+
 
         doc.save(filename);
     };
@@ -637,8 +648,9 @@ const LaporanPage = () => {
         doc.text('Bendahara Paroki,', 130, sigY + 6);
 
         doc.setFont('Helvetica', 'bold');
-        doc.text('RP. Johannes Surono', 30, sigY + 30);
-        doc.text('Yuliana Shanti', 130, sigY + 30);
+        doc.text(pastorName, 30, sigY + 30);
+        doc.text(treasurerName, 130, sigY + 30);
+
 
         doc.save(filename);
     };
@@ -735,8 +747,9 @@ const LaporanPage = () => {
         doc.text('Bendahara Paroki,', 130, sigY + 6);
 
         doc.setFont('Helvetica', 'bold');
-        doc.text('RP. Johannes Surono', 30, sigY + 30);
-        doc.text('Yuliana Shanti', 130, sigY + 30);
+        doc.text(pastorName, 30, sigY + 30);
+        doc.text(treasurerName, 130, sigY + 30);
+
 
         doc.save(filename);
     };
@@ -913,7 +926,7 @@ const LaporanPage = () => {
                     <div className="mt-16 grid grid-cols-3 gap-8 text-center text-sm invisible print:visible">
                         <div>
                             <p className="mb-20 text-xs font-semibold text-slate-600">Mengetahui,</p>
-                            <p className="font-medium border-b border-slate-800 inline-block px-6 pb-1">RP. Johannes Surono</p>
+                            <p className="font-medium border-b border-slate-800 inline-block px-6 pb-1">{pastorName}</p>
                             <p className="text-[10px] font-medium text-slate-500 mt-1">Pastor Paroki</p>
                         </div>
                         <div></div>
@@ -921,7 +934,8 @@ const LaporanPage = () => {
                             <p className="mb-20 text-xs font-semibold text-slate-600">
                                 Sempan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                             </p>
-                            <p className="font-medium border-b border-slate-800 inline-block px-6 pb-1">Yuliana Shanti</p>
+                            <p className="font-medium border-b border-slate-800 inline-block px-6 pb-1">{treasurerName}</p>
+
                             <p className="text-[10px] font-medium text-slate-500 mt-1">Bendahara Paroki</p>
                         </div>
                     </div>
