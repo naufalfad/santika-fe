@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../../app/store/useAuthStore';
-import { AlertCircle, Loader2, ArrowRight, Sparkles, ShieldCheck } from 'lucide-react';
+import { AlertCircle, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
 import churchBg from '../../../assets/church-bg.png';
 import stefanusLogo from '../../../assets/stefanus_sempan_logo.png';
 
